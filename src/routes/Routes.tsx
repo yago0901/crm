@@ -1,46 +1,47 @@
 import { Routes, Route } from "react-router-dom";
 
 // Importe os componentes correspondentes a cada funcionalidade
+import AcompanhamentoLeads from "../components/pages/AcompanhamentoLeads";
+import AlocacaoRecursos from "../components/pages/AlocacaoRecursos";
+import AnaliseDados from "../components/pages/AnaliseDados";
+import AuditoriaInterna from "../components/pages/AuditoriaInterna";
+import AutomacaoVendas from "../components/pages/AutomacaoVendas";
+import AvaliacaoDesempenho from "../components/pages/AvaliacaoDesempenho";
+import ColaboracaoDepartamentos from "../components/pages/ColaboracaoDepartamentos";
+import ColaboracaoEquipe from "../components/pages/ColaboracaoEquipe";
+import Compras from "../components/pages/Compras";
+import ComunicacaoInterna from "../components/pages/ComunicacaoInterna";
 import Contabilidade from "../components/pages/Contabilidade";
 import ContasPagar from "../components/pages/ContasPagar";
 import ContasReceber from "../components/pages/ContasReceber";
-import FluxoCaixa from "../components/pages/FluxoCaixa";
-import RelatoriosFinanceiros from "../components/pages/RelatoriosFinanceiros";
-import GestaoFuncionarios from "../components/pages/GestaoFuncionarios";
-import FolhaPagamento from "../components/pages/FolhaPagamento";
-import Recrutamento from "../components/pages/Recrutamento";
-import Treinamento from "../components/pages/Treinamento";
-import AvaliacaoDesempenho from "../components/pages/AvaliacaoDesempenho";
 import ControleEstoque from "../components/pages/ControleEstoque";
-import Compras from "../components/pages/Compras";
-import GestaoFornecedores from "../components/pages/GestaoFornecedores";
-import LogisticaDistribuicao from "../components/pages/LogisticaDistribuicao";
-import GestaoArmazens from "../components/pages/GestaoArmazens";
-import PlanejamentoProducao from "../components/pages/PlanejamentoProducao";
-import ControleQualidade from "../components/pages/ControleQualidade";
-import OrdensProducao from "../components/pages/OrdensProducao";
-import ManutencaoEquipamentos from "../components/pages/ManutencaoEquipamentos";
-import GestaoContatos from "../components/pages/GestaoContatos";
-import AutomacaoVendas from "../components/pages/AutomacaoVendas";
-import AcompanhamentoLeads from "../components/pages/AcompanhamentoLeads";
-import GestaoContratos from "../components/pages/GestaoContratos";
-import PlanejamentoProjetos from "../components/pages/PlanejamentoProjetos";
-import AlocacaoRecursos from "../components/pages/AlocacaoRecursos";
 import ControlePrazosCustos from "../components/pages/ControlePrazosCustos";
-import ColaboracaoEquipe from "../components/pages/ColaboracaoEquipe";
-import RelatoriosPersonalizados from "../components/pages/RelatoriosPersonalizados";
-import AnaliseDados from "../components/pages/AnaliseDados";
-import PainelsControle from "../components/pages/PainelsControle";
-import PrevisaoTendencias from "../components/pages/PrevisaoTendencias";
-import GestaoConformidade from "../components/pages/GestaoConformidade";
-import AuditoriaInterna from "../components/pages/AuditoriaInterna";
+import ControleQualidade from "../components/pages/ControleQualidade";
 import ControleRegulamentacoes from "../components/pages/ControleRegulamentacoes";
-import IntegracaoSistemas from "../components/pages/IntegracaoSistemas";
-import ComunicacaoInterna from "../components/pages/ComunicacaoInterna";
-import ColaboracaoDepartamentos from "../components/pages/ColaboracaoDepartamentos";
-import Login from "../components/pages/Login";
-import Register from '../components/pages/Register';
+import FolhaPagamento from "../components/pages/FolhaPagamento";
+import GestaoArmazens from "../components/pages/GestaoArmazens";
+import GestaoConformidade from "../components/pages/GestaoConformidade";
+import GestaoContatos from "../components/pages/GestaoContatos";
+import GestaoContratos from "../components/pages/GestaoContratos";
+import GestaoFornecedores from "../components/pages/GestaoFornecedores";
+import GestaoFuncionarios from "../components/pages/GestaoFuncionarios";
 import Home from '../components/pages/Home';
+import IntegracaoSistemas from "../components/pages/IntegracaoSistemas";
+import LogisticaDistribuicao from "../components/pages/LogisticaDistribuicao";
+import Login from "../components/pages/Login";
+import ManutencaoEquipamentos from "../components/pages/ManutencaoEquipamentos";
+import OrdensProducao from "../components/pages/OrdensProducao";
+import PaineisControle from "../components/pages/PaineisControle";
+import PlanejamentoProducao from "../components/pages/PlanejamentoProducao";
+import PlanejamentoProjetos from "../components/pages/PlanejamentoProjetos";
+import PrevisaoTendencias from "../components/pages/PrevisaoTendencias";
+import Recrutamento from "../components/pages/Recrutamento";
+import Register from '../components/pages/Register';
+import RelatoriosFinanceiros from "../components/pages/RelatoriosFinanceiros";
+import RelatoriosPersonalizados from "../components/pages/RelatoriosPersonalizados";
+import Treinamento from "../components/pages/Treinamento";
+import FluxoCaixa from "../components/pages/FluxoCaixa";
+
 
 function Router() {
   return (
@@ -143,7 +144,7 @@ function Router() {
       />
       <Route
         path="/business-intelligence/painels-controle"
-        element={<PainelsControle />}
+        element={<PaineisControle />}
       />
       <Route
         path="/business-intelligence/previsao-tendencias"
