@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { auth } from "../../../services/firebase"
 import { signInWithEmailAndPassword } from 'firebase/auth';
 
-import "./styles.scss";
+import './styles.scss'
 
 const Login = () => {
 
@@ -18,7 +18,7 @@ const Login = () => {
     navigate('/registro');
   };
 
-  const handleSign = async (event: React.FormEvent) => {
+  const handleSign = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     try {
@@ -38,38 +38,43 @@ const Login = () => {
   };
 
   return (
-    <div className="background">
-      <div className="background__container">
-        <div className="background__container__card_login">
-          <div className="background__container__card_login__titles">
+    <div className="login_background">
+      <div className="login_background__container">
+        <div className="login_background__container__card_login">
+          <div className="login_background__container__card_login__titles">
+            <div className="login_background__container__card_login__titles__icon">
+
+            </div>
             <h1>Login</h1>
-            <button onClick={handleClick}>Cadastro</button>
           </div>
-          <form onSubmit={handleSign}>
+          <form onSubmit={handleSign} >
             <input
-              className="background__container__card_login__user"
+              className="login_background__container__card_login__user"
               name='login'
               placeholder='Usuário/E-mail'
               type="text"
               onChange={(e) => setEmail(e.target.value)}
             />
             <input
-              className="background__container__card_login__password"
+              className="login_background__container__card_login__password"
               name='senha'
               placeholder='Senha'
               type="password"
               onChange={(e) => setPassword(e.target.value)}
             />
-            <button>LOGIN</button>
-            <div className="background__container__card_login__settings" >
-              <div className="background__container__card_login__settings__remember">
+            <div className="login_background__container__card_login__buttons">
+              <button className="login_background__container__card_login__buttons__login">LOGIN</button>
+              <button className="login_background__container__card_login__buttons__register" onClick={handleClick}>REGISTRO</button>
+            </div>
+            <div className="login_background__container__card_login__settings" >
+              <div className="login_background__container__card_login__settings__remember">
                 <input
                   type="checkbox"
-                  className="background__container__card_login__settings__remember__checkbox"
+                  className="login_background__container__card_login__settings__remember__checkbox"
                 />
                 <p>Lembre-me</p>
               </div>
-              <div className="background__container__card_login__settings__forgot">
+              <div className="login_background__container__card_login__settings__forgot">
                 <p>Esqueci a senha</p>
               </div>
             </div>

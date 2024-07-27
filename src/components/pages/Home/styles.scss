@@ -1,4 +1,4 @@
-.background {
+.home_background {
   width: 100%;
   height: 100vh;
   background-image: url("../../common/images/fundo.jpg");
@@ -19,7 +19,6 @@
     backdrop-filter: blur(5px);
     display: inherit;
     align-items: center;
-    justify-content: center;
 
     &__card_login {
       width: 50%;
@@ -51,7 +50,6 @@
         }
 
         button {
-          margin-top: 1rem;
           padding: 0.5rem;
           border-radius: 6px;
         }

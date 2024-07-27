@@ -10,10 +10,11 @@ const Home = () => {
   };
 
   return (
-    <div className="background">
-      <div className="background__container">
-        <div className="background__container__card_login">
-          <div className="background__container__card_login__titles">
+    <div className="home_background">
+      <div className="home_background__container">
+        <div>Teste</div>
+        <div className="home_background__container__card_login">
+          <div className="home_background__container__card_login__titles">
             <h1>Logado com sucesso</h1>
             <h1>HOME PAGE</h1>
             <button onClick={handleHome}>Voltar</button>

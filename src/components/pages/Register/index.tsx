@@ -38,21 +38,21 @@ const Register = () => {
   };
 
   return (
-    <div className="background">
-      <div className="background__container">
-        <div className="background__container__card_login">
+    <div className="register_background">
+      <div className="register_background__container">
+        <div className="register_background__container__card_login">
           <h1>Cadastro</h1>
           <button onClick={handleHome}>Voltar</button>
           <form onSubmit={handleSignUp}>
             <input
-              className="background__container__card_login__password"
+              className="register_background__container__card_login__password"
               name='email'
               placeholder='E-mail'
               type="email"
               onChange={(e) => setEmail(e.target.value)}
             />
             <input
-              className="background__container__card_login__password"
+              className="register_background__container__card_login__password"
               name='senha'
               placeholder='Senha'
               type="password"
