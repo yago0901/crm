@@ -394,15 +394,14 @@ As seguintes ferramentas foram usadas até o momento na construção do projeto:
 
 #### **Desenvolvedor React** <br/>
 
-([Vite](https://vitejs.dev/)
-
+- [Vite](https://vitejs.dev/)
 - [React](https://reactjs.org/)
 - [Typescript](https://www.typescriptlang.org/)
-- [Firebase](https://firebase.google.com/) )
+- [Firebase](https://firebase.google.com/)
 
 Ferramentas previstas para utilização:
 
-**[Axios](https://github.com/axios/axios)**
+- [Axios](https://github.com/axios/axios)
 
 ---
 
