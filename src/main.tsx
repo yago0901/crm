@@ -6,10 +6,15 @@ import { BrowserRouter } from "react-router-dom";
 import "./reset.scss";
 import Router from './routes/Routes.tsx';
 
+
+import { AuthProvider } from './contexts/auth';
+
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    <BrowserRouter>
-      <Router />
-    </BrowserRouter>
+    <AuthProvider>
+      <BrowserRouter>
+        <Router />
+      </BrowserRouter>
+    </AuthProvider>
   </React.StrictMode>
 );

@@ -1,18 +1,15 @@
 import { useNavigate } from 'react-router-dom';
-
 import { useState } from 'react';
-import { auth } from "../../../services/firebase"
-import { signInWithEmailAndPassword } from 'firebase/auth';
-
-import './styles.scss'
+import { useAuth } from '../../../contexts/auth';
+import './styles.scss';
 
 const Login = () => {
-
   const [email, setEmail] = useState<string>('');
   const [password, setPassword] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
 
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   const handleClick = () => {
     navigate('/registro');
@@ -22,8 +19,8 @@ const Login = () => {
     event.preventDefault();
 
     try {
-      await signInWithEmailAndPassword(auth, email, password);
-      navigate("/home")
+      await login(email, password);
+      navigate("/home");
       setError(null);
     } catch (error: any) {
       const errorCode = error.code;
@@ -36,6 +33,7 @@ const Login = () => {
       }
     }
   };
+
 
   return (
     <div className="login_background">

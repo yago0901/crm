@@ -1,15 +1,22 @@
 import { INavbar } from "./types";
 
 import "./styles.scss";
+import { useNavigate } from 'react-router-dom';
 
 const Navbar: React.FC<INavbar> = ({ isMenuOpen, onToggleMenu }) => {
+
+  const navigate = useNavigate();
+
+  const handleFinanceiroContabilidade = () => {
+    navigate('/financeiro/contabilidade');
+  };
 
   return (
     <div className={`navbar ${isMenuOpen ? 'open' : 'closed'}`}>
       {isMenuOpen && (
         <nav>
           <ul>
-            <li><a href="#item1">Item 1</a></li>
+            <li><button onClick={handleFinanceiroContabilidade}>Item 1</button></li>
             <li><a href="#item2">Item 2</a></li>
             <li><a href="#item3">Item 3</a></li>
             <li><a href="#item4">Item 4</a></li>
@@ -23,4 +30,4 @@ const Navbar: React.FC<INavbar> = ({ isMenuOpen, onToggleMenu }) => {
   )
 }
 
-export default Navbar
+export default Navbar;
