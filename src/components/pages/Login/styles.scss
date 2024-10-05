@@ -103,10 +103,20 @@
             width: 100%;
           }
         }
+
+        @media (max-width: 460px) {
+          display: flex;
+          flex-direction: column-reverse;
+          margin-top: 1rem;
+        }
       }
 
-      @media (max-width: 740px) {
-        width: 80%;
+      @media (max-width: 1330px) {
+        width: 35%;
+      }
+
+      @media (max-width: 1050px) {
+        width: 45%;
       }
 
       @media (max-width: 915px) {
@@ -119,7 +129,16 @@
         }
       }
 
-      @media (max-width: 420px) {
+      @media (max-width: 740px) {
+        width: 55%;
+      }
+
+      @media (max-width: 620px) {
+        width: 75%;
+      }
+
+      @media (max-width: 450px) {
+        width: 75%;
         .background__container__card_login__settings {
           flex-direction: column;
         }

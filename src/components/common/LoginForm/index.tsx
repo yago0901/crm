@@ -12,7 +12,7 @@ export const LoginForm: React.FC<ILoginFormProps> = ({ onLogin }) => {
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    // Aqui você pode adicionar a lógica de autenticação, como enviar os dados para o servidor
+
     onLogin(email, password);
   };
 

@@ -1,4 +1,3 @@
-// src/contexts/AuthContext.tsx
 import { createContext, useContext, useEffect, useState } from 'react';
 import { auth } from '../../services/firebase';
 import { User, signInWithEmailAndPassword, signOut } from 'firebase/auth';
@@ -15,21 +14,38 @@ export const useAuth = () => {
 };
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [currentUser, setCurrentUser] = useState<User | null>(() => {
+
+    const cachedUser = localStorage.getItem("currentUser");
+    return cachedUser ? JSON.parse(cachedUser) : null;
+  });
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(user => {
       setCurrentUser(user);
+      if (user) {
+        localStorage.setItem('currentUser', JSON.stringify(user));
+      } else {
+        localStorage.removeItem('currentUser');
+      }
     });
+
     return unsubscribe;
   }, []);
 
   const login = async (email: string, password: string) => {
     await signInWithEmailAndPassword(auth, email, password);
+    const user = auth.currentUser;
+    if (user) {
+      localStorage.setItem('currentUser', JSON.stringify(user));
+      setCurrentUser(user);
+    }
   };
 
   const logout = async () => {
     await signOut(auth);
+    localStorage.removeItem('currentUser');
+    setCurrentUser(null);
   };
 
   return (

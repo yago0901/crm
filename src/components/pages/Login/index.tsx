@@ -34,7 +34,6 @@ const Login = () => {
     }
   };
 
-
   return (
     <div className="login_background">
       <div className="login_background__container">

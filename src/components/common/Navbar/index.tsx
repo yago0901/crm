@@ -16,10 +16,38 @@ const Navbar: React.FC<INavbar> = ({ isMenuOpen, onToggleMenu }) => {
       {isMenuOpen && (
         <nav>
           <ul>
-            <li><button onClick={handleFinanceiroContabilidade}>Item 1</button></li>
-            <li><a href="#item2">Item 2</a></li>
-            <li><a href="#item3">Item 3</a></li>
-            <li><a href="#item4">Item 4</a></li>
+            <li>
+              <button
+                onClick={handleFinanceiroContabilidade}
+                className=''
+              >
+                Item 1
+              </button>
+            </li>
+            <li>
+              <button
+                onClick={handleFinanceiroContabilidade}
+                className=''
+              >
+                Item 2
+              </button>
+            </li>
+            <li>
+              <button
+                onClick={handleFinanceiroContabilidade}
+                className=''
+              >
+                Item 3
+              </button>
+            </li>
+            <li>
+              <button
+                onClick={handleFinanceiroContabilidade}
+                className=''
+              >
+                Item 4
+              </button>
+            </li>
           </ul>
         </nav>
       )}
