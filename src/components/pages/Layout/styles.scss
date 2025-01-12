@@ -1,4 +1,4 @@
-.login_background {
+.home_background {
   width: 100%;
   height: 100vh;
   background-image: url("../../../assets/fundo.jpg");
@@ -8,22 +8,22 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  position: relative;
 
   &__container {
-    width: 80%;
-    height: 80vh;
+    width: 90%;
+    height: 90vh;
     border-radius: 30px;
     padding: 1rem;
     background-color: rgba(255, 255, 255, 0.3);
-
     backdrop-filter: blur(5px);
     display: inherit;
     align-items: center;
-    justify-content: center;
+    gap: 1%;
 
     &__card_login {
-      width: 30%;
-      height: 75vh;
+      width: 97.7%;
+      height: 85vh;
       background-color: white;
       border-radius: 30px;
       padding: 1rem;
@@ -32,38 +32,30 @@
       align-items: center;
       justify-content: center;
       gap: 1rem;
+      transition: width 0.3s ease-in-out;
 
-      &__buttons {
-        display: flex;
-        justify-content: space-between;
-        gap: 0.5rem;
-
-        &__login {
-          padding: 0.5rem;
-          border-radius: 6px;
-          flex: 1;
-        }
-        &__register {
-          padding: 0.5rem;
-          border-radius: 6px;
-          flex: 1;
-        }
+      &.open {
+        width: 85%;
       }
 
       &__titles {
         display: flex;
         width: 60%;
-        justify-content: center;
-        align-items: center;
+        justify-content: space-between;
       }
 
       form {
         display: flex;
         gap: 0.5rem;
         flex-direction: column;
-        width: 80%;
+        width: 60%;
 
         input {
+          padding: 0.5rem;
+          border-radius: 6px;
+        }
+
+        button {
           padding: 0.5rem;
           border-radius: 6px;
         }
@@ -103,20 +95,6 @@
             width: 100%;
           }
         }
-
-        @media (max-width: 460px) {
-          display: flex;
-          flex-direction: column-reverse;
-          margin-top: 1rem;
-        }
-      }
-
-      @media (max-width: 1330px) {
-        width: 35%;
-      }
-
-      @media (max-width: 1050px) {
-        width: 45%;
       }
 
       @media (max-width: 915px) {
@@ -129,16 +107,7 @@
         }
       }
 
-      @media (max-width: 740px) {
-        width: 55%;
-      }
-
-      @media (max-width: 620px) {
-        width: 75%;
-      }
-
-      @media (max-width: 450px) {
-        width: 75%;
+      @media (max-width: 420px) {
         .background__container__card_login__settings {
           flex-direction: column;
         }

@@ -42,6 +42,7 @@ import RelatoriosPersonalizados from "../components/pages/RelatoriosPersonalizad
 import Treinamento from "../components/pages/Treinamento";
 import FluxoCaixa from "../components/pages/FluxoCaixa";
 import { useAuth } from '../contexts/auth';
+import Layout from '../components/pages/Layout';
 
 const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
   const { currentUser } = useAuth();
@@ -53,54 +54,55 @@ function Router() {
     <Routes>
       <Route path="/" element={<Login />} />
       <Route path="/register" element={<Register />} />
+      <Route element={<PrivateRoute><Layout /></PrivateRoute>}>
+        <Route path="/home" element={<PrivateRoute><Home /></PrivateRoute>} />
 
-      <Route path="/home" element={<PrivateRoute><Home /></PrivateRoute>} />
+        <Route path="/financeiro/contabilidade" element={<PrivateRoute><Contabilidade /></PrivateRoute>} />
+        <Route path="/financeiro/contas-pagar" element={<PrivateRoute><ContasPagar /></PrivateRoute>} />
+        <Route path="/financeiro/contas-receber" element={<PrivateRoute><ContasReceber /></PrivateRoute>} />
+        <Route path="/financeiro/fluxo-caixa" element={<PrivateRoute><FluxoCaixa /></PrivateRoute>} />
+        <Route path="/financeiro/relatorios-financeiros" element={<PrivateRoute><RelatoriosFinanceiros /></PrivateRoute>} />
 
-      <Route path="/financeiro/contabilidade" element={<PrivateRoute><Contabilidade /></PrivateRoute>} />
-      <Route path="/financeiro/contas-pagar" element={<PrivateRoute><ContasPagar /></PrivateRoute>} />
-      <Route path="/financeiro/contas-receber" element={<PrivateRoute><ContasReceber /></PrivateRoute>} />
-      <Route path="/financeiro/fluxo-caixa" element={<PrivateRoute><FluxoCaixa /></PrivateRoute>} />
-      <Route path="/financeiro/relatorios-financeiros" element={<PrivateRoute><RelatoriosFinanceiros /></PrivateRoute>} />
+        <Route path="/rh/gestao-funcionarios" element={<PrivateRoute><GestaoFuncionarios /></PrivateRoute>} />
+        <Route path="/rh/folha-pagamento" element={<PrivateRoute><FolhaPagamento /></PrivateRoute>} />
+        <Route path="/rh/recrutamento" element={<PrivateRoute><Recrutamento /></PrivateRoute>} />
+        <Route path="/rh/treinamento" element={<PrivateRoute><Treinamento /></PrivateRoute>} />
+        <Route path="/rh/avaliacao-desempenho" element={<PrivateRoute><AvaliacaoDesempenho /></PrivateRoute>} />
 
-      <Route path="/rh/gestao-funcionarios" element={<PrivateRoute><GestaoFuncionarios /></PrivateRoute>} />
-      <Route path="/rh/folha-pagamento" element={<PrivateRoute><FolhaPagamento /></PrivateRoute>} />
-      <Route path="/rh/recrutamento" element={<PrivateRoute><Recrutamento /></PrivateRoute>} />
-      <Route path="/rh/treinamento" element={<PrivateRoute><Treinamento /></PrivateRoute>} />
-      <Route path="/rh/avaliacao-desempenho" element={<PrivateRoute><AvaliacaoDesempenho /></PrivateRoute>} />
+        <Route path="/estoques-logistica/controle-estoque" element={<PrivateRoute><ControleEstoque /></PrivateRoute>} />
+        <Route path="/estoques-logistica/compras" element={<PrivateRoute><Compras /></PrivateRoute>} />
+        <Route path="/estoques-logistica/gestao-fornecedores" element={<PrivateRoute><GestaoFornecedores /></PrivateRoute>} />
+        <Route path="/estoques-logistica/logistica-distribuicao" element={<PrivateRoute><LogisticaDistribuicao /></PrivateRoute>} />
+        <Route path="/estoques-logistica/gestao-armazens" element={<PrivateRoute><GestaoArmazens /></PrivateRoute>} />
 
-      <Route path="/estoques-logistica/controle-estoque" element={<PrivateRoute><ControleEstoque /></PrivateRoute>} />
-      <Route path="/estoques-logistica/compras" element={<PrivateRoute><Compras /></PrivateRoute>} />
-      <Route path="/estoques-logistica/gestao-fornecedores" element={<PrivateRoute><GestaoFornecedores /></PrivateRoute>} />
-      <Route path="/estoques-logistica/logistica-distribuicao" element={<PrivateRoute><LogisticaDistribuicao /></PrivateRoute>} />
-      <Route path="/estoques-logistica/gestao-armazens" element={<PrivateRoute><GestaoArmazens /></PrivateRoute>} />
+        <Route path="/producao-manufatura/planejamento-producao" element={<PrivateRoute><PlanejamentoProducao /></PrivateRoute>} />
+        <Route path="/producao-manufatura/controle-qualidade" element={<PrivateRoute><ControleQualidade /></PrivateRoute>} />
+        <Route path="/producao-manufatura/ordens-producao" element={<PrivateRoute><OrdensProducao /></PrivateRoute>} />
+        <Route path="/producao-manufatura/manutencao-equipamentos" element={<PrivateRoute><ManutencaoEquipamentos /></PrivateRoute>} />
 
-      <Route path="/producao-manufatura/planejamento-producao" element={<PrivateRoute><PlanejamentoProducao /></PrivateRoute>} />
-      <Route path="/producao-manufatura/controle-qualidade" element={<PrivateRoute><ControleQualidade /></PrivateRoute>} />
-      <Route path="/producao-manufatura/ordens-producao" element={<PrivateRoute><OrdensProducao /></PrivateRoute>} />
-      <Route path="/producao-manufatura/manutencao-equipamentos" element={<PrivateRoute><ManutencaoEquipamentos /></PrivateRoute>} />
+        <Route path="/vendas-crm/gestao-contatos" element={<PrivateRoute><GestaoContatos /></PrivateRoute>} />
+        <Route path="/vendas-crm/automacao-vendas" element={<PrivateRoute><AutomacaoVendas /></PrivateRoute>} />
+        <Route path="/vendas-crm/acompanhamento-leads" element={<PrivateRoute><AcompanhamentoLeads /></PrivateRoute>} />
+        <Route path="/vendas-crm/gestao-contratos" element={<PrivateRoute><GestaoContratos /></PrivateRoute>} />
 
-      <Route path="/vendas-crm/gestao-contatos" element={<PrivateRoute><GestaoContatos /></PrivateRoute>} />
-      <Route path="/vendas-crm/automacao-vendas" element={<PrivateRoute><AutomacaoVendas /></PrivateRoute>} />
-      <Route path="/vendas-crm/acompanhamento-leads" element={<PrivateRoute><AcompanhamentoLeads /></PrivateRoute>} />
-      <Route path="/vendas-crm/gestao-contratos" element={<PrivateRoute><GestaoContratos /></PrivateRoute>} />
+        <Route path="/projetos/planejamento-projetos" element={<PrivateRoute><PlanejamentoProjetos /></PrivateRoute>} />
+        <Route path="/projetos/alocacao-recursos" element={<PrivateRoute><AlocacaoRecursos /></PrivateRoute>} />
+        <Route path="/projetos/controle-prazos-custos" element={<PrivateRoute><ControlePrazosCustos /></PrivateRoute>} />
+        <Route path="/projetos/colaboracao-equipe" element={<PrivateRoute><ColaboracaoEquipe /></PrivateRoute>} />
 
-      <Route path="/projetos/planejamento-projetos" element={<PrivateRoute><PlanejamentoProjetos /></PrivateRoute>} />
-      <Route path="/projetos/alocacao-recursos" element={<PrivateRoute><AlocacaoRecursos /></PrivateRoute>} />
-      <Route path="/projetos/controle-prazos-custos" element={<PrivateRoute><ControlePrazosCustos /></PrivateRoute>} />
-      <Route path="/projetos/colaboracao-equipe" element={<PrivateRoute><ColaboracaoEquipe /></PrivateRoute>} />
+        <Route path="/business-intelligence/relatorios-personalizados" element={<PrivateRoute><RelatoriosPersonalizados /></PrivateRoute>} />
+        <Route path="/business-intelligence/analise-dados" element={<PrivateRoute><AnaliseDados /></PrivateRoute>} />
+        <Route path="/business-intelligence/painels-controle" element={<PrivateRoute><PaineisControle /></PrivateRoute>} />
+        <Route path="/business-intelligence/previsao-tendencias" element={<PrivateRoute><PrevisaoTendencias /></PrivateRoute>} />
 
-      <Route path="/business-intelligence/relatorios-personalizados" element={<PrivateRoute><RelatoriosPersonalizados /></PrivateRoute>} />
-      <Route path="/business-intelligence/analise-dados" element={<PrivateRoute><AnaliseDados /></PrivateRoute>} />
-      <Route path="/business-intelligence/painels-controle" element={<PrivateRoute><PaineisControle /></PrivateRoute>} />
-      <Route path="/business-intelligence/previsao-tendencias" element={<PrivateRoute><PrevisaoTendencias /></PrivateRoute>} />
+        <Route path="/compliance-regulamentacoes/gestao-conformidade" element={<PrivateRoute><GestaoConformidade /></PrivateRoute>} />
+        <Route path="/compliance-regulamentacoes/auditoria-interna" element={<PrivateRoute><AuditoriaInterna /></PrivateRoute>} />
+        <Route path="/compliance-regulamentacoes/controle-regulamentacoes" element={<PrivateRoute><ControleRegulamentacoes /></PrivateRoute>} />
 
-      <Route path="/compliance-regulamentacoes/gestao-conformidade" element={<PrivateRoute><GestaoConformidade /></PrivateRoute>} />
-      <Route path="/compliance-regulamentacoes/auditoria-interna" element={<PrivateRoute><AuditoriaInterna /></PrivateRoute>} />
-      <Route path="/compliance-regulamentacoes/controle-regulamentacoes" element={<PrivateRoute><ControleRegulamentacoes /></PrivateRoute>} />
-
-      <Route path="/integracao-colaboracao/integracao-sistemas" element={<PrivateRoute><IntegracaoSistemas /></PrivateRoute>} />
-      <Route path="/integracao-colaboracao/comunicacao-interna" element={<PrivateRoute><ComunicacaoInterna /></PrivateRoute>} />
-      <Route path="/integracao-colaboracao/colaboracao-departamentos" element={<PrivateRoute><ColaboracaoDepartamentos /></PrivateRoute>} />
+        <Route path="/integracao-colaboracao/integracao-sistemas" element={<PrivateRoute><IntegracaoSistemas /></PrivateRoute>} />
+        <Route path="/integracao-colaboracao/comunicacao-interna" element={<PrivateRoute><ComunicacaoInterna /></PrivateRoute>} />
+        <Route path="/integracao-colaboracao/colaboracao-departamentos" element={<PrivateRoute><ColaboracaoDepartamentos /></PrivateRoute>} />
+      </Route>
     </Routes>
   );
 }
