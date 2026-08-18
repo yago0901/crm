@@ -83,6 +83,7 @@ function Router() {
         <Route path="/vendas-crm/gestao-contatos" element={<PrivateRoute><GestaoContatos /></PrivateRoute>} />
         <Route path="/vendas-crm/automacao-vendas" element={<PrivateRoute><AutomacaoVendas /></PrivateRoute>} />
         <Route path="/vendas-crm/acompanhamento-leads" element={<PrivateRoute><AcompanhamentoLeads /></PrivateRoute>} />
+        <Route path="/vendas-crm/acompanhamento-leads/:contactId" element={<PrivateRoute><AcompanhamentoLeads /></PrivateRoute>} />
         <Route path="/vendas-crm/gestao-contratos" element={<PrivateRoute><GestaoContratos /></PrivateRoute>} />
 
         <Route path="/projetos/planejamento-projetos" element={<PrivateRoute><PlanejamentoProjetos /></PrivateRoute>} />

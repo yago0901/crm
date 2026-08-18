@@ -37,14 +37,6 @@ const Navbar: React.FC<INavbar> = ({ isMenuOpen, onToggleMenu }) => {
                 <ul>
                   <li>
                     <button
-                      onClick={() => console.log('Subitem 2-1')}
-                      className=''
-                    >
-                      Acompanhamento de Leads
-                    </button>
-                  </li>
-                  <li>
-                    <button
                       onClick={() => handleNavigate('/rh/gestao-funcionarios')}
                       className=''
                     >
@@ -53,7 +45,7 @@ const Navbar: React.FC<INavbar> = ({ isMenuOpen, onToggleMenu }) => {
                   </li>
                   <li>
                     <button
-                      onClick={() => console.log('Subitem 2-2')}
+                      onClick={() => handleNavigate('/rh/recrutamento')}
                       className=''
                     >
                       Recrutamento
@@ -61,10 +53,54 @@ const Navbar: React.FC<INavbar> = ({ isMenuOpen, onToggleMenu }) => {
                   </li>
                   <li>
                     <button
-                      onClick={() => console.log('Subitem 2-2')}
+                      onClick={() => handleNavigate('/rh/treinamento')}
                       className=''
                     >
                       Treinamento
+                    </button>
+                  </li>
+                </ul>
+              }
+            </li>
+            <li>
+              <button
+                onClick={() => { subItemOpen !== 'sales' ? setSubItemOpen('sales') : setSubItemOpen('') }}
+                className={subItemOpen === 'sales' ? 'navbar__selected' : ''}
+              >
+                Vendas / CRM
+              </button>
+              {subItemOpen === 'sales' &&
+                <ul>
+                  <li>
+                    <button
+                      onClick={() => handleNavigate('/vendas-crm/gestao-contatos')}
+                      className=''
+                    >
+                      Gestão de Contatos
+                    </button>
+                  </li>
+                  <li>
+                    <button
+                      onClick={() => handleNavigate('/vendas-crm/acompanhamento-leads')}
+                      className=''
+                    >
+                      Acompanhamento de Leads
+                    </button>
+                  </li>
+                  <li>
+                    <button
+                      onClick={() => handleNavigate('/vendas-crm/automacao-vendas')}
+                      className=''
+                    >
+                      Automação de Vendas
+                    </button>
+                  </li>
+                  <li>
+                    <button
+                      onClick={() => handleNavigate('/vendas-crm/gestao-contratos')}
+                      className=''
+                    >
+                      Gestão de Contratos
                     </button>
                   </li>
                 </ul>
@@ -81,7 +117,7 @@ const Navbar: React.FC<INavbar> = ({ isMenuOpen, onToggleMenu }) => {
                 <ul>
                   <li>
                     <button
-                      onClick={() => console.log('Subitem 2-1')}
+                      onClick={() => handleNavigate('/financeiro/fluxo-caixa')}
                       className=''
                     >
                       Fluxo de Caixa
@@ -89,7 +125,7 @@ const Navbar: React.FC<INavbar> = ({ isMenuOpen, onToggleMenu }) => {
                   </li>
                   <li>
                     <button
-                      onClick={() => handleNavigate('/rh/gestao-funcionarios')}
+                      onClick={() => handleNavigate('/financeiro/contabilidade')}
                       className=''
                     >
                       Contabilidade
@@ -97,7 +133,7 @@ const Navbar: React.FC<INavbar> = ({ isMenuOpen, onToggleMenu }) => {
                   </li>
                   <li>
                     <button
-                      onClick={() => console.log('Subitem 2-2')}
+                      onClick={() => handleNavigate('/financeiro/contas-pagar')}
                       className=''
                     >
                       Contas a Pagar
@@ -105,7 +141,7 @@ const Navbar: React.FC<INavbar> = ({ isMenuOpen, onToggleMenu }) => {
                   </li>
                   <li>
                     <button
-                      onClick={() => console.log('Subitem 2-2')}
+                      onClick={() => handleNavigate('/financeiro/contas-receber')}
                       className=''
                     >
                       Contas a Receber
@@ -113,18 +149,10 @@ const Navbar: React.FC<INavbar> = ({ isMenuOpen, onToggleMenu }) => {
                   </li>
                   <li>
                     <button
-                      onClick={() => console.log('Subitem 2-2')}
+                      onClick={() => handleNavigate('/financeiro/relatorios-financeiros')}
                       className=''
                     >
                       Relatórios Financeiros
-                    </button>
-                  </li>
-                  <li>
-                    <button
-                      onClick={() => console.log('Subitem 2-2')}
-                      className=''
-                    >
-                      Relatórios Personalizados
                     </button>
                   </li>
                 </ul>
