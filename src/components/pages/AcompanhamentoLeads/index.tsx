@@ -2,6 +2,9 @@ import { FormEvent, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Timestamp } from "firebase/firestore";
 import { useAuth } from "../../../contexts/auth";
+import { useToast } from "../../common/Toast";
+import Button from "../../common/Button";
+import ConfirmDialog from "../../common/ConfirmDialog";
 import {
   addInteraction,
   subscribeToContacts,
@@ -48,16 +51,18 @@ export default function AcompanhamentoLeads() {
   const { contactId } = useParams<{ contactId: string }>();
   const navigate = useNavigate();
   const { currentUser } = useAuth();
+  const { showToast } = useToast();
 
   const [leads, setLeads] = useState<IContact[]>([]);
   const [loadingLeads, setLoadingLeads] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const [interactions, setInteractions] = useState<IInteraction[]>([]);
   const [interactionType, setInteractionType] =
     useState<InteractionType>("nota");
   const [description, setDescription] = useState("");
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [confirmingConvert, setConfirmingConvert] = useState(false);
 
   useEffect(() => {
     setLoadingLeads(true);
@@ -66,10 +71,10 @@ export default function AcompanhamentoLeads() {
       (data) => {
         setLeads(data);
         setLoadingLeads(false);
-        setError(null);
+        setLoadError(null);
       },
       (err) => {
-        setError(err.message);
+        setLoadError(err.message);
         setLoadingLeads(false);
       }
     );
@@ -93,19 +98,23 @@ export default function AcompanhamentoLeads() {
 
   const handleAddInteraction = async (event: FormEvent) => {
     event.preventDefault();
-    if (!contactId || !currentUser || !description.trim()) return;
+    if (!contactId || !currentUser || !description.trim() || !selectedLead) return;
 
     setSaving(true);
-    setError(null);
     try {
       await addInteraction(
         contactId,
+        selectedLead.name,
         { type: interactionType, description },
         { uid: currentUser.uid, name: currentUser.displayName ?? currentUser.email }
       );
       setDescription("");
+      showToast("Interação registrada.", "success");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro ao registrar interação");
+      showToast(
+        err instanceof Error ? err.message : "Erro ao registrar interação",
+        "error"
+      );
     } finally {
       setSaving(false);
     }
@@ -117,26 +126,34 @@ export default function AcompanhamentoLeads() {
     try {
       await updateNextContact(contactId, date);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro ao atualizar próximo contato");
+      showToast(
+        err instanceof Error ? err.message : "Erro ao atualizar próximo contato",
+        "error"
+      );
     }
   };
 
   const handleConvert = async () => {
     if (!contactId) return;
-    const confirmed = window.confirm(
-      "Converter este lead em cliente? Ele sairá desta lista."
-    );
-    if (!confirmed) return;
-
-    await updateContactStatus(contactId, "cliente");
-    navigate("/vendas-crm/acompanhamento-leads");
+    try {
+      await updateContactStatus(contactId, "cliente");
+      showToast("Lead convertido em cliente.", "success");
+      navigate("/vendas-crm/acompanhamento-leads");
+    } catch (err) {
+      showToast(
+        err instanceof Error ? err.message : "Erro ao converter lead",
+        "error"
+      );
+    } finally {
+      setConfirmingConvert(false);
+    }
   };
 
   return (
     <div className="leads_page">
       <aside className="leads_page__list">
         <h1>Acompanhamento de Leads</h1>
-        {error && <p className="leads_page__error">{error}</p>}
+        {loadError && <p className="leads_page__error">{loadError}</p>}
         {loadingLeads ? (
           <p className="leads_page__empty">Carregando leads...</p>
         ) : leads.length === 0 ? (
@@ -192,12 +209,9 @@ export default function AcompanhamentoLeads() {
                   {selectedLead.phone && ` · ${selectedLead.phone}`}
                 </p>
               </div>
-              <button
-                className="leads_page__detail__convert_btn"
-                onClick={handleConvert}
-              >
+              <Button variant="primary" onClick={() => setConfirmingConvert(true)}>
                 Converter em cliente
-              </button>
+              </Button>
             </div>
 
             <div className="leads_page__detail__followup">
@@ -214,8 +228,6 @@ export default function AcompanhamentoLeads() {
                 />
               </div>
             </div>
-
-            {error && <p className="leads_page__error">{error}</p>}
 
             <form
               className="leads_page__detail__form"
@@ -237,9 +249,9 @@ export default function AcompanhamentoLeads() {
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
               />
-              <button type="submit" disabled={saving}>
+              <Button type="submit" variant="primary" disabled={saving}>
                 {saving ? "Salvando..." : "Registrar"}
-              </button>
+              </Button>
             </form>
 
             <ul className="leads_page__timeline">
@@ -264,6 +276,15 @@ export default function AcompanhamentoLeads() {
           </>
         )}
       </section>
+
+      <ConfirmDialog
+        isOpen={confirmingConvert}
+        title="Converter em cliente"
+        message="Converter este lead em cliente? Ele sairá desta lista."
+        confirmLabel="Converter"
+        onConfirm={handleConvert}
+        onCancel={() => setConfirmingConvert(false)}
+      />
     </div>
   );
 }

@@ -1,6 +1,12 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { Timestamp } from "firebase/firestore";
 import { useAuth } from "../../../contexts/auth";
+import { useToast } from "../../common/Toast";
+import Modal from "../../common/Modal";
+import ConfirmDialog from "../../common/ConfirmDialog";
+import Button from "../../common/Button";
+import Badge from "../../common/Badge";
+import FormField from "../../common/FormField";
 import {
   createContract,
   deleteContract,
@@ -17,6 +23,13 @@ const STATUS_LABEL: Record<ContractStatus, string> = {
   ativo: "Ativo",
   encerrado: "Encerrado",
   cancelado: "Cancelado",
+};
+
+const STATUS_TONE: Record<ContractStatus, "neutral" | "success" | "info" | "danger"> = {
+  rascunho: "neutral",
+  ativo: "success",
+  encerrado: "info",
+  cancelado: "danger",
 };
 
 const EMPTY_FORM: ContractInput = {
@@ -43,11 +56,12 @@ const fromDateInput = (value: string): Timestamp | null =>
 
 export default function GestaoContratos() {
   const { currentUser } = useAuth();
+  const { showToast } = useToast();
 
   const [contracts, setContracts] = useState<IContract[]>([]);
   const [clients, setClients] = useState<IContact[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const [statusFilter, setStatusFilter] = useState<ContractStatus | "all">("all");
 
@@ -56,6 +70,8 @@ export default function GestaoContratos() {
   const [form, setForm] = useState<ContractInput>(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
 
+  const [contractToDelete, setContractToDelete] = useState<IContract | null>(null);
+
   useEffect(() => {
     setLoading(true);
     const unsubscribe = subscribeToContracts(
@@ -63,10 +79,10 @@ export default function GestaoContratos() {
       (data) => {
         setContracts(data);
         setLoading(false);
-        setError(null);
+        setLoadError(null);
       },
       (err) => {
-        setError(err.message);
+        setLoadError(err.message);
         setLoading(false);
       }
     );
@@ -76,7 +92,7 @@ export default function GestaoContratos() {
   useEffect(() => {
     fetchClientContacts()
       .then(setClients)
-      .catch((err) => setError(err.message));
+      .catch((err) => setLoadError(err.message));
   }, []);
 
   const totalAtivo = useMemo(
@@ -128,32 +144,40 @@ export default function GestaoContratos() {
     if (!currentUser || !form.contactId) return;
 
     setSaving(true);
-    setError(null);
     try {
       if (editingId) {
         await updateContract(editingId, form);
+        showToast("Contrato atualizado com sucesso.", "success");
       } else {
         await createContract(form, {
           uid: currentUser.uid,
           name: currentUser.displayName ?? currentUser.email,
         });
+        showToast("Contrato criado com sucesso.", "success");
       }
       closeForm();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro ao salvar contrato");
+      showToast(
+        err instanceof Error ? err.message : "Erro ao salvar contrato",
+        "error"
+      );
     } finally {
       setSaving(false);
     }
   };
 
-  const handleDelete = async (contract: IContract) => {
-    const confirmed = window.confirm(`Excluir o contrato "${contract.title}"?`);
-    if (!confirmed) return;
-
+  const handleDelete = async () => {
+    if (!contractToDelete) return;
     try {
-      await deleteContract(contract.id);
+      await deleteContract(contractToDelete.id);
+      showToast("Contrato excluído.", "success");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro ao excluir contrato");
+      showToast(
+        err instanceof Error ? err.message : "Erro ao excluir contrato",
+        "error"
+      );
+    } finally {
+      setContractToDelete(null);
     }
   };
 
@@ -161,9 +185,9 @@ export default function GestaoContratos() {
     <div className="contracts_page">
       <div className="contracts_page__header">
         <h1>Gestão de Contratos</h1>
-        <button className="contracts_page__header__new_btn" onClick={openCreateForm}>
+        <Button variant="primary" onClick={openCreateForm}>
           + Novo contrato
-        </button>
+        </Button>
       </div>
 
       <div className="contracts_page__summary">
@@ -186,82 +210,7 @@ export default function GestaoContratos() {
         </select>
       </div>
 
-      {error && <p className="contracts_page__error">{error}</p>}
-
-      {isFormOpen && (
-        <form className="contracts_page__form" onSubmit={handleSubmit}>
-          <h2>{editingId ? "Editar contrato" : "Novo contrato"}</h2>
-          <div className="contracts_page__form__grid">
-            <input
-              required
-              placeholder="Título*"
-              value={form.title}
-              onChange={(e) => setForm({ ...form, title: e.target.value })}
-            />
-            <select
-              required
-              value={form.contactId}
-              onChange={(e) => handleContactChange(e.target.value)}
-            >
-              <option value="">Selecione o cliente*</option>
-              {clients.map((client) => (
-                <option key={client.id} value={client.id}>
-                  {client.name}
-                </option>
-              ))}
-            </select>
-            <input
-              required
-              type="number"
-              min="0"
-              step="0.01"
-              placeholder="Valor (R$)*"
-              value={form.value}
-              onChange={(e) =>
-                setForm({ ...form, value: Number(e.target.value) })
-              }
-            />
-            <select
-              value={form.status}
-              onChange={(e) =>
-                setForm({ ...form, status: e.target.value as ContractStatus })
-              }
-            >
-              <option value="rascunho">Rascunho</option>
-              <option value="ativo">Ativo</option>
-              <option value="encerrado">Encerrado</option>
-              <option value="cancelado">Cancelado</option>
-            </select>
-            <input
-              type="date"
-              value={toDateInput(form.startDate)}
-              onChange={(e) =>
-                setForm({ ...form, startDate: fromDateInput(e.target.value) })
-              }
-            />
-            <input
-              type="date"
-              value={toDateInput(form.endDate)}
-              onChange={(e) =>
-                setForm({ ...form, endDate: fromDateInput(e.target.value) })
-              }
-            />
-          </div>
-          <textarea
-            placeholder="Observações"
-            value={form.notes}
-            onChange={(e) => setForm({ ...form, notes: e.target.value })}
-          />
-          <div className="contracts_page__form__actions">
-            <button type="button" onClick={closeForm} disabled={saving}>
-              Cancelar
-            </button>
-            <button type="submit" disabled={saving}>
-              {saving ? "Salvando..." : "Salvar"}
-            </button>
-          </div>
-        </form>
-      )}
+      {loadError && <p className="contracts_page__error">{loadError}</p>}
 
       {loading ? (
         <p className="contracts_page__empty">Carregando contratos...</p>
@@ -271,43 +220,146 @@ export default function GestaoContratos() {
           antes de criar um contrato.
         </p>
       ) : (
-        <table className="contracts_page__table">
-          <thead>
-            <tr>
-              <th>Título</th>
-              <th>Cliente</th>
-              <th>Valor</th>
-              <th>Vigência</th>
-              <th>Status</th>
-              <th />
-            </tr>
-          </thead>
-          <tbody>
-            {contracts.map((contract) => (
-              <tr key={contract.id}>
-                <td>{contract.title}</td>
-                <td>{contract.contactName}</td>
-                <td>{currency.format(contract.value)}</td>
-                <td>
-                  {toDateInput(contract.startDate) || "—"} a{" "}
-                  {toDateInput(contract.endDate) || "—"}
-                </td>
-                <td>
-                  <span
-                    className={`contracts_page__badge contracts_page__badge--${contract.status}`}
-                  >
-                    {STATUS_LABEL[contract.status]}
-                  </span>
-                </td>
-                <td className="contracts_page__table__actions">
-                  <button onClick={() => openEditForm(contract)}>Editar</button>
-                  <button onClick={() => handleDelete(contract)}>Excluir</button>
-                </td>
+        <div className="contracts_page__table_wrap">
+          <table className="contracts_page__table">
+            <thead>
+              <tr>
+                <th>Título</th>
+                <th>Cliente</th>
+                <th>Valor</th>
+                <th>Vigência</th>
+                <th>Status</th>
+                <th />
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {contracts.map((contract) => (
+                <tr key={contract.id}>
+                  <td>{contract.title}</td>
+                  <td>{contract.contactName}</td>
+                  <td>{currency.format(contract.value)}</td>
+                  <td>
+                    {toDateInput(contract.startDate) || "—"} a{" "}
+                    {toDateInput(contract.endDate) || "—"}
+                  </td>
+                  <td>
+                    <Badge tone={STATUS_TONE[contract.status]}>
+                      {STATUS_LABEL[contract.status]}
+                    </Badge>
+                  </td>
+                  <td className="contracts_page__table__actions">
+                    <Button variant="secondary" onClick={() => openEditForm(contract)}>
+                      Editar
+                    </Button>
+                    <Button variant="danger" onClick={() => setContractToDelete(contract)}>
+                      Excluir
+                    </Button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
+
+      <Modal
+        isOpen={isFormOpen}
+        onClose={closeForm}
+        title={editingId ? "Editar contrato" : "Novo contrato"}
+      >
+        <form className="contracts_page__form" onSubmit={handleSubmit}>
+          <div className="contracts_page__form__grid">
+            <FormField label="Título*">
+              <input
+                required
+                value={form.title}
+                onChange={(e) => setForm({ ...form, title: e.target.value })}
+              />
+            </FormField>
+            <FormField label="Cliente*">
+              <select
+                required
+                value={form.contactId}
+                onChange={(e) => handleContactChange(e.target.value)}
+              >
+                <option value="">Selecione o cliente</option>
+                {clients.map((client) => (
+                  <option key={client.id} value={client.id}>
+                    {client.name}
+                  </option>
+                ))}
+              </select>
+            </FormField>
+            <FormField label="Valor (R$)*">
+              <input
+                required
+                type="number"
+                min="0"
+                step="0.01"
+                value={form.value}
+                onChange={(e) =>
+                  setForm({ ...form, value: Number(e.target.value) })
+                }
+              />
+            </FormField>
+            <FormField label="Status">
+              <select
+                value={form.status}
+                onChange={(e) =>
+                  setForm({ ...form, status: e.target.value as ContractStatus })
+                }
+              >
+                <option value="rascunho">Rascunho</option>
+                <option value="ativo">Ativo</option>
+                <option value="encerrado">Encerrado</option>
+                <option value="cancelado">Cancelado</option>
+              </select>
+            </FormField>
+            <FormField label="Início">
+              <input
+                type="date"
+                value={toDateInput(form.startDate)}
+                onChange={(e) =>
+                  setForm({ ...form, startDate: fromDateInput(e.target.value) })
+                }
+              />
+            </FormField>
+            <FormField label="Término">
+              <input
+                type="date"
+                value={toDateInput(form.endDate)}
+                onChange={(e) =>
+                  setForm({ ...form, endDate: fromDateInput(e.target.value) })
+                }
+              />
+            </FormField>
+          </div>
+          <FormField label="Observações">
+            <textarea
+              value={form.notes}
+              onChange={(e) => setForm({ ...form, notes: e.target.value })}
+            />
+          </FormField>
+          <div className="contracts_page__form__actions">
+            <Button type="button" variant="secondary" onClick={closeForm} disabled={saving}>
+              Cancelar
+            </Button>
+            <Button type="submit" variant="primary" disabled={saving}>
+              {saving ? "Salvando..." : "Salvar"}
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
+      <ConfirmDialog
+        isOpen={!!contractToDelete}
+        title="Excluir contrato"
+        message={`Excluir o contrato "${contractToDelete?.title}"?`}
+        confirmLabel="Excluir"
+        danger
+        onConfirm={handleDelete}
+        onCancel={() => setContractToDelete(null)}
+      />
     </div>
   );
 }
