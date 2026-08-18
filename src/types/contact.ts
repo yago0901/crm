@@ -19,6 +19,7 @@ export interface IContact {
   createdAt: Timestamp | null;
   updatedAt: Timestamp | null;
   lastInteractionAt: Timestamp | null;
+  nextContactAt: Timestamp | null;
 }
 
 export type ContactInput = Pick<
