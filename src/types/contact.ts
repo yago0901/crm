@@ -29,6 +29,8 @@ export type ContactInput = Pick<
 
 export interface IInteraction {
   id: string;
+  contactId: string;
+  contactName: string;
   type: InteractionType;
   description: string;
   createdAt: Timestamp | null;

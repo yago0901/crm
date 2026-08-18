@@ -1,0 +1,54 @@
+:root {
+  --color-primary: #2f6feb;
+  --color-primary-hover: #2657bd;
+  --color-primary-soft: #eaf1fd;
+  --color-primary-soft-text: #1c4fa3;
+
+  --color-success: #1c7a44;
+  --color-success-hover: #145c34;
+  --color-success-soft: #d9f2e3;
+
+  --color-danger: #c62828;
+  --color-danger-soft: #fdecea;
+
+  --color-warning: #8a6d00;
+  --color-warning-soft: #fff4cc;
+
+  --color-info-soft: #dde6f7;
+  --color-info-text: #2f4f8f;
+
+  --color-neutral-soft: #eee;
+  --color-neutral-text: #666;
+
+  --color-text: #222;
+  --color-text-muted: #777;
+  --color-text-faint: #999;
+
+  --color-border: #d0d0d0;
+  --color-border-soft: #e2e2e2;
+  --color-surface: #ffffff;
+  --color-surface-muted: #f7f8fa;
+
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 10px;
+  --radius-pill: 999px;
+
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+
+  --font-size-sm: 0.8rem;
+  --font-size-base: 0.9rem;
+  --font-size-md: 1.1rem;
+  --font-size-lg: 1.4rem;
+
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.16);
+
+  --transition-fast: 0.15s ease-in-out;
+  --transition-base: 0.3s ease-in-out;
+}

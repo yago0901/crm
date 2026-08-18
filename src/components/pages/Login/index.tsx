@@ -49,6 +49,7 @@ const Login = () => {
               className="login_background__container__card_login__user"
               name='login'
               placeholder='Usuário/E-mail'
+              aria-label='Usuário ou e-mail'
               type="text"
               onChange={(e) => setEmail(e.target.value)}
             />
@@ -56,6 +57,7 @@ const Login = () => {
               className="login_background__container__card_login__password"
               name='senha'
               placeholder='Senha'
+              aria-label='Senha'
               type="password"
               onChange={(e) => setPassword(e.target.value)}
             />

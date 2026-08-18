@@ -31,6 +31,7 @@ const Register = () => {
               className="register_background__container__card_login__password"
               name='email'
               placeholder='E-mail'
+              aria-label='E-mail'
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -39,6 +40,7 @@ const Register = () => {
               className="register_background__container__card_login__password"
               name='senha'
               placeholder='Senha'
+              aria-label='Senha'
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}

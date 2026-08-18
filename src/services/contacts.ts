@@ -130,6 +130,8 @@ const mapInteraction = (
   const data = snap.data();
   return {
     id: snap.id,
+    contactId: snap.ref.parent.parent?.id ?? "",
+    contactName: data.contactName ?? "",
     type: data.type,
     description: data.description,
     createdAt: data.createdAt ?? null,
@@ -166,6 +168,7 @@ export async function fetchClientContacts(): Promise<IContact[]> {
 
 export async function addInteraction(
   contactId: string,
+  contactName: string,
   input: InteractionInput,
   author: { uid: string; name?: string | null }
 ): Promise<void> {
@@ -173,6 +176,7 @@ export async function addInteraction(
     collection(firestore, "contacts", contactId, "interactions"),
     {
       ...input,
+      contactName,
       createdAt: serverTimestamp(),
       createdBy: author.uid,
       createdByName: author.name ?? "",
