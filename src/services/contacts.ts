@@ -9,6 +9,7 @@ import {
   query,
   QueryDocumentSnapshot,
   serverTimestamp,
+  Timestamp,
   Unsubscribe,
   updateDoc,
   where,
@@ -42,6 +43,7 @@ const mapContact = (snap: QueryDocumentSnapshot<DocumentData>): IContact => {
     createdAt: data.createdAt ?? null,
     updatedAt: data.updatedAt ?? null,
     lastInteractionAt: data.lastInteractionAt ?? null,
+    nextContactAt: data.nextContactAt ?? null,
   };
 };
 
@@ -75,6 +77,7 @@ export async function createContact(
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
     lastInteractionAt: null,
+    nextContactAt: null,
   });
   return docRef.id;
 }
@@ -95,6 +98,16 @@ export async function updateContactStatus(
 ): Promise<void> {
   await updateDoc(doc(firestore, "contacts", contactId), {
     status,
+    updatedAt: serverTimestamp(),
+  });
+}
+
+export async function updateNextContact(
+  contactId: string,
+  date: Timestamp | null
+): Promise<void> {
+  await updateDoc(doc(firestore, "contacts", contactId), {
+    nextContactAt: date,
     updatedAt: serverTimestamp(),
   });
 }

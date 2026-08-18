@@ -7,6 +7,7 @@ import {
   subscribeToContacts,
   subscribeToInteractions,
   updateContactStatus,
+  updateNextContact,
 } from "../../../services/contacts";
 import {
   IContact,
@@ -25,6 +26,24 @@ const INTERACTION_LABEL: Record<InteractionType, string> = {
 const formatDate = (value: Timestamp | null) =>
   value ? value.toDate().toLocaleString("pt-BR") : "agora há pouco";
 
+const formatRelative = (value: Timestamp | null) => {
+  if (!value) return "sem registro";
+  const diffMs = Date.now() - value.toDate().getTime();
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  if (diffDays <= 0) return "hoje";
+  if (diffDays === 1) return "há 1 dia";
+  return `há ${diffDays} dias`;
+};
+
+const formatDateShort = (value: Timestamp | null) =>
+  value ? value.toDate().toLocaleDateString("pt-BR") : "";
+
+const isOverdue = (value: Timestamp | null) =>
+  !!value && value.toDate().getTime() < Date.now();
+
+const toDateInputValue = (value: Timestamp | null) =>
+  value ? value.toDate().toISOString().slice(0, 10) : "";
+
 export default function AcompanhamentoLeads() {
   const { contactId } = useParams<{ contactId: string }>();
   const navigate = useNavigate();
@@ -42,10 +61,18 @@ export default function AcompanhamentoLeads() {
 
   useEffect(() => {
     setLoadingLeads(true);
-    const unsubscribe = subscribeToContacts("lead", (data) => {
-      setLeads(data);
-      setLoadingLeads(false);
-    });
+    const unsubscribe = subscribeToContacts(
+      "lead",
+      (data) => {
+        setLeads(data);
+        setLoadingLeads(false);
+        setError(null);
+      },
+      (err) => {
+        setError(err.message);
+        setLoadingLeads(false);
+      }
+    );
     return unsubscribe;
   }, []);
 
@@ -84,6 +111,16 @@ export default function AcompanhamentoLeads() {
     }
   };
 
+  const handleNextContactChange = async (value: string) => {
+    if (!contactId) return;
+    const date = value ? Timestamp.fromDate(new Date(`${value}T00:00:00`)) : null;
+    try {
+      await updateNextContact(contactId, date);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erro ao atualizar próximo contato");
+    }
+  };
+
   const handleConvert = async () => {
     if (!contactId) return;
     const confirmed = window.confirm(
@@ -99,6 +136,7 @@ export default function AcompanhamentoLeads() {
     <div className="leads_page">
       <aside className="leads_page__list">
         <h1>Acompanhamento de Leads</h1>
+        {error && <p className="leads_page__error">{error}</p>}
         {loadingLeads ? (
           <p className="leads_page__empty">Carregando leads...</p>
         ) : leads.length === 0 ? (
@@ -116,6 +154,21 @@ export default function AcompanhamentoLeads() {
                 >
                   <strong>{lead.name}</strong>
                   <span>{lead.company || lead.email}</span>
+                  <span className="leads_page__list__meta">
+                    Último: {formatRelative(lead.lastInteractionAt)}
+                  </span>
+                  <span
+                    className={
+                      isOverdue(lead.nextContactAt)
+                        ? "leads_page__list__meta leads_page__list__meta--overdue"
+                        : "leads_page__list__meta"
+                    }
+                  >
+                    Próximo:{" "}
+                    {lead.nextContactAt
+                      ? formatDateShort(lead.nextContactAt)
+                      : "sem previsão"}
+                  </span>
                 </button>
               </li>
             ))}
@@ -145,6 +198,21 @@ export default function AcompanhamentoLeads() {
               >
                 Converter em cliente
               </button>
+            </div>
+
+            <div className="leads_page__detail__followup">
+              <div>
+                <span>Último contato</span>
+                <strong>{formatRelative(selectedLead.lastInteractionAt)}</strong>
+              </div>
+              <div>
+                <span>Próximo contato previsto</span>
+                <input
+                  type="date"
+                  value={toDateInputValue(selectedLead.nextContactAt)}
+                  onChange={(e) => handleNextContactChange(e.target.value)}
+                />
+              </div>
             </div>
 
             {error && <p className="leads_page__error">{error}</p>}

@@ -51,6 +51,16 @@
         color: #777;
       }
 
+      .leads_page__list__meta {
+        font-size: 0.72rem;
+        color: #999;
+
+        &--overdue {
+          color: #c62828;
+          font-weight: 600;
+        }
+      }
+
       &.selected {
         border-color: #2f6feb;
         background-color: #eaf1fd;
@@ -98,6 +108,37 @@
 
       &:hover {
         background-color: #145c34;
+      }
+    }
+
+    &__followup {
+      display: flex;
+      gap: 1.5rem;
+      background-color: #f7f8fa;
+      border: 1px solid #e2e2e2;
+      border-radius: 8px;
+      padding: 0.6rem 0.9rem;
+
+      > div {
+        display: flex;
+        flex-direction: column;
+        gap: 0.2rem;
+      }
+
+      span {
+        font-size: 0.75rem;
+        color: #777;
+      }
+
+      strong {
+        font-size: 0.9rem;
+      }
+
+      input[type="date"] {
+        padding: 0.3rem 0.5rem;
+        border-radius: 6px;
+        border: 1px solid #d0d0d0;
+        width: auto;
       }
     }
 
