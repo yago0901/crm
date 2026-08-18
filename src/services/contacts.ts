@@ -141,6 +141,16 @@ export function subscribeToInteractions(
   );
 }
 
+export async function fetchClientContacts(): Promise<IContact[]> {
+  const q = query(
+    contactsRef,
+    where("status", "==", "cliente"),
+    orderBy("name", "asc")
+  );
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map(mapContact);
+}
+
 export async function addInteraction(
   contactId: string,
   input: InteractionInput,
