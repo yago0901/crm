@@ -3,20 +3,17 @@ import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 
-// Configuração do Firebase do seu aplicativo web
 const firebaseConfig = {
-  apiKey: "AIzaSyDejsQiYU9j_7wGEat0tgvWzlxaOGDEaYs",
-  authDomain: "crm-dev-assina.firebaseapp.com",
-  projectId: "crm-dev-assina",
-  storageBucket: "crm-dev-assina.appspot.com",
-  messagingSenderId: "846656781444",
-  appId: "1:846656781444:web:56d557966e2f2ba052d6d1",
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
-// Inicializar o Firebase
 const app = initializeApp(firebaseConfig);
 
-// Inicializar serviços do Firebase
 const auth = getAuth(app);
 const firestore = getFirestore(app);
 const storage = getStorage(app);

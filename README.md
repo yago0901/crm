@@ -379,6 +379,9 @@ $ cd crm
 # Instale as dependências
 $ npm install
 
+# Copie o arquivo de exemplo e preencha com as credenciais do seu projeto Firebase
+$ cp .env.example .env
+
 # Execute a aplicação em modo de desenvolvimento
 $ npm run dev
 

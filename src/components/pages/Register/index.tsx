@@ -1,15 +1,11 @@
 import { useState } from 'react';
-import { auth } from "../../../services/firebase"
-import { createUserWithEmailAndPassword } from 'firebase/auth';
-
-import "./styles.scss";
 import { useNavigate } from 'react-router-dom';
-
+import "./styles.scss";
 
 const Register = () => {
   const [password, setPassword] = useState<string>("");
   const [email, setEmail] = useState<string>("");
-  const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
 
   const navigate = useNavigate();
 
@@ -17,24 +13,11 @@ const Register = () => {
     navigate('/');
   };
 
-  const handleSignUp = async (event: React.FormEvent) => {
+  const handleSignUp = (event: React.FormEvent) => {
     event.preventDefault();
-
-    try {
-      await createUserWithEmailAndPassword(auth, email, password);
-      navigate("/")
-      setError(null);
-    } catch (error: any) {
-      const errorCode = error.code;
-      const errorMessage = error.message;
-
-      if (errorCode === 'auth/weak-password') {
-        setError('A senha é muito fraca. Tente outra.');
-      } else {
-        setError(errorMessage);
-      }
-
-    }
+    setNotice(
+      'Cadastro público desabilitado nesta demonstração. Novas contas são criadas manualmente pelo administrador.'
+    );
   };
 
   return (
@@ -49,6 +32,7 @@ const Register = () => {
               name='email'
               placeholder='E-mail'
               type="email"
+              value={email}
               onChange={(e) => setEmail(e.target.value)}
             />
             <input
@@ -56,11 +40,12 @@ const Register = () => {
               name='senha'
               placeholder='Senha'
               type="password"
+              value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
             <button>Register</button>
           </form>
-          {error && <p style={{ color: "red" }}>{error}</p>}
+          {notice && <p style={{ color: "red" }}>{notice}</p>}
         </div>
       </div>
     </div>

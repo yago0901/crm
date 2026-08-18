@@ -45,7 +45,8 @@ import { useAuth } from '../contexts/auth';
 import Layout from '../components/pages/Layout';
 
 const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
-  const { currentUser } = useAuth();
+  const { currentUser, loading } = useAuth();
+  if (loading) return null;
   return currentUser ? children : <Navigate to="/" />;
 };
 
