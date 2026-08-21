@@ -127,7 +127,11 @@
       padding: 0.5rem;
 
       &__card_login {
-        width: 100% !important;
+        width: 100%;
+
+        &.open {
+          width: 100%;
+        }
       }
     }
   }

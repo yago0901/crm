@@ -75,6 +75,15 @@
       background-color: white;
       color: black;
     }
+
+    &.navbar__button_close {
+      width: 26px;
+      height: 26px;
+      padding: 0;
+      flex-shrink: 0;
+      justify-content: center;
+      text-align: center;
+    }
   }
 
   &__chevron {
@@ -111,16 +120,14 @@
     }
   }
 
-  &__button_close {
-    margin-bottom: var(--space-4);
-    width: auto !important;
-  }
-
   @media (max-width: 768px) {
     position: fixed;
-    top: var(--space-3);
+    top: var(--space-4);
     left: var(--space-3);
-    height: calc(100vh - 2 * var(--space-3));
+    height: auto;
+    max-height: 80vh;
+    overflow-y: auto;
+    border-radius: 15px;
     z-index: 1500;
 
     &.closed {
@@ -128,7 +135,7 @@
     }
 
     &.open {
-      width: min(80vw, 280px);
+      width: min(70vw, 220px);
     }
   }
 }
