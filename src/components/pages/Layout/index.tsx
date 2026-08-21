@@ -3,11 +3,19 @@ import { Outlet } from 'react-router-dom';
 import Navbar from '../../common/Navbar';
 import './styles.scss';
 
+const MENU_STATE_KEY = 'navbarOpen';
+
 const Layout = () => {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(() => {
+    return localStorage.getItem(MENU_STATE_KEY) === 'true';
+  });
 
   const handleToggleMenu = () => {
-    setIsMenuOpen(!isMenuOpen);
+    setIsMenuOpen((current) => {
+      const next = !current;
+      localStorage.setItem(MENU_STATE_KEY, String(next));
+      return next;
+    });
   };
 
   return (
