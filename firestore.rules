@@ -64,6 +64,22 @@ service cloud.firestore {
       allow delete: if isSignedIn() && resource.data.ownerId == request.auth.uid;
     }
 
+    match /employees/{employeeId} {
+      allow read: if isSignedIn();
+
+      allow create: if isSignedIn()
+        && request.resource.data.ownerId == request.auth.uid
+        && request.resource.data.name is string
+        && request.resource.data.name.size() > 0
+        && request.resource.data.status in ['ativo', 'ferias', 'desligado'];
+
+      allow update: if isSignedIn()
+        && resource.data.ownerId == request.auth.uid
+        && request.resource.data.ownerId == resource.data.ownerId;
+
+      allow delete: if isSignedIn() && resource.data.ownerId == request.auth.uid;
+    }
+
     match /{document=**} {
       allow read, write: if false;
     }
