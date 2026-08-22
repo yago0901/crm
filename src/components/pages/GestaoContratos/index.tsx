@@ -1,5 +1,5 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
-import { Timestamp } from "firebase/firestore";
+import { Timestamp, orderBy, where } from "firebase/firestore";
 import { useAuth } from "../../../contexts/auth";
 import { useToast } from "../../common/Toast";
 import Modal from "../../common/Modal";
@@ -7,10 +7,13 @@ import ConfirmDialog from "../../common/ConfirmDialog";
 import Button from "../../common/Button";
 import Badge from "../../common/Badge";
 import FormField from "../../common/FormField";
+import Pagination from "../../common/Pagination";
+import { usePaginatedCollection } from "../../../hooks/usePaginatedCollection";
 import {
   createContract,
   deleteContract,
-  subscribeToContracts,
+  getActiveContractsTotal,
+  mapContract,
   updateContract,
 } from "../../../services/contracts";
 import { fetchClientContacts } from "../../../services/contacts";
@@ -54,16 +57,41 @@ const toDateInput = (value: Timestamp | null) =>
 const fromDateInput = (value: string): Timestamp | null =>
   value ? Timestamp.fromDate(new Date(`${value}T00:00:00`)) : null;
 
+const PAGE_SIZE = 10;
+
 export default function GestaoContratos() {
   const { currentUser } = useAuth();
   const { showToast } = useToast();
 
-  const [contracts, setContracts] = useState<IContract[]>([]);
   const [clients, setClients] = useState<IContact[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [totalAtivo, setTotalAtivo] = useState(0);
   const [loadError, setLoadError] = useState<string | null>(null);
 
   const [statusFilter, setStatusFilter] = useState<ContractStatus | "all">("all");
+
+  const constraints = useMemo(
+    () =>
+      statusFilter === "all"
+        ? [orderBy("createdAt", "desc")]
+        : [where("status", "==", statusFilter), orderBy("createdAt", "desc")],
+    [statusFilter]
+  );
+
+  const {
+    items: contracts,
+    currentPage,
+    totalPages,
+    setCurrentPage,
+    loading,
+    error: pageError,
+    refresh,
+  } = usePaginatedCollection({
+    collectionPath: "contracts",
+    constraints,
+    mapDoc: mapContract,
+    pageSize: PAGE_SIZE,
+    resetKey: statusFilter,
+  });
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -72,36 +100,21 @@ export default function GestaoContratos() {
 
   const [contractToDelete, setContractToDelete] = useState<IContract | null>(null);
 
+  const refreshTotal = () => {
+    getActiveContractsTotal()
+      .then(setTotalAtivo)
+      .catch((err) => setLoadError(err.message));
+  };
+
   useEffect(() => {
-    setLoading(true);
-    const unsubscribe = subscribeToContracts(
-      statusFilter,
-      (data) => {
-        setContracts(data);
-        setLoading(false);
-        setLoadError(null);
-      },
-      (err) => {
-        setLoadError(err.message);
-        setLoading(false);
-      }
-    );
-    return unsubscribe;
-  }, [statusFilter]);
+    refreshTotal();
+  }, []);
 
   useEffect(() => {
     fetchClientContacts()
       .then(setClients)
       .catch((err) => setLoadError(err.message));
   }, []);
-
-  const totalAtivo = useMemo(
-    () =>
-      contracts
-        .filter((c) => c.status === "ativo")
-        .reduce((sum, c) => sum + c.value, 0),
-    [contracts]
-  );
 
   const openCreateForm = () => {
     setEditingId(null);
@@ -155,6 +168,8 @@ export default function GestaoContratos() {
         });
         showToast("Contrato criado com sucesso.", "success");
       }
+      refresh();
+      refreshTotal();
       closeForm();
     } catch (err) {
       showToast(
@@ -171,6 +186,8 @@ export default function GestaoContratos() {
     try {
       await deleteContract(contractToDelete.id);
       showToast("Contrato excluído.", "success");
+      refresh();
+      refreshTotal();
     } catch (err) {
       showToast(
         err instanceof Error ? err.message : "Erro ao excluir contrato",
@@ -210,7 +227,9 @@ export default function GestaoContratos() {
         </select>
       </div>
 
-      {loadError && <p className="contracts_page__error">{loadError}</p>}
+      {(loadError || pageError) && (
+        <p className="contracts_page__error">{loadError ?? pageError}</p>
+      )}
 
       {loading ? (
         <p className="contracts_page__empty">Carregando contratos...</p>
@@ -247,13 +266,15 @@ export default function GestaoContratos() {
                       {STATUS_LABEL[contract.status]}
                     </Badge>
                   </td>
-                  <td className="contracts_page__table__actions">
-                    <Button variant="secondary" onClick={() => openEditForm(contract)}>
-                      Editar
-                    </Button>
-                    <Button variant="danger" onClick={() => setContractToDelete(contract)}>
-                      Excluir
-                    </Button>
+                  <td>
+                    <div className="contracts_page__table__actions">
+                      <Button variant="secondary" onClick={() => openEditForm(contract)}>
+                        Editar
+                      </Button>
+                      <Button variant="danger" onClick={() => setContractToDelete(contract)}>
+                        Excluir
+                      </Button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -261,6 +282,12 @@ export default function GestaoContratos() {
           </table>
         </div>
       )}
+
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
+      />
 
       <Modal
         isOpen={isFormOpen}

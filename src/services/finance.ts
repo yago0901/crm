@@ -4,11 +4,13 @@ import {
   deleteDoc,
   doc,
   DocumentData,
+  getAggregateFromServer,
   onSnapshot,
   orderBy,
   query,
   QueryDocumentSnapshot,
   serverTimestamp,
+  sum,
   Timestamp,
   Unsubscribe,
   updateDoc,
@@ -26,7 +28,7 @@ import {
 const payablesRef = collection(firestore, "payables");
 const receivablesRef = collection(firestore, "receivables");
 
-const mapPayable = (snap: QueryDocumentSnapshot<DocumentData>): IPayable => {
+export const mapPayable = (snap: QueryDocumentSnapshot<DocumentData>): IPayable => {
   const data = snap.data();
   return {
     id: snap.id,
@@ -45,7 +47,7 @@ const mapPayable = (snap: QueryDocumentSnapshot<DocumentData>): IPayable => {
   };
 };
 
-const mapReceivable = (
+export const mapReceivable = (
   snap: QueryDocumentSnapshot<DocumentData>
 ): IReceivable => {
   const data = snap.data();
@@ -122,6 +124,18 @@ export async function deletePayable(payableId: string): Promise<void> {
   await deleteDoc(doc(firestore, "payables", payableId));
 }
 
+export async function getPayablesOpenTotal(): Promise<number> {
+  const [pendente, atrasado] = await Promise.all([
+    getAggregateFromServer(query(payablesRef, where("status", "==", "pendente")), {
+      total: sum("value"),
+    }),
+    getAggregateFromServer(query(payablesRef, where("status", "==", "atrasado")), {
+      total: sum("value"),
+    }),
+  ]);
+  return pendente.data().total + atrasado.data().total;
+}
+
 export function subscribeToReceivables(
   status: FinanceStatus | "all",
   onChange: (receivables: IReceivable[]) => void,
@@ -177,6 +191,18 @@ export async function markReceivableReceived(
 
 export async function deleteReceivable(receivableId: string): Promise<void> {
   await deleteDoc(doc(firestore, "receivables", receivableId));
+}
+
+export async function getReceivablesOpenTotal(): Promise<number> {
+  const [pendente, atrasado] = await Promise.all([
+    getAggregateFromServer(query(receivablesRef, where("status", "==", "pendente")), {
+      total: sum("value"),
+    }),
+    getAggregateFromServer(query(receivablesRef, where("status", "==", "atrasado")), {
+      total: sum("value"),
+    }),
+  ]);
+  return pendente.data().total + atrasado.data().total;
 }
 
 export interface IMonthlyCashFlow {

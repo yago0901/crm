@@ -3,11 +3,13 @@ import {
   collection,
   doc,
   DocumentData,
+  getAggregateFromServer,
   onSnapshot,
   orderBy,
   query,
   QueryDocumentSnapshot,
   serverTimestamp,
+  sum,
   Unsubscribe,
   updateDoc,
   deleteDoc,
@@ -18,7 +20,7 @@ import { ContractInput, ContractStatus, IContract } from "../types/contract";
 
 const contractsRef = collection(firestore, "contracts");
 
-const mapContract = (
+export const mapContract = (
   snap: QueryDocumentSnapshot<DocumentData>
 ): IContract => {
   const data = snap.data();
@@ -83,4 +85,12 @@ export async function updateContract(
 
 export async function deleteContract(contractId: string): Promise<void> {
   await deleteDoc(doc(firestore, "contracts", contractId));
+}
+
+export async function getActiveContractsTotal(): Promise<number> {
+  const snap = await getAggregateFromServer(
+    query(contractsRef, where("status", "==", "ativo")),
+    { total: sum("value") }
+  );
+  return snap.data().total;
 }

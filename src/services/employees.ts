@@ -4,11 +4,13 @@ import {
   deleteDoc,
   doc,
   DocumentData,
+  getAggregateFromServer,
   onSnapshot,
   orderBy,
   query,
   QueryDocumentSnapshot,
   serverTimestamp,
+  sum,
   Unsubscribe,
   updateDoc,
   where,
@@ -18,7 +20,7 @@ import { EmployeeInput, EmployeeStatus, IEmployee } from "../types/employee";
 
 const employeesRef = collection(firestore, "employees");
 
-const mapEmployee = (
+export const mapEmployee = (
   snap: QueryDocumentSnapshot<DocumentData>
 ): IEmployee => {
   const data = snap.data();
@@ -84,4 +86,12 @@ export async function updateEmployee(
 
 export async function deleteEmployee(employeeId: string): Promise<void> {
   await deleteDoc(doc(firestore, "employees", employeeId));
+}
+
+export async function getActivePayrollTotal(): Promise<number> {
+  const snap = await getAggregateFromServer(
+    query(employeesRef, where("status", "==", "ativo")),
+    { total: sum("salary") }
+  );
+  return snap.data().total;
 }

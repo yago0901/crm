@@ -1,4 +1,5 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
+import { orderBy, where } from "firebase/firestore";
 import { useAuth } from "../../../contexts/auth";
 import { useToast } from "../../common/Toast";
 import Modal from "../../common/Modal";
@@ -6,10 +7,13 @@ import ConfirmDialog from "../../common/ConfirmDialog";
 import Button from "../../common/Button";
 import Badge from "../../common/Badge";
 import FormField from "../../common/FormField";
+import Pagination from "../../common/Pagination";
+import { usePaginatedCollection } from "../../../hooks/usePaginatedCollection";
 import {
   createContact,
   deleteContact,
-  subscribeToContacts,
+  mapContact,
+  searchContacts,
   updateContact,
 } from "../../../services/contacts";
 import { ContactInput, ContactStatus, IContact } from "../../../types/contact";
@@ -38,16 +42,72 @@ const EMPTY_FORM: ContactInput = {
   notes: "",
 };
 
+const PAGE_SIZE = 10;
+
 export default function GestaoContatos() {
   const { currentUser } = useAuth();
   const { showToast } = useToast();
 
-  const [contacts, setContacts] = useState<IContact[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [loadError, setLoadError] = useState<string | null>(null);
-
   const [statusFilter, setStatusFilter] = useState<ContactStatus | "all">("all");
   const [search, setSearch] = useState("");
+
+  const constraints = useMemo(
+    () =>
+      statusFilter === "all"
+        ? [orderBy("createdAt", "desc")]
+        : [where("status", "==", statusFilter), orderBy("createdAt", "desc")],
+    [statusFilter]
+  );
+
+  const {
+    items: pagedContacts,
+    currentPage,
+    totalPages,
+    setCurrentPage,
+    loading: pageLoading,
+    error: pageError,
+    refresh,
+  } = usePaginatedCollection({
+    collectionPath: "contacts",
+    constraints,
+    mapDoc: mapContact,
+    pageSize: PAGE_SIZE,
+    resetKey: statusFilter,
+  });
+
+  const [searchResults, setSearchResults] = useState<IContact[] | null>(null);
+  const [searching, setSearching] = useState(false);
+  const [searchError, setSearchError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const term = search.trim();
+    if (!term) {
+      setSearchResults(null);
+      return;
+    }
+
+    let cancelled = false;
+    setSearching(true);
+    searchContacts(statusFilter, term)
+      .then((results) => {
+        if (!cancelled) setSearchResults(results);
+      })
+      .catch((err) => {
+        if (!cancelled) setSearchError(err instanceof Error ? err.message : "Erro ao buscar");
+      })
+      .finally(() => {
+        if (!cancelled) setSearching(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [search, statusFilter]);
+
+  const isSearching = search.trim().length > 0;
+  const contacts = isSearching ? searchResults ?? [] : pagedContacts;
+  const loading = isSearching ? searching : pageLoading;
+  const loadError = searchError ?? pageError;
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -55,34 +115,6 @@ export default function GestaoContatos() {
   const [saving, setSaving] = useState(false);
 
   const [contactToDelete, setContactToDelete] = useState<IContact | null>(null);
-
-  useEffect(() => {
-    setLoading(true);
-    const unsubscribe = subscribeToContacts(
-      statusFilter,
-      (data) => {
-        setContacts(data);
-        setLoading(false);
-        setLoadError(null);
-      },
-      (err) => {
-        setLoadError(err.message);
-        setLoading(false);
-      }
-    );
-
-    return unsubscribe;
-  }, [statusFilter]);
-
-  const filteredContacts = useMemo(() => {
-    const term = search.trim().toLowerCase();
-    if (!term) return contacts;
-    return contacts.filter((c) =>
-      [c.name, c.email, c.company].some((field) =>
-        field?.toLowerCase().includes(term)
-      )
-    );
-  }, [contacts, search]);
 
   const openCreateForm = () => {
     setEditingId(null);
@@ -127,6 +159,7 @@ export default function GestaoContatos() {
         });
         showToast("Contato criado com sucesso.", "success");
       }
+      refresh();
       closeForm();
     } catch (err) {
       showToast(
@@ -143,6 +176,7 @@ export default function GestaoContatos() {
     try {
       await deleteContact(contactToDelete.id);
       showToast("Contato excluído.", "success");
+      refresh();
     } catch (err) {
       showToast(
         err instanceof Error ? err.message : "Erro ao excluir contato",
@@ -186,7 +220,7 @@ export default function GestaoContatos() {
 
       {loading ? (
         <p className="contacts_page__empty">Carregando contatos...</p>
-      ) : filteredContacts.length === 0 ? (
+      ) : contacts.length === 0 ? (
         <p className="contacts_page__empty">Nenhum contato encontrado.</p>
       ) : (
         <div className="contacts_page__table_wrap">
@@ -201,7 +235,7 @@ export default function GestaoContatos() {
               </tr>
             </thead>
             <tbody>
-              {filteredContacts.map((contact) => (
+              {contacts.map((contact) => (
                 <tr key={contact.id}>
                   <td>
                     <strong>{contact.name}</strong>
@@ -217,19 +251,29 @@ export default function GestaoContatos() {
                       {STATUS_LABEL[contact.status]}
                     </Badge>
                   </td>
-                  <td className="contacts_page__table__actions">
-                    <Button variant="secondary" onClick={() => openEditForm(contact)}>
-                      Editar
-                    </Button>
-                    <Button variant="danger" onClick={() => setContactToDelete(contact)}>
-                      Excluir
-                    </Button>
+                  <td>
+                    <div className="contacts_page__table__actions">
+                      <Button variant="secondary" onClick={() => openEditForm(contact)}>
+                        Editar
+                      </Button>
+                      <Button variant="danger" onClick={() => setContactToDelete(contact)}>
+                        Excluir
+                      </Button>
+                    </div>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
+      )}
+
+      {!isSearching && (
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+        />
       )}
 
       <Modal
