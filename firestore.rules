@@ -11,6 +11,11 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == uid;
     }
 
+    function isAdmin() {
+      return isSignedIn()
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.level == 'Admin';
+    }
+
     match /users/{uid} {
       allow read: if isOwner(uid);
       allow create: if isOwner(uid);
@@ -27,11 +32,13 @@ service cloud.firestore {
         && request.resource.data.name.size() > 0
         && request.resource.data.status in ['lead', 'cliente', 'inativo'];
 
-      allow update: if isSignedIn()
-        && resource.data.ownerId == request.auth.uid
-        && request.resource.data.ownerId == resource.data.ownerId;
+      allow update: if isSignedIn() && (
+        isAdmin()
+        || (resource.data.ownerId == request.auth.uid
+          && request.resource.data.ownerId == resource.data.ownerId)
+      );
 
-      allow delete: if isSignedIn() && resource.data.ownerId == request.auth.uid;
+      allow delete: if isSignedIn() && (isAdmin() || resource.data.ownerId == request.auth.uid);
 
       match /interactions/{interactionId} {
         allow read: if isSignedIn();
@@ -43,7 +50,7 @@ service cloud.firestore {
 
         allow update: if false;
 
-        allow delete: if isSignedIn() && resource.data.createdBy == request.auth.uid;
+        allow delete: if isSignedIn() && (isAdmin() || resource.data.createdBy == request.auth.uid);
       }
     }
 
@@ -57,11 +64,13 @@ service cloud.firestore {
         && request.resource.data.contactId is string
         && request.resource.data.status in ['rascunho', 'ativo', 'encerrado', 'cancelado'];
 
-      allow update: if isSignedIn()
-        && resource.data.ownerId == request.auth.uid
-        && request.resource.data.ownerId == resource.data.ownerId;
+      allow update: if isSignedIn() && (
+        isAdmin()
+        || (resource.data.ownerId == request.auth.uid
+          && request.resource.data.ownerId == resource.data.ownerId)
+      );
 
-      allow delete: if isSignedIn() && resource.data.ownerId == request.auth.uid;
+      allow delete: if isSignedIn() && (isAdmin() || resource.data.ownerId == request.auth.uid);
     }
 
     match /employees/{employeeId} {
@@ -73,11 +82,13 @@ service cloud.firestore {
         && request.resource.data.name.size() > 0
         && request.resource.data.status in ['ativo', 'ferias', 'desligado'];
 
-      allow update: if isSignedIn()
-        && resource.data.ownerId == request.auth.uid
-        && request.resource.data.ownerId == resource.data.ownerId;
+      allow update: if isSignedIn() && (
+        isAdmin()
+        || (resource.data.ownerId == request.auth.uid
+          && request.resource.data.ownerId == resource.data.ownerId)
+      );
 
-      allow delete: if isSignedIn() && resource.data.ownerId == request.auth.uid;
+      allow delete: if isSignedIn() && (isAdmin() || resource.data.ownerId == request.auth.uid);
     }
 
     match /payables/{payableId} {
@@ -89,11 +100,13 @@ service cloud.firestore {
         && request.resource.data.description.size() > 0
         && request.resource.data.status in ['pendente', 'pago', 'atrasado'];
 
-      allow update: if isSignedIn()
-        && resource.data.ownerId == request.auth.uid
-        && request.resource.data.ownerId == resource.data.ownerId;
+      allow update: if isSignedIn() && (
+        isAdmin()
+        || (resource.data.ownerId == request.auth.uid
+          && request.resource.data.ownerId == resource.data.ownerId)
+      );
 
-      allow delete: if isSignedIn() && resource.data.ownerId == request.auth.uid;
+      allow delete: if isSignedIn() && (isAdmin() || resource.data.ownerId == request.auth.uid);
     }
 
     match /receivables/{receivableId} {
@@ -105,11 +118,13 @@ service cloud.firestore {
         && request.resource.data.description.size() > 0
         && request.resource.data.status in ['pendente', 'pago', 'atrasado'];
 
-      allow update: if isSignedIn()
-        && resource.data.ownerId == request.auth.uid
-        && request.resource.data.ownerId == resource.data.ownerId;
+      allow update: if isSignedIn() && (
+        isAdmin()
+        || (resource.data.ownerId == request.auth.uid
+          && request.resource.data.ownerId == resource.data.ownerId)
+      );
 
-      allow delete: if isSignedIn() && resource.data.ownerId == request.auth.uid;
+      allow delete: if isSignedIn() && (isAdmin() || resource.data.ownerId == request.auth.uid);
     }
 
     match /{document=**} {
