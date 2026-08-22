@@ -1,8 +1,8 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { auth, firestore } from '../../services/firebase';
 import { User, signInWithEmailAndPassword, signOut } from 'firebase/auth';
-import { IAuthContextType } from './types'
-import { doc, getDoc, serverTimestamp, setDoc } from 'firebase/firestore';
+import { IAuthContextType, UserLevel } from './types'
+import { doc, getDoc, onSnapshot, serverTimestamp, setDoc } from 'firebase/firestore';
 
 const AuthContext = createContext<IAuthContextType | undefined>(undefined);
 
@@ -16,6 +16,7 @@ export const useAuth = () => {
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [userLevel, setUserLevel] = useState<UserLevel | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -26,6 +27,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     return unsubscribe;
   }, []);
+
+  useEffect(() => {
+    if (!currentUser) {
+      setUserLevel(null);
+      return;
+    }
+
+    const userDocRef = doc(firestore, 'users', currentUser.uid);
+    const unsubscribe = onSnapshot(userDocRef, snap => {
+      setUserLevel((snap.data()?.level as UserLevel) ?? 'User');
+    });
+
+    return unsubscribe;
+  }, [currentUser]);
 
   const login = async (email: string, password: string) => {
     await signInWithEmailAndPassword(auth, email, password);
@@ -55,7 +70,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ currentUser, loading, login, logout }}>
+    <AuthContext.Provider
+      value={{ currentUser, userLevel, isAdmin: userLevel === 'Admin', loading, login, logout }}
+    >
       {children}
     </AuthContext.Provider>
   );
