@@ -7,8 +7,11 @@ import {
   FaHandshake,
   FaHome,
   FaMoneyBillWave,
+  FaMoon,
+  FaSun,
   FaUsers,
 } from 'react-icons/fa';
+import { useTheme } from '../../../hooks/useTheme';
 
 interface MenuChild {
   label: string;
@@ -72,6 +75,7 @@ const findActiveKey = (pathname: string): string | null => {
 const Navbar: React.FC<INavbar> = ({ isMenuOpen, onToggleMenu }) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { theme, toggleTheme } = useTheme();
 
   const [openKey, setOpenKey] = useState<string | null>(findActiveKey(location.pathname));
 
@@ -139,6 +143,11 @@ const Navbar: React.FC<INavbar> = ({ isMenuOpen, onToggleMenu }) => {
                 );
               })}
             </ul>
+
+            <button className="navbar__theme_toggle" onClick={toggleTheme}>
+              {theme === 'light' ? <FaMoon /> : <FaSun />}
+              <span>{theme === 'light' ? 'Modo escuro' : 'Modo claro'}</span>
+            </button>
           </nav>
         )}
         <button className='navbar__button_close' onClick={onToggleMenu}>
