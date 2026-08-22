@@ -1,5 +1,5 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
-import { Timestamp } from "firebase/firestore";
+import { Timestamp, orderBy, where } from "firebase/firestore";
 import { useAuth } from "../../../contexts/auth";
 import { useToast } from "../../common/Toast";
 import Modal from "../../common/Modal";
@@ -7,11 +7,14 @@ import ConfirmDialog from "../../common/ConfirmDialog";
 import Button from "../../common/Button";
 import Badge from "../../common/Badge";
 import FormField from "../../common/FormField";
+import Pagination from "../../common/Pagination";
+import { usePaginatedCollection } from "../../../hooks/usePaginatedCollection";
 import {
   createPayable,
   deletePayable,
+  getPayablesOpenTotal,
+  mapPayable,
   markPayablePaid,
-  subscribeToPayables,
   updatePayable,
 } from "../../../services/finance";
 import { FinanceStatus, IPayable, PayableInput } from "../../../types/finance";
@@ -50,15 +53,49 @@ const toDateInput = (value: Timestamp | null) =>
 const fromDateInput = (value: string): Timestamp | null =>
   value ? Timestamp.fromDate(new Date(`${value}T00:00:00`)) : null;
 
+const PAGE_SIZE = 10;
+
 export default function ContasPagar() {
   const { currentUser } = useAuth();
   const { showToast } = useToast();
 
-  const [payables, setPayables] = useState<IPayable[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [statusFilter, setStatusFilter] = useState<FinanceStatus | "all">("all");
+  const [totalEmAberto, setTotalEmAberto] = useState(0);
   const [loadError, setLoadError] = useState<string | null>(null);
 
-  const [statusFilter, setStatusFilter] = useState<FinanceStatus | "all">("all");
+  const constraints = useMemo(
+    () =>
+      statusFilter === "all"
+        ? [orderBy("dueDate", "asc")]
+        : [where("status", "==", statusFilter), orderBy("dueDate", "asc")],
+    [statusFilter]
+  );
+
+  const {
+    items: payables,
+    currentPage,
+    totalPages,
+    setCurrentPage,
+    loading,
+    error: pageError,
+    refresh,
+  } = usePaginatedCollection({
+    collectionPath: "payables",
+    constraints,
+    mapDoc: mapPayable,
+    pageSize: PAGE_SIZE,
+    resetKey: statusFilter,
+  });
+
+  const refreshTotal = () => {
+    getPayablesOpenTotal()
+      .then(setTotalEmAberto)
+      .catch((err) => setLoadError(err.message));
+  };
+
+  useEffect(() => {
+    refreshTotal();
+  }, []);
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -66,31 +103,6 @@ export default function ContasPagar() {
   const [saving, setSaving] = useState(false);
 
   const [payableToDelete, setPayableToDelete] = useState<IPayable | null>(null);
-
-  useEffect(() => {
-    setLoading(true);
-    const unsubscribe = subscribeToPayables(
-      statusFilter,
-      (data) => {
-        setPayables(data);
-        setLoading(false);
-        setLoadError(null);
-      },
-      (err) => {
-        setLoadError(err.message);
-        setLoading(false);
-      }
-    );
-    return unsubscribe;
-  }, [statusFilter]);
-
-  const totalEmAberto = useMemo(
-    () =>
-      payables
-        .filter((p) => p.status !== "pago")
-        .reduce((sum, p) => sum + p.value, 0),
-    [payables]
-  );
 
   const openCreateForm = () => {
     setEditingId(null);
@@ -134,6 +146,8 @@ export default function ContasPagar() {
         });
         showToast("Conta cadastrada com sucesso.", "success");
       }
+      refresh();
+      refreshTotal();
       closeForm();
     } catch (err) {
       showToast(
@@ -149,6 +163,8 @@ export default function ContasPagar() {
     try {
       await markPayablePaid(payable.id);
       showToast("Conta marcada como paga.", "success");
+      refresh();
+      refreshTotal();
     } catch (err) {
       showToast(
         err instanceof Error ? err.message : "Erro ao atualizar conta",
@@ -162,6 +178,8 @@ export default function ContasPagar() {
     try {
       await deletePayable(payableToDelete.id);
       showToast("Conta excluída.", "success");
+      refresh();
+      refreshTotal();
     } catch (err) {
       showToast(
         err instanceof Error ? err.message : "Erro ao excluir conta",
@@ -198,7 +216,9 @@ export default function ContasPagar() {
         </select>
       </div>
 
-      {loadError && <p className="payables_page__error">{loadError}</p>}
+      {(loadError || pageError) && (
+        <p className="payables_page__error">{loadError ?? pageError}</p>
+      )}
 
       {loading ? (
         <p className="payables_page__empty">Carregando contas...</p>
@@ -231,18 +251,20 @@ export default function ContasPagar() {
                       {STATUS_LABEL[payable.status]}
                     </Badge>
                   </td>
-                  <td className="payables_page__table__actions">
-                    {payable.status !== "pago" && (
-                      <Button variant="secondary" onClick={() => handleMarkPaid(payable)}>
-                        Marcar pago
+                  <td>
+                    <div className="payables_page__table__actions">
+                      {payable.status !== "pago" && (
+                        <Button variant="secondary" onClick={() => handleMarkPaid(payable)}>
+                          Marcar pago
+                        </Button>
+                      )}
+                      <Button variant="secondary" onClick={() => openEditForm(payable)}>
+                        Editar
                       </Button>
-                    )}
-                    <Button variant="secondary" onClick={() => openEditForm(payable)}>
-                      Editar
-                    </Button>
-                    <Button variant="danger" onClick={() => setPayableToDelete(payable)}>
-                      Excluir
-                    </Button>
+                      <Button variant="danger" onClick={() => setPayableToDelete(payable)}>
+                        Excluir
+                      </Button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -250,6 +272,12 @@ export default function ContasPagar() {
           </table>
         </div>
       )}
+
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
+      />
 
       <Modal
         isOpen={isFormOpen}

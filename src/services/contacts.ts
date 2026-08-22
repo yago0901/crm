@@ -26,7 +26,7 @@ import {
 
 const contactsRef = collection(firestore, "contacts");
 
-const mapContact = (snap: QueryDocumentSnapshot<DocumentData>): IContact => {
+export const mapContact = (snap: QueryDocumentSnapshot<DocumentData>): IContact => {
   const data = snap.data();
   return {
     id: snap.id,
@@ -154,6 +154,23 @@ export function subscribeToInteractions(
     (snapshot) => onChange(snapshot.docs.map(mapInteraction)),
     (error) => onError?.(error)
   );
+}
+
+export async function searchContacts(
+  status: ContactStatus | "all",
+  term: string
+): Promise<IContact[]> {
+  const constraints =
+    status === "all"
+      ? [orderBy("createdAt", "desc")]
+      : [where("status", "==", status), orderBy("createdAt", "desc")];
+
+  const snapshot = await getDocs(query(contactsRef, ...constraints));
+  const lower = term.trim().toLowerCase();
+
+  return snapshot.docs
+    .map(mapContact)
+    .filter((c) => [c.name, c.email, c.company].some((field) => field?.toLowerCase().includes(lower)));
 }
 
 export async function fetchClientContacts(): Promise<IContact[]> {

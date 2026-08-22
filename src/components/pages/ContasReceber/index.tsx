@@ -1,5 +1,5 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
-import { Timestamp } from "firebase/firestore";
+import { Timestamp, orderBy, where } from "firebase/firestore";
 import { useAuth } from "../../../contexts/auth";
 import { useToast } from "../../common/Toast";
 import Modal from "../../common/Modal";
@@ -7,11 +7,14 @@ import ConfirmDialog from "../../common/ConfirmDialog";
 import Button from "../../common/Button";
 import Badge from "../../common/Badge";
 import FormField from "../../common/FormField";
+import Pagination from "../../common/Pagination";
+import { usePaginatedCollection } from "../../../hooks/usePaginatedCollection";
 import {
   createReceivable,
   deleteReceivable,
+  getReceivablesOpenTotal,
+  mapReceivable,
   markReceivableReceived,
-  subscribeToReceivables,
   updateReceivable,
 } from "../../../services/finance";
 import { fetchClientContacts } from "../../../services/contacts";
@@ -53,40 +56,50 @@ const toDateInput = (value: Timestamp | null) =>
 const fromDateInput = (value: string): Timestamp | null =>
   value ? Timestamp.fromDate(new Date(`${value}T00:00:00`)) : null;
 
+const PAGE_SIZE = 10;
+
 export default function ContasReceber() {
   const { currentUser } = useAuth();
   const { showToast } = useToast();
 
-  const [receivables, setReceivables] = useState<IReceivable[]>([]);
   const [clients, setClients] = useState<IContact[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [statusFilter, setStatusFilter] = useState<FinanceStatus | "all">("all");
+  const [totalEmAberto, setTotalEmAberto] = useState(0);
   const [loadError, setLoadError] = useState<string | null>(null);
 
-  const [statusFilter, setStatusFilter] = useState<FinanceStatus | "all">("all");
+  const constraints = useMemo(
+    () =>
+      statusFilter === "all"
+        ? [orderBy("dueDate", "asc")]
+        : [where("status", "==", statusFilter), orderBy("dueDate", "asc")],
+    [statusFilter]
+  );
 
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [form, setForm] = useState<ReceivableInput>(EMPTY_FORM);
-  const [saving, setSaving] = useState(false);
+  const {
+    items: receivables,
+    currentPage,
+    totalPages,
+    setCurrentPage,
+    loading,
+    error: pageError,
+    refresh,
+  } = usePaginatedCollection({
+    collectionPath: "receivables",
+    constraints,
+    mapDoc: mapReceivable,
+    pageSize: PAGE_SIZE,
+    resetKey: statusFilter,
+  });
 
-  const [receivableToDelete, setReceivableToDelete] = useState<IReceivable | null>(null);
+  const refreshTotal = () => {
+    getReceivablesOpenTotal()
+      .then(setTotalEmAberto)
+      .catch((err) => setLoadError(err.message));
+  };
 
   useEffect(() => {
-    setLoading(true);
-    const unsubscribe = subscribeToReceivables(
-      statusFilter,
-      (data) => {
-        setReceivables(data);
-        setLoading(false);
-        setLoadError(null);
-      },
-      (err) => {
-        setLoadError(err.message);
-        setLoading(false);
-      }
-    );
-    return unsubscribe;
-  }, [statusFilter]);
+    refreshTotal();
+  }, []);
 
   useEffect(() => {
     fetchClientContacts()
@@ -94,13 +107,12 @@ export default function ContasReceber() {
       .catch((err) => setLoadError(err.message));
   }, []);
 
-  const totalEmAberto = useMemo(
-    () =>
-      receivables
-        .filter((r) => r.status !== "pago")
-        .reduce((sum, r) => sum + r.value, 0),
-    [receivables]
-  );
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [form, setForm] = useState<ReceivableInput>(EMPTY_FORM);
+  const [saving, setSaving] = useState(false);
+
+  const [receivableToDelete, setReceivableToDelete] = useState<IReceivable | null>(null);
 
   const openCreateForm = () => {
     setEditingId(null);
@@ -150,6 +162,8 @@ export default function ContasReceber() {
         });
         showToast("Conta cadastrada com sucesso.", "success");
       }
+      refresh();
+      refreshTotal();
       closeForm();
     } catch (err) {
       showToast(
@@ -165,6 +179,8 @@ export default function ContasReceber() {
     try {
       await markReceivableReceived(receivable.id);
       showToast("Conta marcada como recebida.", "success");
+      refresh();
+      refreshTotal();
     } catch (err) {
       showToast(
         err instanceof Error ? err.message : "Erro ao atualizar conta",
@@ -178,6 +194,8 @@ export default function ContasReceber() {
     try {
       await deleteReceivable(receivableToDelete.id);
       showToast("Conta excluída.", "success");
+      refresh();
+      refreshTotal();
     } catch (err) {
       showToast(
         err instanceof Error ? err.message : "Erro ao excluir conta",
@@ -214,7 +232,9 @@ export default function ContasReceber() {
         </select>
       </div>
 
-      {loadError && <p className="receivables_page__error">{loadError}</p>}
+      {(loadError || pageError) && (
+        <p className="receivables_page__error">{loadError ?? pageError}</p>
+      )}
 
       {loading ? (
         <p className="receivables_page__empty">Carregando contas...</p>
@@ -250,21 +270,23 @@ export default function ContasReceber() {
                       {STATUS_LABEL[receivable.status]}
                     </Badge>
                   </td>
-                  <td className="receivables_page__table__actions">
-                    {receivable.status !== "pago" && (
-                      <Button
-                        variant="secondary"
-                        onClick={() => handleMarkReceived(receivable)}
-                      >
-                        Marcar recebido
+                  <td>
+                    <div className="receivables_page__table__actions">
+                      {receivable.status !== "pago" && (
+                        <Button
+                          variant="secondary"
+                          onClick={() => handleMarkReceived(receivable)}
+                        >
+                          Marcar recebido
+                        </Button>
+                      )}
+                      <Button variant="secondary" onClick={() => openEditForm(receivable)}>
+                        Editar
                       </Button>
-                    )}
-                    <Button variant="secondary" onClick={() => openEditForm(receivable)}>
-                      Editar
-                    </Button>
-                    <Button variant="danger" onClick={() => setReceivableToDelete(receivable)}>
-                      Excluir
-                    </Button>
+                      <Button variant="danger" onClick={() => setReceivableToDelete(receivable)}>
+                        Excluir
+                      </Button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -272,6 +294,12 @@ export default function ContasReceber() {
           </table>
         </div>
       )}
+
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
+      />
 
       <Modal
         isOpen={isFormOpen}

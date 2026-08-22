@@ -1,5 +1,5 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
-import { Timestamp } from "firebase/firestore";
+import { Timestamp, orderBy, where } from "firebase/firestore";
 import { useAuth } from "../../../contexts/auth";
 import { useToast } from "../../common/Toast";
 import Modal from "../../common/Modal";
@@ -7,10 +7,13 @@ import ConfirmDialog from "../../common/ConfirmDialog";
 import Button from "../../common/Button";
 import Badge from "../../common/Badge";
 import FormField from "../../common/FormField";
+import Pagination from "../../common/Pagination";
+import { usePaginatedCollection } from "../../../hooks/usePaginatedCollection";
 import {
   createEmployee,
   deleteEmployee,
-  subscribeToEmployees,
+  getActivePayrollTotal,
+  mapEmployee,
   updateEmployee,
 } from "../../../services/employees";
 import { EmployeeInput, EmployeeStatus, IEmployee } from "../../../types/employee";
@@ -51,40 +54,40 @@ const toDateInput = (value: Timestamp | null) =>
 const fromDateInput = (value: string): Timestamp | null =>
   value ? Timestamp.fromDate(new Date(`${value}T00:00:00`)) : null;
 
+const PAGE_SIZE = 10;
+
 export default function GestaoFuncionarios() {
   const { currentUser } = useAuth();
   const { showToast } = useToast();
 
-  const [employees, setEmployees] = useState<IEmployee[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [loadError, setLoadError] = useState<string | null>(null);
-
   const [statusFilter, setStatusFilter] = useState<EmployeeStatus | "all">("all");
   const [search, setSearch] = useState("");
+  const [totalFolhaAtiva, setTotalFolhaAtiva] = useState(0);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [form, setForm] = useState<EmployeeInput>(EMPTY_FORM);
-  const [saving, setSaving] = useState(false);
+  const constraints = useMemo(
+    () =>
+      statusFilter === "all"
+        ? [orderBy("createdAt", "desc")]
+        : [where("status", "==", statusFilter), orderBy("createdAt", "desc")],
+    [statusFilter]
+  );
 
-  const [employeeToDelete, setEmployeeToDelete] = useState<IEmployee | null>(null);
-
-  useEffect(() => {
-    setLoading(true);
-    const unsubscribe = subscribeToEmployees(
-      statusFilter,
-      (data) => {
-        setEmployees(data);
-        setLoading(false);
-        setLoadError(null);
-      },
-      (err) => {
-        setLoadError(err.message);
-        setLoading(false);
-      }
-    );
-    return unsubscribe;
-  }, [statusFilter]);
+  const {
+    items: employees,
+    currentPage,
+    totalPages,
+    setCurrentPage,
+    loading,
+    error: pageError,
+    refresh,
+  } = usePaginatedCollection({
+    collectionPath: "employees",
+    constraints,
+    mapDoc: mapEmployee,
+    pageSize: PAGE_SIZE,
+    resetKey: statusFilter,
+  });
 
   const filteredEmployees = useMemo(() => {
     const term = search.trim().toLowerCase();
@@ -96,13 +99,22 @@ export default function GestaoFuncionarios() {
     );
   }, [employees, search]);
 
-  const totalFolhaAtiva = useMemo(
-    () =>
-      employees
-        .filter((e) => e.status === "ativo")
-        .reduce((sum, e) => sum + e.salary, 0),
-    [employees]
-  );
+  const refreshTotal = () => {
+    getActivePayrollTotal()
+      .then(setTotalFolhaAtiva)
+      .catch((err) => setLoadError(err.message));
+  };
+
+  useEffect(() => {
+    refreshTotal();
+  }, []);
+
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [form, setForm] = useState<EmployeeInput>(EMPTY_FORM);
+  const [saving, setSaving] = useState(false);
+
+  const [employeeToDelete, setEmployeeToDelete] = useState<IEmployee | null>(null);
 
   const openCreateForm = () => {
     setEditingId(null);
@@ -148,6 +160,8 @@ export default function GestaoFuncionarios() {
         });
         showToast("Funcionário cadastrado com sucesso.", "success");
       }
+      refresh();
+      refreshTotal();
       closeForm();
     } catch (err) {
       showToast(
@@ -164,6 +178,8 @@ export default function GestaoFuncionarios() {
     try {
       await deleteEmployee(employeeToDelete.id);
       showToast("Funcionário excluído.", "success");
+      refresh();
+      refreshTotal();
     } catch (err) {
       showToast(
         err instanceof Error ? err.message : "Erro ao excluir funcionário",
@@ -191,7 +207,7 @@ export default function GestaoFuncionarios() {
       <div className="employees_page__filters">
         <input
           type="text"
-          placeholder="Buscar por nome, e-mail, cargo ou departamento..."
+          placeholder="Buscar na página atual por nome, e-mail, cargo ou departamento..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
@@ -208,7 +224,9 @@ export default function GestaoFuncionarios() {
         </select>
       </div>
 
-      {loadError && <p className="employees_page__error">{loadError}</p>}
+      {(loadError || pageError) && (
+        <p className="employees_page__error">{loadError ?? pageError}</p>
+      )}
 
       {loading ? (
         <p className="employees_page__empty">Carregando funcionários...</p>
@@ -242,13 +260,15 @@ export default function GestaoFuncionarios() {
                       {STATUS_LABEL[employee.status]}
                     </Badge>
                   </td>
-                  <td className="employees_page__table__actions">
-                    <Button variant="secondary" onClick={() => openEditForm(employee)}>
-                      Editar
-                    </Button>
-                    <Button variant="danger" onClick={() => setEmployeeToDelete(employee)}>
-                      Excluir
-                    </Button>
+                  <td>
+                    <div className="employees_page__table__actions">
+                      <Button variant="secondary" onClick={() => openEditForm(employee)}>
+                        Editar
+                      </Button>
+                      <Button variant="danger" onClick={() => setEmployeeToDelete(employee)}>
+                        Excluir
+                      </Button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -256,6 +276,12 @@ export default function GestaoFuncionarios() {
           </table>
         </div>
       )}
+
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
+      />
 
       <Modal
         isOpen={isFormOpen}
