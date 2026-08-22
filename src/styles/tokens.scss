@@ -52,6 +52,14 @@
 
   --color-page-bg: #f2f4fa;
 
+  --color-navbar-bg: rgba(255, 255, 255, 0.55);
+  --color-glass-bg: var(--color-navbar-bg);
+  --color-navbar-text: #333333;
+  --color-navbar-hover-bg: rgba(0, 0, 0, 0.06);
+  --color-navbar-hover-text: #111111;
+  --color-navbar-border: rgba(0, 0, 0, 0.1);
+  --color-navbar-backdrop: rgba(0, 0, 0, 0.25);
+
   --gradient-amber: linear-gradient(135deg, #fb923c, #f97316);
   --gradient-teal: linear-gradient(135deg, #34d399, #10b981);
   --gradient-blue: linear-gradient(135deg, #60a5fa, #3b82f6);
@@ -103,6 +111,14 @@
   --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.3);
 
   --color-page-bg: #17171a;
+
+  --color-navbar-bg: rgba(0, 0, 0, 0.5);
+  --color-glass-bg: var(--color-navbar-bg);
+  --color-navbar-text: #ffffff;
+  --color-navbar-hover-bg: rgba(255, 255, 255, 0.2);
+  --color-navbar-hover-text: #f0f0f0;
+  --color-navbar-border: rgba(255, 255, 255, 0.15);
+  --color-navbar-backdrop: rgba(0, 0, 0, 0.4);
 
   --chart-orange: #fb923c;
   --chart-green: #34d399;

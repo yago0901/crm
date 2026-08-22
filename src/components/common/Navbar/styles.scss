@@ -4,13 +4,14 @@
 
 .navbar {
   height: 85vh;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: var(--color-navbar-bg);
+  backdrop-filter: blur(5px);
   border-radius: 40px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: space-between;
-  transition: width var(--transition-base);
+  transition: width var(--transition-base), background-color var(--transition-base);
   gap: var(--space-4);
 
   &.closed {
@@ -42,7 +43,7 @@
 
   button {
     background-color: transparent;
-    color: white;
+    color: var(--color-navbar-text);
     border: none;
     cursor: pointer;
     border-radius: var(--radius-sm);
@@ -67,13 +68,13 @@
     }
 
     &:hover {
-      background-color: rgba(255, 255, 255, 0.2);
-      color: #f0f0f0;
+      background-color: var(--color-navbar-hover-bg);
+      color: var(--color-navbar-hover-text);
     }
 
     &.navbar__selected {
-      background-color: white;
-      color: black;
+      background-color: var(--color-primary);
+      color: #ffffff;
     }
 
     &.navbar__button_close {
@@ -88,7 +89,7 @@
     &.navbar__theme_toggle {
       margin-top: var(--space-3);
       padding-top: var(--space-3);
-      border-top: 1px solid rgba(255, 255, 255, 0.15);
+      border-top: 1px solid var(--color-navbar-border);
     }
   }
 
@@ -151,7 +152,7 @@
     display: block;
     position: fixed;
     inset: 0;
-    background-color: rgba(0, 0, 0, 0.4);
+    background-color: var(--color-navbar-backdrop);
     z-index: 1400;
   }
 }
