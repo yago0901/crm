@@ -3,7 +3,7 @@
 }
 
 .navbar {
-  height: 88vh;
+  height: 85vh;
   background-color: rgba(0, 0, 0, 0.5);
   border-radius: 40px;
   display: flex;
@@ -83,6 +83,12 @@
       flex-shrink: 0;
       justify-content: center;
       text-align: center;
+    }
+
+    &.navbar__theme_toggle {
+      margin-top: var(--space-3);
+      padding-top: var(--space-3);
+      border-top: 1px solid rgba(255, 255, 255, 0.15);
     }
   }
 
