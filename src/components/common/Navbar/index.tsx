@@ -10,6 +10,7 @@ import {
   FaMoon,
   FaSun,
   FaUsers,
+  FaWarehouse,
 } from 'react-icons/fa';
 import { useTheme } from '../../../hooks/useTheme';
 
@@ -61,6 +62,18 @@ const MENU: MenuItem[] = [
       { label: 'Contas a Pagar', path: '/financeiro/contas-pagar' },
       { label: 'Contas a Receber', path: '/financeiro/contas-receber' },
       { label: 'Relatórios Financeiros', path: '/financeiro/relatorios-financeiros' },
+    ],
+  },
+  {
+    key: 'inventory-logistics',
+    label: 'Estoques e Logística',
+    icon: FaWarehouse,
+    children: [
+      { label: 'Gestão de Fornecedores', path: '/estoques-logistica/gestao-fornecedores' },
+      { label: 'Controle de Estoque', path: '/estoques-logistica/controle-estoque' },
+      { label: 'Compras', path: '/estoques-logistica/compras' },
+      { label: 'Logística e Distribuição', path: '/estoques-logistica/logistica-distribuicao' },
+      { label: 'Gestão de Armazéns', path: '/estoques-logistica/gestao-armazens' },
     ],
   },
 ];

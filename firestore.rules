@@ -18,8 +18,13 @@ service cloud.firestore {
 
     match /users/{uid} {
       allow read: if isOwner(uid);
-      allow create: if isOwner(uid);
-      allow update: if isOwner(uid);
+
+      allow create: if isOwner(uid)
+        && request.resource.data.level == 'User';
+
+      allow update: if isOwner(uid)
+        && request.resource.data.level == resource.data.level;
+
       allow delete: if false;
     }
 
@@ -225,6 +230,96 @@ service cloud.firestore {
         && request.resource.data.employeeId is string
         && request.resource.data.employeeId.size() > 0
         && request.resource.data.status in ['rascunho', 'finalizada'];
+
+      allow update: if isSignedIn() && (
+        isAdmin()
+        || (resource.data.ownerId == request.auth.uid
+          && request.resource.data.ownerId == resource.data.ownerId)
+      );
+
+      allow delete: if isSignedIn() && (isAdmin() || resource.data.ownerId == request.auth.uid);
+    }
+
+    match /suppliers/{supplierId} {
+      allow read: if isSignedIn();
+
+      allow create: if isSignedIn()
+        && request.resource.data.ownerId == request.auth.uid
+        && request.resource.data.name is string
+        && request.resource.data.name.size() > 0
+        && request.resource.data.status in ['ativo', 'inativo'];
+
+      allow update: if isSignedIn() && (
+        isAdmin()
+        || (resource.data.ownerId == request.auth.uid
+          && request.resource.data.ownerId == resource.data.ownerId)
+      );
+
+      allow delete: if isSignedIn() && (isAdmin() || resource.data.ownerId == request.auth.uid);
+    }
+
+    match /inventoryItems/{itemId} {
+      allow read: if isSignedIn();
+
+      allow create: if isSignedIn()
+        && request.resource.data.ownerId == request.auth.uid
+        && request.resource.data.name is string
+        && request.resource.data.name.size() > 0
+        && request.resource.data.status in ['ativo', 'descontinuado'];
+
+      allow update: if isSignedIn() && (
+        isAdmin()
+        || (resource.data.ownerId == request.auth.uid
+          && request.resource.data.ownerId == resource.data.ownerId)
+      );
+
+      allow delete: if isSignedIn() && (isAdmin() || resource.data.ownerId == request.auth.uid);
+    }
+
+    match /purchaseOrders/{orderId} {
+      allow read: if isSignedIn();
+
+      allow create: if isSignedIn()
+        && request.resource.data.ownerId == request.auth.uid
+        && request.resource.data.supplierId is string
+        && request.resource.data.supplierId.size() > 0
+        && request.resource.data.status in ['pendente', 'aprovado', 'recebido', 'cancelado'];
+
+      allow update: if isSignedIn() && (
+        isAdmin()
+        || (resource.data.ownerId == request.auth.uid
+          && request.resource.data.ownerId == resource.data.ownerId)
+      );
+
+      allow delete: if isSignedIn() && (isAdmin() || resource.data.ownerId == request.auth.uid);
+    }
+
+    match /shipments/{shipmentId} {
+      allow read: if isSignedIn();
+
+      allow create: if isSignedIn()
+        && request.resource.data.ownerId == request.auth.uid
+        && request.resource.data.description is string
+        && request.resource.data.description.size() > 0
+        && request.resource.data.status in ['preparando', 'em_transito', 'entregue', 'cancelado'];
+
+      allow update: if isSignedIn() && (
+        isAdmin()
+        || (resource.data.ownerId == request.auth.uid
+          && request.resource.data.ownerId == resource.data.ownerId)
+      );
+
+      allow delete: if isSignedIn() && (isAdmin() || resource.data.ownerId == request.auth.uid);
+    }
+
+    match /warehouses/{warehouseId} {
+      allow read: if isSignedIn();
+
+      allow create: if isSignedIn()
+        && request.resource.data.ownerId == request.auth.uid
+        && request.resource.data.name is string
+        && request.resource.data.name.size() > 0
+        && request.resource.data.status in ['ativo', 'inativo'];
 
       allow update: if isSignedIn() && (
         isAdmin()
