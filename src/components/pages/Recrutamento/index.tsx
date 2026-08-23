@@ -15,7 +15,7 @@ import {
   getCandidatesInScreeningCount,
   mapCandidate,
   updateCandidate,
-} from "../../../services/candidates";
+} from "../../../services/rh/candidates";
 import { CandidateInput, CandidateStatus, ICandidate } from "../../../types/candidate";
 import "./styles.scss";
 

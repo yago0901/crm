@@ -9,7 +9,7 @@ import {
 } from "recharts";
 import ChartCard from "../../../common/ChartCard";
 import ChartTooltip from "../../../common/ChartCard/ChartTooltip";
-import { IDepartmentPayroll } from "../../../../services/dashboard";
+import { IDepartmentPayroll } from "../../../../services/shared/dashboard";
 
 const currency = new Intl.NumberFormat("pt-BR", {
   style: "currency",

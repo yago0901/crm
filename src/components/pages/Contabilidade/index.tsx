@@ -15,7 +15,7 @@ import {
   getLedgerBalance,
   mapLedgerEntry,
   updateLedgerEntry,
-} from "../../../services/ledger";
+} from "../../../services/financeiro/ledger";
 import { ILedgerEntry, LedgerEntryInput, LedgerEntryType } from "../../../types/ledgerEntry";
 import "./styles.scss";
 

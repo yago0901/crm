@@ -16,8 +16,8 @@ import {
   mapReceivable,
   markReceivableReceived,
   updateReceivable,
-} from "../../../services/finance";
-import { fetchClientContacts } from "../../../services/contacts";
+} from "../../../services/financeiro/finance";
+import { fetchClientContacts } from "../../../services/vendas-crm/contacts";
 import { FinanceStatus, IReceivable, ReceivableInput } from "../../../types/finance";
 import { IContact } from "../../../types/contact";
 import "./styles.scss";

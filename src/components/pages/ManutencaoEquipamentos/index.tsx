@@ -15,7 +15,7 @@ import {
   getScheduledMaintenanceCount,
   mapMaintenanceRequest,
   updateMaintenanceRequest,
-} from "../../../services/maintenanceRequests";
+} from "../../../services/producao-manufatura/maintenanceRequests";
 import { IMaintenanceRequest, MaintenanceRequestInput, MaintenanceRequestStatus } from "../../../types/maintenanceRequest";
 import "./styles.scss";
 

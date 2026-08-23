@@ -3,7 +3,7 @@ import {
   getCashFlowSummary,
   subscribeToPayables,
   subscribeToReceivables,
-} from "../../../services/finance";
+} from "../../../services/financeiro/finance";
 import { IPayable, IReceivable } from "../../../types/finance";
 import "./styles.scss";
 

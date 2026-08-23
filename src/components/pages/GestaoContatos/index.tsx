@@ -15,7 +15,7 @@ import {
   mapContact,
   searchContacts,
   updateContact,
-} from "../../../services/contacts";
+} from "../../../services/vendas-crm/contacts";
 import { ContactInput, ContactStatus, IContact } from "../../../types/contact";
 import "./styles.scss";
 

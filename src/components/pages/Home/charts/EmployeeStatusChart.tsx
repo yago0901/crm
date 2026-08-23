@@ -1,5 +1,5 @@
 import StatusDonutChart from "./StatusDonutChart";
-import { IStatusCount } from "../../../../services/dashboard";
+import { IStatusCount } from "../../../../services/shared/dashboard";
 
 const STATUS_LABEL: Record<string, string> = {
   ativo: "Ativo",

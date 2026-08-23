@@ -15,7 +15,7 @@ import {
   getFailedQualityChecksCount,
   mapQualityCheck,
   updateQualityCheck,
-} from "../../../services/qualityChecks";
+} from "../../../services/producao-manufatura/qualityChecks";
 import { IQualityCheck, QualityCheckInput, QualityCheckStatus } from "../../../types/qualityCheck";
 import "./styles.scss";
 

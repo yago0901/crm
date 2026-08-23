@@ -11,7 +11,7 @@ import {
   subscribeToInteractions,
   updateContactStatus,
   updateNextContact,
-} from "../../../services/contacts";
+} from "../../../services/vendas-crm/contacts";
 import {
   IContact,
   IInteraction,

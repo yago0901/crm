@@ -15,7 +15,7 @@ import {
   getActiveWarehousesCount,
   mapWarehouse,
   updateWarehouse,
-} from "../../../services/warehouses";
+} from "../../../services/estoques-logistica/warehouses";
 import { IWarehouse, WarehouseInput, WarehouseStatus } from "../../../types/warehouse";
 import "./styles.scss";
 

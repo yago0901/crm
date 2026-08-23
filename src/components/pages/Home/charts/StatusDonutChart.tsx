@@ -1,7 +1,7 @@
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 import ChartCard from "../../../common/ChartCard";
 import ChartTooltip from "../../../common/ChartCard/ChartTooltip";
-import { IStatusCount } from "../../../../services/dashboard";
+import { IStatusCount } from "../../../../services/shared/dashboard";
 import "./StatusDonutChart.scss";
 
 interface StatusDonutChartProps {

@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState } from 'react';
-import { auth, firestore } from '../../services/firebase';
+import { auth, firestore } from '../../services/shared/firebase';
 import { User, signInWithEmailAndPassword, signOut } from 'firebase/auth';
 import { IAuthContextType, UserLevel } from './types'
 import { doc, getDoc, onSnapshot, serverTimestamp, setDoc } from 'firebase/firestore';

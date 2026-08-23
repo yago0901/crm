@@ -16,8 +16,8 @@ import {
   mapFollowUp,
   markFollowUpDone,
   updateFollowUp,
-} from "../../../services/followUps";
-import { searchContacts } from "../../../services/contacts";
+} from "../../../services/vendas-crm/followUps";
+import { searchContacts } from "../../../services/vendas-crm/contacts";
 import { FollowUpInput, FollowUpStatus, IFollowUp } from "../../../types/followUp";
 import { IContact } from "../../../types/contact";
 import "./styles.scss";

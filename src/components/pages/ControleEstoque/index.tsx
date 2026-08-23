@@ -15,7 +15,7 @@ import {
   getActiveInventoryTotal,
   mapInventoryItem,
   updateInventoryItem,
-} from "../../../services/inventory";
+} from "../../../services/estoques-logistica/inventory";
 import { IInventoryItem, InventoryItemInput, InventoryItemStatus } from "../../../types/inventoryItem";
 import "./styles.scss";
 

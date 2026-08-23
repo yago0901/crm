@@ -15,8 +15,8 @@ import {
   getPendingPurchaseOrdersTotal,
   mapPurchaseOrder,
   updatePurchaseOrder,
-} from "../../../services/purchaseOrders";
-import { fetchActiveSuppliers } from "../../../services/suppliers";
+} from "../../../services/estoques-logistica/purchaseOrders";
+import { fetchActiveSuppliers } from "../../../services/estoques-logistica/suppliers";
 import { IPurchaseOrder, PurchaseOrderInput, PurchaseOrderStatus } from "../../../types/purchaseOrder";
 import { ISupplier } from "../../../types/supplier";
 import "./styles.scss";

@@ -14,7 +14,7 @@ import {
   deleteSupplier,
   mapSupplier,
   updateSupplier,
-} from "../../../services/suppliers";
+} from "../../../services/estoques-logistica/suppliers";
 import { ISupplier, SupplierInput, SupplierStatus } from "../../../types/supplier";
 import "./styles.scss";
 

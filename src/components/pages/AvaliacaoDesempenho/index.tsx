@@ -14,8 +14,8 @@ import {
   deletePerformanceReview,
   mapPerformanceReview,
   updatePerformanceReview,
-} from "../../../services/performanceReviews";
-import { fetchActiveEmployees } from "../../../services/employees";
+} from "../../../services/rh/performanceReviews";
+import { fetchActiveEmployees } from "../../../services/rh/employees";
 import {
   IPerformanceReview,
   PerformanceReviewInput,
