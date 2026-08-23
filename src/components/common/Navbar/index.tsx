@@ -9,6 +9,7 @@ import {
   FaIndustry,
   FaMoneyBillWave,
   FaMoon,
+  FaProjectDiagram,
   FaSun,
   FaUsers,
   FaWarehouse,
@@ -86,6 +87,17 @@ const MENU: MenuItem[] = [
       { label: 'Ordens de Produção', path: '/producao-manufatura/ordens-producao' },
       { label: 'Controle de Qualidade', path: '/producao-manufatura/controle-qualidade' },
       { label: 'Manutenção de Equipamentos', path: '/producao-manufatura/manutencao-equipamentos' },
+    ],
+  },
+  {
+    key: 'projects',
+    label: 'Projetos',
+    icon: FaProjectDiagram,
+    children: [
+      { label: 'Planejamento de Projetos', path: '/projetos/planejamento-projetos' },
+      { label: 'Alocação de Recursos', path: '/projetos/alocacao-recursos' },
+      { label: 'Controle de Prazos e Custos', path: '/projetos/controle-prazos-custos' },
+      { label: 'Colaboração de Equipe', path: '/projetos/colaboracao-equipe' },
     ],
   },
 ];
