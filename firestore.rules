@@ -480,6 +480,27 @@ service cloud.firestore {
       allow delete: if isSignedIn() && (isAdmin() || resource.data.ownerId == request.auth.uid);
     }
 
+    match /savedReports/{reportId} {
+      allow read: if isSignedIn();
+
+      allow create: if isSignedIn()
+        && request.resource.data.ownerId == request.auth.uid
+        && request.resource.data.name is string
+        && request.resource.data.name.size() > 0
+        && request.resource.data.source in [
+          'contacts', 'contracts', 'payables', 'receivables',
+          'employees', 'projects', 'inventoryItems', 'suppliers'
+        ];
+
+      allow update: if isSignedIn() && (
+        isAdmin()
+        || (resource.data.ownerId == request.auth.uid
+          && request.resource.data.ownerId == resource.data.ownerId)
+      );
+
+      allow delete: if isSignedIn() && (isAdmin() || resource.data.ownerId == request.auth.uid);
+    }
+
     match /{document=**} {
       allow read, write: if false;
     }

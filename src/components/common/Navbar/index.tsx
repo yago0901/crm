@@ -3,6 +3,7 @@ import "./styles.scss";
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import {
+  FaChartLine,
   FaChevronDown,
   FaHandshake,
   FaHome,
@@ -98,6 +99,17 @@ const MENU: MenuItem[] = [
       { label: 'Alocação de Recursos', path: '/projetos/alocacao-recursos' },
       { label: 'Controle de Prazos e Custos', path: '/projetos/controle-prazos-custos' },
       { label: 'Colaboração de Equipe', path: '/projetos/colaboracao-equipe' },
+    ],
+  },
+  {
+    key: 'business-intelligence',
+    label: 'Business Intelligence',
+    icon: FaChartLine,
+    children: [
+      { label: 'Painéis de Controle', path: '/business-intelligence/painels-controle' },
+      { label: 'Análise de Dados', path: '/business-intelligence/analise-dados' },
+      { label: 'Relatórios Personalizados', path: '/business-intelligence/relatorios-personalizados' },
+      { label: 'Previsão de Tendências', path: '/business-intelligence/previsao-tendencias' },
     ],
   },
 ];
