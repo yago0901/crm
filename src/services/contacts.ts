@@ -16,6 +16,7 @@ import {
   writeBatch,
 } from "firebase/firestore";
 import { firestore } from "./firebase";
+import { createCrudService } from "./crudFactory";
 import {
   ContactInput,
   ContactStatus,
@@ -23,8 +24,6 @@ import {
   IInteraction,
   InteractionInput,
 } from "../types/contact";
-
-const contactsRef = collection(firestore, "contacts");
 
 export const mapContact = (snap: QueryDocumentSnapshot<DocumentData>): IContact => {
   const data = snap.data();
@@ -47,69 +46,50 @@ export const mapContact = (snap: QueryDocumentSnapshot<DocumentData>): IContact 
   };
 };
 
+const contactsService = createCrudService<IContact, ContactInput>(
+  "contacts",
+  mapContact
+);
+const contactsRef = contactsService.ref;
+
 export function subscribeToContacts(
   status: ContactStatus | "all",
   onChange: (contacts: IContact[]) => void,
   onError?: (error: Error) => void
 ): Unsubscribe {
-  const constraints = [orderBy("createdAt", "desc")];
-  const q =
-    status === "all"
-      ? query(contactsRef, ...constraints)
-      : query(contactsRef, where("status", "==", status), ...constraints);
-
-  return onSnapshot(
-    q,
-    (snapshot) => onChange(snapshot.docs.map(mapContact)),
-    (error) => onError?.(error)
-  );
+  return contactsService.subscribe(status, onChange, onError);
 }
 
 export async function createContact(
   input: ContactInput,
   owner: { uid: string; name?: string | null }
 ): Promise<string> {
-  const docRef = await addDoc(contactsRef, {
-    ...input,
+  return contactsService.create(input, owner, {
     tags: input.tags ?? [],
-    ownerId: owner.uid,
-    ownerName: owner.name ?? "",
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp(),
     lastInteractionAt: null,
     nextContactAt: null,
   });
-  return docRef.id;
 }
 
 export async function updateContact(
   contactId: string,
   input: Partial<ContactInput>
 ): Promise<void> {
-  await updateDoc(doc(firestore, "contacts", contactId), {
-    ...input,
-    updatedAt: serverTimestamp(),
-  });
+  return contactsService.update(contactId, input);
 }
 
 export async function updateContactStatus(
   contactId: string,
   status: ContactStatus
 ): Promise<void> {
-  await updateDoc(doc(firestore, "contacts", contactId), {
-    status,
-    updatedAt: serverTimestamp(),
-  });
+  return contactsService.update(contactId, {}, { status });
 }
 
 export async function updateNextContact(
   contactId: string,
   date: Timestamp | null
 ): Promise<void> {
-  await updateDoc(doc(firestore, "contacts", contactId), {
-    nextContactAt: date,
-    updatedAt: serverTimestamp(),
-  });
+  return contactsService.update(contactId, {}, { nextContactAt: date });
 }
 
 export async function deleteContact(contactId: string): Promise<void> {

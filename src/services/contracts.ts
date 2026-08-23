@@ -1,24 +1,6 @@
-import {
-  addDoc,
-  collection,
-  doc,
-  DocumentData,
-  getAggregateFromServer,
-  onSnapshot,
-  orderBy,
-  query,
-  QueryDocumentSnapshot,
-  serverTimestamp,
-  sum,
-  Unsubscribe,
-  updateDoc,
-  deleteDoc,
-  where,
-} from "firebase/firestore";
-import { firestore } from "./firebase";
+import { DocumentData, QueryDocumentSnapshot, Unsubscribe } from "firebase/firestore";
+import { createCrudService } from "./crudFactory";
 import { ContractInput, ContractStatus, IContract } from "../types/contract";
-
-const contractsRef = collection(firestore, "contracts");
 
 export const mapContract = (
   snap: QueryDocumentSnapshot<DocumentData>
@@ -41,56 +23,37 @@ export const mapContract = (
   };
 };
 
+const contractsService = createCrudService<IContract, ContractInput>(
+  "contracts",
+  mapContract
+);
+
 export function subscribeToContracts(
   status: ContractStatus | "all",
   onChange: (contracts: IContract[]) => void,
   onError?: (error: Error) => void
 ): Unsubscribe {
-  const constraints = [orderBy("createdAt", "desc")];
-  const q =
-    status === "all"
-      ? query(contractsRef, ...constraints)
-      : query(contractsRef, where("status", "==", status), ...constraints);
-
-  return onSnapshot(
-    q,
-    (snapshot) => onChange(snapshot.docs.map(mapContract)),
-    (error) => onError?.(error)
-  );
+  return contractsService.subscribe(status, onChange, onError);
 }
 
 export async function createContract(
   input: ContractInput,
   owner: { uid: string; name?: string | null }
 ): Promise<string> {
-  const docRef = await addDoc(contractsRef, {
-    ...input,
-    ownerId: owner.uid,
-    ownerName: owner.name ?? "",
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp(),
-  });
-  return docRef.id;
+  return contractsService.create(input, owner);
 }
 
 export async function updateContract(
   contractId: string,
   input: Partial<ContractInput>
 ): Promise<void> {
-  await updateDoc(doc(firestore, "contracts", contractId), {
-    ...input,
-    updatedAt: serverTimestamp(),
-  });
+  return contractsService.update(contractId, input);
 }
 
 export async function deleteContract(contractId: string): Promise<void> {
-  await deleteDoc(doc(firestore, "contracts", contractId));
+  return contractsService.remove(contractId);
 }
 
 export async function getActiveContractsTotal(): Promise<number> {
-  const snap = await getAggregateFromServer(
-    query(contractsRef, where("status", "==", "ativo")),
-    { total: sum("value") }
-  );
-  return snap.data().total;
+  return contractsService.sumByStatus("value", "ativo");
 }

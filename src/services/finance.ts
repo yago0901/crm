@@ -1,22 +1,14 @@
 import {
-  addDoc,
-  collection,
-  deleteDoc,
   doc,
   DocumentData,
-  getAggregateFromServer,
-  onSnapshot,
-  orderBy,
-  query,
   QueryDocumentSnapshot,
   serverTimestamp,
-  sum,
   Timestamp,
   Unsubscribe,
   updateDoc,
-  where,
 } from "firebase/firestore";
 import { firestore } from "./firebase";
+import { createCrudService } from "./crudFactory";
 import {
   FinanceStatus,
   IPayable,
@@ -24,9 +16,6 @@ import {
   PayableInput,
   ReceivableInput,
 } from "../types/finance";
-
-const payablesRef = collection(firestore, "payables");
-const receivablesRef = collection(firestore, "receivables");
 
 export const mapPayable = (snap: QueryDocumentSnapshot<DocumentData>): IPayable => {
   const data = snap.data();
@@ -69,47 +58,32 @@ export const mapReceivable = (
   };
 };
 
+const payablesService = createCrudService<IPayable, PayableInput>(
+  "payables",
+  mapPayable,
+  { orderByField: "dueDate", orderDirection: "asc" }
+);
+
 export function subscribeToPayables(
   status: FinanceStatus | "all",
   onChange: (payables: IPayable[]) => void,
   onError?: (error: Error) => void
 ): Unsubscribe {
-  const constraints = [orderBy("dueDate", "asc")];
-  const q =
-    status === "all"
-      ? query(payablesRef, ...constraints)
-      : query(payablesRef, where("status", "==", status), ...constraints);
-
-  return onSnapshot(
-    q,
-    (snapshot) => onChange(snapshot.docs.map(mapPayable)),
-    (error) => onError?.(error)
-  );
+  return payablesService.subscribe(status, onChange, onError);
 }
 
 export async function createPayable(
   input: PayableInput,
   owner: { uid: string; name?: string | null }
 ): Promise<string> {
-  const docRef = await addDoc(payablesRef, {
-    ...input,
-    paidAt: null,
-    ownerId: owner.uid,
-    ownerName: owner.name ?? "",
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp(),
-  });
-  return docRef.id;
+  return payablesService.create(input, owner, { paidAt: null });
 }
 
 export async function updatePayable(
   payableId: string,
   input: Partial<PayableInput>
 ): Promise<void> {
-  await updateDoc(doc(firestore, "payables", payableId), {
-    ...input,
-    updatedAt: serverTimestamp(),
-  });
+  return payablesService.update(payableId, input);
 }
 
 export async function markPayablePaid(payableId: string): Promise<void> {
@@ -121,62 +95,43 @@ export async function markPayablePaid(payableId: string): Promise<void> {
 }
 
 export async function deletePayable(payableId: string): Promise<void> {
-  await deleteDoc(doc(firestore, "payables", payableId));
+  return payablesService.remove(payableId);
 }
 
 export async function getPayablesOpenTotal(): Promise<number> {
   const [pendente, atrasado] = await Promise.all([
-    getAggregateFromServer(query(payablesRef, where("status", "==", "pendente")), {
-      total: sum("value"),
-    }),
-    getAggregateFromServer(query(payablesRef, where("status", "==", "atrasado")), {
-      total: sum("value"),
-    }),
+    payablesService.sumByStatus("value", "pendente"),
+    payablesService.sumByStatus("value", "atrasado"),
   ]);
-  return pendente.data().total + atrasado.data().total;
+  return pendente + atrasado;
 }
+
+const receivablesService = createCrudService<IReceivable, ReceivableInput>(
+  "receivables",
+  mapReceivable,
+  { orderByField: "dueDate", orderDirection: "asc" }
+);
 
 export function subscribeToReceivables(
   status: FinanceStatus | "all",
   onChange: (receivables: IReceivable[]) => void,
   onError?: (error: Error) => void
 ): Unsubscribe {
-  const constraints = [orderBy("dueDate", "asc")];
-  const q =
-    status === "all"
-      ? query(receivablesRef, ...constraints)
-      : query(receivablesRef, where("status", "==", status), ...constraints);
-
-  return onSnapshot(
-    q,
-    (snapshot) => onChange(snapshot.docs.map(mapReceivable)),
-    (error) => onError?.(error)
-  );
+  return receivablesService.subscribe(status, onChange, onError);
 }
 
 export async function createReceivable(
   input: ReceivableInput,
   owner: { uid: string; name?: string | null }
 ): Promise<string> {
-  const docRef = await addDoc(receivablesRef, {
-    ...input,
-    receivedAt: null,
-    ownerId: owner.uid,
-    ownerName: owner.name ?? "",
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp(),
-  });
-  return docRef.id;
+  return receivablesService.create(input, owner, { receivedAt: null });
 }
 
 export async function updateReceivable(
   receivableId: string,
   input: Partial<ReceivableInput>
 ): Promise<void> {
-  await updateDoc(doc(firestore, "receivables", receivableId), {
-    ...input,
-    updatedAt: serverTimestamp(),
-  });
+  return receivablesService.update(receivableId, input);
 }
 
 export async function markReceivableReceived(
@@ -190,19 +145,15 @@ export async function markReceivableReceived(
 }
 
 export async function deleteReceivable(receivableId: string): Promise<void> {
-  await deleteDoc(doc(firestore, "receivables", receivableId));
+  return receivablesService.remove(receivableId);
 }
 
 export async function getReceivablesOpenTotal(): Promise<number> {
   const [pendente, atrasado] = await Promise.all([
-    getAggregateFromServer(query(receivablesRef, where("status", "==", "pendente")), {
-      total: sum("value"),
-    }),
-    getAggregateFromServer(query(receivablesRef, where("status", "==", "atrasado")), {
-      total: sum("value"),
-    }),
+    receivablesService.sumByStatus("value", "pendente"),
+    receivablesService.sumByStatus("value", "atrasado"),
   ]);
-  return pendente.data().total + atrasado.data().total;
+  return pendente + atrasado;
 }
 
 export interface IMonthlyCashFlow {

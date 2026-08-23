@@ -1,24 +1,6 @@
-import {
-  addDoc,
-  collection,
-  deleteDoc,
-  doc,
-  DocumentData,
-  getAggregateFromServer,
-  onSnapshot,
-  orderBy,
-  query,
-  QueryDocumentSnapshot,
-  serverTimestamp,
-  sum,
-  Unsubscribe,
-  updateDoc,
-  where,
-} from "firebase/firestore";
-import { firestore } from "./firebase";
+import { DocumentData, QueryDocumentSnapshot, Unsubscribe } from "firebase/firestore";
+import { createCrudService } from "./crudFactory";
 import { EmployeeInput, EmployeeStatus, IEmployee } from "../types/employee";
-
-const employeesRef = collection(firestore, "employees");
 
 export const mapEmployee = (
   snap: QueryDocumentSnapshot<DocumentData>
@@ -42,56 +24,37 @@ export const mapEmployee = (
   };
 };
 
+const employeesService = createCrudService<IEmployee, EmployeeInput>(
+  "employees",
+  mapEmployee
+);
+
 export function subscribeToEmployees(
   status: EmployeeStatus | "all",
   onChange: (employees: IEmployee[]) => void,
   onError?: (error: Error) => void
 ): Unsubscribe {
-  const constraints = [orderBy("createdAt", "desc")];
-  const q =
-    status === "all"
-      ? query(employeesRef, ...constraints)
-      : query(employeesRef, where("status", "==", status), ...constraints);
-
-  return onSnapshot(
-    q,
-    (snapshot) => onChange(snapshot.docs.map(mapEmployee)),
-    (error) => onError?.(error)
-  );
+  return employeesService.subscribe(status, onChange, onError);
 }
 
 export async function createEmployee(
   input: EmployeeInput,
   owner: { uid: string; name?: string | null }
 ): Promise<string> {
-  const docRef = await addDoc(employeesRef, {
-    ...input,
-    ownerId: owner.uid,
-    ownerName: owner.name ?? "",
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp(),
-  });
-  return docRef.id;
+  return employeesService.create(input, owner);
 }
 
 export async function updateEmployee(
   employeeId: string,
   input: Partial<EmployeeInput>
 ): Promise<void> {
-  await updateDoc(doc(firestore, "employees", employeeId), {
-    ...input,
-    updatedAt: serverTimestamp(),
-  });
+  return employeesService.update(employeeId, input);
 }
 
 export async function deleteEmployee(employeeId: string): Promise<void> {
-  await deleteDoc(doc(firestore, "employees", employeeId));
+  return employeesService.remove(employeeId);
 }
 
 export async function getActivePayrollTotal(): Promise<number> {
-  const snap = await getAggregateFromServer(
-    query(employeesRef, where("status", "==", "ativo")),
-    { total: sum("salary") }
-  );
-  return snap.data().total;
+  return employeesService.sumByStatus("salary", "ativo");
 }
