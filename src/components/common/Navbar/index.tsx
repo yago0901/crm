@@ -34,8 +34,10 @@ const MENU: MenuItem[] = [
     icon: FaUsers,
     children: [
       { label: 'Funcionários', path: '/rh/gestao-funcionarios' },
+      { label: 'Folha de Pagamento', path: '/rh/folha-pagamento' },
       { label: 'Recrutamento', path: '/rh/recrutamento' },
       { label: 'Treinamento', path: '/rh/treinamento' },
+      { label: 'Avaliação de Desempenho', path: '/rh/avaliacao-desempenho' },
     ],
   },
   {

@@ -2,6 +2,7 @@ import {
   addDoc,
   collection,
   CollectionReference,
+  count,
   deleteDoc,
   doc,
   DocumentData,
@@ -100,5 +101,13 @@ export function createCrudService<T, TInput extends object>(
     return snap.data().total;
   }
 
-  return { ref, subscribe, create, update, remove, sumByStatus };
+  async function countByStatus(filterValue: string): Promise<number> {
+    const snap = await getAggregateFromServer(
+      query(ref, where(filterField, "==", filterValue)),
+      { total: count() }
+    );
+    return snap.data().total;
+  }
+
+  return { ref, subscribe, create, update, remove, sumByStatus, countByStatus };
 }
