@@ -4,10 +4,10 @@ import { useAuth } from "../../../contexts/auth";
 import QuickActions from "../../common/QuickActions";
 import ContactsStatusChart from "./charts/ContactsStatusChart";
 import ContractsStatusChart from "./charts/ContractsStatusChart";
-import CashFlowChart from "./charts/CashFlowChart";
+import CashFlowChart from "../../common/charts/CashFlowChart";
 import PayrollByDepartmentChart from "./charts/PayrollByDepartmentChart";
 import EmployeeStatusChart from "./charts/EmployeeStatusChart";
-import FinanceStatusChart from "./charts/FinanceStatusChart";
+import FinanceStatusChart from "../../common/charts/FinanceStatusChart";
 import {
   getContactStatusBreakdown,
   getContractStatusBreakdown,

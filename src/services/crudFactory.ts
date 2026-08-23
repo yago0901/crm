@@ -2,6 +2,7 @@ import {
   addDoc,
   collection,
   CollectionReference,
+  count,
   deleteDoc,
   doc,
   DocumentData,
@@ -22,6 +23,7 @@ import { firestore } from "./firebase";
 interface CrudServiceConfig {
   orderByField?: string;
   orderDirection?: OrderByDirection;
+  filterField?: string;
 }
 
 export interface Owner {
@@ -34,19 +36,23 @@ export function createCrudService<T, TInput extends object>(
   mapDoc: (snap: QueryDocumentSnapshot<DocumentData>) => T,
   config: CrudServiceConfig = {}
 ) {
-  const { orderByField = "createdAt", orderDirection = "desc" } = config;
+  const {
+    orderByField = "createdAt",
+    orderDirection = "desc",
+    filterField = "status",
+  } = config;
   const ref: CollectionReference<DocumentData> = collection(firestore, collectionName);
 
   function subscribe(
-    status: string | "all",
+    filterValue: string | "all",
     onChange: (items: T[]) => void,
     onError?: (error: Error) => void
   ): Unsubscribe {
     const constraints = [orderBy(orderByField, orderDirection)];
     const q =
-      status === "all"
+      filterValue === "all"
         ? query(ref, ...constraints)
-        : query(ref, where("status", "==", status), ...constraints);
+        : query(ref, where(filterField, "==", filterValue), ...constraints);
 
     return onSnapshot(
       q,
@@ -87,12 +93,21 @@ export function createCrudService<T, TInput extends object>(
     await deleteDoc(doc(firestore, collectionName, id));
   }
 
-  async function sumByStatus(field: string, status: string): Promise<number> {
-    const snap = await getAggregateFromServer(query(ref, where("status", "==", status)), {
-      total: sum(field),
-    });
+  async function sumByStatus(field: string, filterValue: string): Promise<number> {
+    const snap = await getAggregateFromServer(
+      query(ref, where(filterField, "==", filterValue)),
+      { total: sum(field) }
+    );
     return snap.data().total;
   }
 
-  return { ref, subscribe, create, update, remove, sumByStatus };
+  async function countByStatus(filterValue: string): Promise<number> {
+    const snap = await getAggregateFromServer(
+      query(ref, where(filterField, "==", filterValue)),
+      { total: count() }
+    );
+    return snap.data().total;
+  }
+
+  return { ref, subscribe, create, update, remove, sumByStatus, countByStatus };
 }

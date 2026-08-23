@@ -8,9 +8,9 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import ChartCard from "../../../common/ChartCard";
-import ChartTooltip from "../../../common/ChartCard/ChartTooltip";
-import { IStatusCount } from "../../../../services/dashboard";
+import ChartCard from "../ChartCard";
+import ChartTooltip from "../ChartCard/ChartTooltip";
+import { IStatusCount } from "../../../services/dashboard";
 
 const STATUS_LABEL: Record<string, string> = {
   pendente: "Pendente",

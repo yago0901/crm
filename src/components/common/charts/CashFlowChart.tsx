@@ -8,9 +8,9 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import ChartCard from "../../../common/ChartCard";
-import ChartTooltip from "../../../common/ChartCard/ChartTooltip";
-import { IMonthlyCashFlow } from "../../../../services/finance";
+import ChartCard from "../ChartCard";
+import ChartTooltip from "../ChartCard/ChartTooltip";
+import { IMonthlyCashFlow } from "../../../services/finance";
 
 const currency = new Intl.NumberFormat("pt-BR", {
   style: "currency",
