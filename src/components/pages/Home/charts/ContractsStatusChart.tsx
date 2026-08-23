@@ -10,7 +10,7 @@ import {
 } from "recharts";
 import ChartCard from "../../../common/ChartCard";
 import ChartTooltip from "../../../common/ChartCard/ChartTooltip";
-import { IStatusCount } from "../../../../services/dashboard";
+import { IStatusCount } from "../../../../services/shared/dashboard";
 
 const STATUS_LABEL: Record<string, string> = {
   rascunho: "Rascunho",

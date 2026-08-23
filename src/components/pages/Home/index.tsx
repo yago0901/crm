@@ -19,8 +19,8 @@ import {
   IDashboardStats,
   IDepartmentPayroll,
   IStatusCount,
-} from "../../../services/dashboard";
-import { IMonthlyCashFlow } from "../../../services/finance";
+} from "../../../services/shared/dashboard";
+import { IMonthlyCashFlow } from "../../../services/financeiro/finance";
 import "./styles.scss";
 
 const currency = new Intl.NumberFormat("pt-BR", {

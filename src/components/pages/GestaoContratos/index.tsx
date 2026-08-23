@@ -15,8 +15,8 @@ import {
   getActiveContractsTotal,
   mapContract,
   updateContract,
-} from "../../../services/contracts";
-import { fetchClientContacts } from "../../../services/contacts";
+} from "../../../services/vendas-crm/contracts";
+import { fetchClientContacts } from "../../../services/vendas-crm/contacts";
 import { ContractInput, ContractStatus, IContract } from "../../../types/contract";
 import { IContact } from "../../../types/contact";
 import "./styles.scss";

@@ -10,7 +10,7 @@ import {
 } from "recharts";
 import ChartCard from "../ChartCard";
 import ChartTooltip from "../ChartCard/ChartTooltip";
-import { IMonthlyCashFlow } from "../../../services/finance";
+import { IMonthlyCashFlow } from "../../../services/financeiro/finance";
 
 const currency = new Intl.NumberFormat("pt-BR", {
   style: "currency",

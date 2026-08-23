@@ -16,8 +16,8 @@ import {
   mapPayrollEntry,
   markPayrollEntryPaid,
   updatePayrollEntry,
-} from "../../../services/payroll";
-import { fetchActiveEmployees } from "../../../services/employees";
+} from "../../../services/rh/payroll";
+import { fetchActiveEmployees } from "../../../services/rh/employees";
 import { IPayrollEntry, PayrollEntryInput, PayrollStatus } from "../../../types/payrollEntry";
 import { IEmployee } from "../../../types/employee";
 import "./styles.scss";

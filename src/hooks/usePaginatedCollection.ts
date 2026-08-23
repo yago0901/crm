@@ -12,7 +12,7 @@ import {
   startAfter,
 } from "firebase/firestore";
 import { useRef, useState } from "react";
-import { firestore } from "../services/firebase";
+import { firestore } from "../services/shared/firebase";
 
 interface UsePaginatedCollectionParams<T> {
   collectionPath: string;

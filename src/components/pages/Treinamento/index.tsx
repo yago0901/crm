@@ -15,7 +15,7 @@ import {
   getScheduledTrainingsCount,
   mapTraining,
   updateTraining,
-} from "../../../services/trainings";
+} from "../../../services/rh/trainings";
 import { ITraining, TrainingInput, TrainingStatus } from "../../../types/training";
 import "./styles.scss";
 

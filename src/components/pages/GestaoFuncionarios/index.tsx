@@ -15,7 +15,7 @@ import {
   getActivePayrollTotal,
   mapEmployee,
   updateEmployee,
-} from "../../../services/employees";
+} from "../../../services/rh/employees";
 import { EmployeeInput, EmployeeStatus, IEmployee } from "../../../types/employee";
 import "./styles.scss";
 

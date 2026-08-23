@@ -15,7 +15,7 @@ import {
   getPendingProductionOrdersCount,
   mapProductionOrder,
   updateProductionOrder,
-} from "../../../services/productionOrders";
+} from "../../../services/producao-manufatura/productionOrders";
 import { IProductionOrder, ProductionOrderInput, ProductionOrderStatus } from "../../../types/productionOrder";
 import "./styles.scss";
 

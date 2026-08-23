@@ -15,7 +15,7 @@ import {
   getInTransitShipmentsCount,
   mapShipment,
   updateShipment,
-} from "../../../services/shipments";
+} from "../../../services/estoques-logistica/shipments";
 import { IShipment, ShipmentInput, ShipmentStatus } from "../../../types/shipment";
 import "./styles.scss";
 

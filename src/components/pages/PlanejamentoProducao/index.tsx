@@ -15,7 +15,7 @@ import {
   getActiveProductionPlansCount,
   mapProductionPlan,
   updateProductionPlan,
-} from "../../../services/productionPlans";
+} from "../../../services/producao-manufatura/productionPlans";
 import { IProductionPlan, ProductionPlanInput, ProductionPlanStatus } from "../../../types/productionPlan";
 import "./styles.scss";
 

@@ -16,7 +16,7 @@ import {
   mapPayable,
   markPayablePaid,
   updatePayable,
-} from "../../../services/finance";
+} from "../../../services/financeiro/finance";
 import { FinanceStatus, IPayable, PayableInput } from "../../../types/finance";
 import "./styles.scss";
 

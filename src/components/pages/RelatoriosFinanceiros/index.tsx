@@ -1,13 +1,13 @@
 import { useEffect, useState } from "react";
-import { getActiveContractsTotal } from "../../../services/contracts";
-import { getPayablesOpenTotal, getReceivablesOpenTotal } from "../../../services/finance";
-import { getLedgerBalance } from "../../../services/ledger";
+import { getActiveContractsTotal } from "../../../services/vendas-crm/contracts";
+import { getPayablesOpenTotal, getReceivablesOpenTotal } from "../../../services/financeiro/finance";
+import { getLedgerBalance } from "../../../services/financeiro/ledger";
 import {
   getFinanceStatusBreakdown,
   getMonthlyCashFlow,
   IStatusCount,
-} from "../../../services/dashboard";
-import { IMonthlyCashFlow } from "../../../services/finance";
+} from "../../../services/shared/dashboard";
+import { IMonthlyCashFlow } from "../../../services/financeiro/finance";
 import CashFlowChart from "../../common/charts/CashFlowChart";
 import FinanceStatusChart from "../../common/charts/FinanceStatusChart";
 import "./styles.scss";
