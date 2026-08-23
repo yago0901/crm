@@ -6,6 +6,7 @@ import {
   FaChevronDown,
   FaHandshake,
   FaHome,
+  FaIndustry,
   FaMoneyBillWave,
   FaMoon,
   FaSun,
@@ -74,6 +75,17 @@ const MENU: MenuItem[] = [
       { label: 'Compras', path: '/estoques-logistica/compras' },
       { label: 'Logística e Distribuição', path: '/estoques-logistica/logistica-distribuicao' },
       { label: 'Gestão de Armazéns', path: '/estoques-logistica/gestao-armazens' },
+    ],
+  },
+  {
+    key: 'production',
+    label: 'Produção e Manufatura',
+    icon: FaIndustry,
+    children: [
+      { label: 'Planejamento de Produção', path: '/producao-manufatura/planejamento-producao' },
+      { label: 'Ordens de Produção', path: '/producao-manufatura/ordens-producao' },
+      { label: 'Controle de Qualidade', path: '/producao-manufatura/controle-qualidade' },
+      { label: 'Manutenção de Equipamentos', path: '/producao-manufatura/manutencao-equipamentos' },
     ],
   },
 ];

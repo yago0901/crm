@@ -330,6 +330,78 @@ service cloud.firestore {
       allow delete: if isSignedIn() && (isAdmin() || resource.data.ownerId == request.auth.uid);
     }
 
+    match /productionPlans/{planId} {
+      allow read: if isSignedIn();
+
+      allow create: if isSignedIn()
+        && request.resource.data.ownerId == request.auth.uid
+        && request.resource.data.productName is string
+        && request.resource.data.productName.size() > 0
+        && request.resource.data.status in ['planejado', 'em_andamento', 'concluido', 'cancelado'];
+
+      allow update: if isSignedIn() && (
+        isAdmin()
+        || (resource.data.ownerId == request.auth.uid
+          && request.resource.data.ownerId == resource.data.ownerId)
+      );
+
+      allow delete: if isSignedIn() && (isAdmin() || resource.data.ownerId == request.auth.uid);
+    }
+
+    match /productionOrders/{orderId} {
+      allow read: if isSignedIn();
+
+      allow create: if isSignedIn()
+        && request.resource.data.ownerId == request.auth.uid
+        && request.resource.data.description is string
+        && request.resource.data.description.size() > 0
+        && request.resource.data.status in ['pendente', 'em_producao', 'concluida', 'cancelada'];
+
+      allow update: if isSignedIn() && (
+        isAdmin()
+        || (resource.data.ownerId == request.auth.uid
+          && request.resource.data.ownerId == resource.data.ownerId)
+      );
+
+      allow delete: if isSignedIn() && (isAdmin() || resource.data.ownerId == request.auth.uid);
+    }
+
+    match /qualityChecks/{checkId} {
+      allow read: if isSignedIn();
+
+      allow create: if isSignedIn()
+        && request.resource.data.ownerId == request.auth.uid
+        && request.resource.data.item is string
+        && request.resource.data.item.size() > 0
+        && request.resource.data.status in ['pendente', 'aprovado', 'reprovado'];
+
+      allow update: if isSignedIn() && (
+        isAdmin()
+        || (resource.data.ownerId == request.auth.uid
+          && request.resource.data.ownerId == resource.data.ownerId)
+      );
+
+      allow delete: if isSignedIn() && (isAdmin() || resource.data.ownerId == request.auth.uid);
+    }
+
+    match /maintenanceRequests/{requestId} {
+      allow read: if isSignedIn();
+
+      allow create: if isSignedIn()
+        && request.resource.data.ownerId == request.auth.uid
+        && request.resource.data.equipmentName is string
+        && request.resource.data.equipmentName.size() > 0
+        && request.resource.data.status in ['agendada', 'em_andamento', 'concluida', 'cancelada'];
+
+      allow update: if isSignedIn() && (
+        isAdmin()
+        || (resource.data.ownerId == request.auth.uid
+          && request.resource.data.ownerId == resource.data.ownerId)
+      );
+
+      allow delete: if isSignedIn() && (isAdmin() || resource.data.ownerId == request.auth.uid);
+    }
+
     match /{document=**} {
       allow read, write: if false;
     }
