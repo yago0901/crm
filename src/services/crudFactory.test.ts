@@ -16,6 +16,7 @@ vi.mock("firebase/firestore", () => ({
   orderBy: vi.fn((field, direction) => ({ type: "orderBy", field, direction })),
   serverTimestamp: vi.fn(() => "SERVER_TIMESTAMP"),
   sum: vi.fn((field) => ({ type: "sum", field })),
+  count: vi.fn(() => ({ type: "count" })),
   onSnapshot: vi.fn(),
 }));
 
@@ -116,5 +117,32 @@ describe("createCrudService", () => {
 
     expect(total).toBe(42);
     expect(where).toHaveBeenCalledWith("status", "==", "pendente");
+  });
+
+  it("countByStatus() aggregates a document count for the given status", async () => {
+    const service = createCrudService<FakeItem, { name: string }>("fakes", mapFakeItem);
+    vi.mocked(getAggregateFromServer).mockResolvedValue({
+      data: () => ({ total: 5 }),
+    } as never);
+
+    const total = await service.countByStatus("triagem");
+
+    expect(total).toBe(5);
+    expect(where).toHaveBeenCalledWith("status", "==", "triagem");
+  });
+
+  it("uses a custom filterField for subscribe/sumByStatus/countByStatus when configured", async () => {
+    const service = createCrudService<FakeItem, { name: string }>("fakes", mapFakeItem, {
+      filterField: "type",
+    });
+    vi.mocked(getAggregateFromServer).mockResolvedValue({
+      data: () => ({ total: 10 }),
+    } as never);
+
+    service.subscribe("credito", vi.fn());
+    expect(where).toHaveBeenCalledWith("type", "==", "credito");
+
+    await service.sumByStatus("value", "debito");
+    expect(where).toHaveBeenCalledWith("type", "==", "debito");
   });
 });

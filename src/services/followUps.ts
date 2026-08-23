@@ -1,14 +1,10 @@
 import {
-  count,
   doc,
   DocumentData,
-  getAggregateFromServer,
-  query,
   QueryDocumentSnapshot,
   serverTimestamp,
   Unsubscribe,
   updateDoc,
-  where,
 } from "firebase/firestore";
 import { firestore } from "./firebase";
 import { createCrudService } from "./crudFactory";
@@ -75,9 +71,5 @@ export async function deleteFollowUp(followUpId: string): Promise<void> {
 }
 
 export async function getPendingFollowUpsCount(): Promise<number> {
-  const snap = await getAggregateFromServer(
-    query(followUpsService.ref, where("status", "==", "pendente")),
-    { total: count() }
-  );
-  return snap.data().total;
+  return followUpsService.countByStatus("pendente");
 }

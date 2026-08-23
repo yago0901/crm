@@ -1,4 +1,12 @@
-import { DocumentData, QueryDocumentSnapshot, Unsubscribe } from "firebase/firestore";
+import {
+  DocumentData,
+  getDocs,
+  orderBy,
+  query,
+  QueryDocumentSnapshot,
+  Unsubscribe,
+  where,
+} from "firebase/firestore";
 import { createCrudService } from "./crudFactory";
 import { EmployeeInput, EmployeeStatus, IEmployee } from "../types/employee";
 
@@ -57,4 +65,14 @@ export async function deleteEmployee(employeeId: string): Promise<void> {
 
 export async function getActivePayrollTotal(): Promise<number> {
   return employeesService.sumByStatus("salary", "ativo");
+}
+
+export async function fetchActiveEmployees(): Promise<IEmployee[]> {
+  const q = query(
+    employeesService.ref,
+    where("status", "==", "ativo"),
+    orderBy("name", "asc")
+  );
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map(mapEmployee);
 }
