@@ -26,7 +26,6 @@ import GestaoContratos from "../components/pages/GestaoContratos";
 import GestaoFornecedores from "../components/pages/GestaoFornecedores";
 import GestaoFuncionarios from "../components/pages/GestaoFuncionarios";
 import Home from '../components/pages/Home';
-import IntegracaoSistemas from "../components/pages/IntegracaoSistemas";
 import LogisticaDistribuicao from "../components/pages/LogisticaDistribuicao";
 import Login from "../components/pages/Login";
 import ManutencaoEquipamentos from "../components/pages/ManutencaoEquipamentos";
@@ -101,7 +100,6 @@ function Router() {
         <Route path="/compliance-regulamentacoes/auditoria-interna" element={<PrivateRoute><AuditoriaInterna /></PrivateRoute>} />
         <Route path="/compliance-regulamentacoes/controle-regulamentacoes" element={<PrivateRoute><ControleRegulamentacoes /></PrivateRoute>} />
 
-        <Route path="/integracao-colaboracao/integracao-sistemas" element={<PrivateRoute><IntegracaoSistemas /></PrivateRoute>} />
         <Route path="/integracao-colaboracao/comunicacao-interna" element={<PrivateRoute><ComunicacaoInterna /></PrivateRoute>} />
         <Route path="/integracao-colaboracao/colaboracao-departamentos" element={<PrivateRoute><ColaboracaoDepartamentos /></PrivateRoute>} />
       </Route>

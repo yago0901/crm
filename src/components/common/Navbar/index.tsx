@@ -5,6 +5,8 @@ import { useEffect, useState } from 'react';
 import {
   FaChartLine,
   FaChevronDown,
+  FaClipboardCheck,
+  FaCommentDots,
   FaHandshake,
   FaHome,
   FaIndustry,
@@ -110,6 +112,25 @@ const MENU: MenuItem[] = [
       { label: 'Análise de Dados', path: '/business-intelligence/analise-dados' },
       { label: 'Relatórios Personalizados', path: '/business-intelligence/relatorios-personalizados' },
       { label: 'Previsão de Tendências', path: '/business-intelligence/previsao-tendencias' },
+    ],
+  },
+  {
+    key: 'compliance',
+    label: 'Compliance e Regulamentações',
+    icon: FaClipboardCheck,
+    children: [
+      { label: 'Gestão de Conformidade', path: '/compliance-regulamentacoes/gestao-conformidade' },
+      { label: 'Auditoria Interna', path: '/compliance-regulamentacoes/auditoria-interna' },
+      { label: 'Controle de Regulamentações', path: '/compliance-regulamentacoes/controle-regulamentacoes' },
+    ],
+  },
+  {
+    key: 'collaboration',
+    label: 'Colaboração',
+    icon: FaCommentDots,
+    children: [
+      { label: 'Comunicação Interna', path: '/integracao-colaboracao/comunicacao-interna' },
+      { label: 'Colaboração de Departamentos', path: '/integracao-colaboracao/colaboracao-departamentos' },
     ],
   },
 ];
