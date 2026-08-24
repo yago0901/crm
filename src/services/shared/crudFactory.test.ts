@@ -131,6 +131,50 @@ describe("createCrudService", () => {
     expect(where).toHaveBeenCalledWith("status", "==", "triagem");
   });
 
+  it("subscribe(filter, onChange, onError, companyId) adds a companyId filter alongside the status filter", () => {
+    const service = createCrudService<FakeItem, { name: string }>("fakes", mapFakeItem);
+
+    service.subscribe("ativo", vi.fn(), undefined, "acme");
+
+    expect(where).toHaveBeenCalledWith("companyId", "==", "acme");
+    expect(where).toHaveBeenCalledWith("status", "==", "ativo");
+  });
+
+  it("subscribe('all', onChange, onError, companyId) filters by companyId only", () => {
+    const service = createCrudService<FakeItem, { name: string }>("fakes", mapFakeItem);
+
+    service.subscribe("all", vi.fn(), undefined, "acme");
+
+    expect(where).toHaveBeenCalledWith("companyId", "==", "acme");
+    expect(where).not.toHaveBeenCalledWith("status", "==", expect.anything());
+  });
+
+  it("omitting companyId keeps subscribe/sumByStatus/countByStatus unfiltered by company, for modules not migrated yet", async () => {
+    const service = createCrudService<FakeItem, { name: string }>("fakes", mapFakeItem);
+    vi.mocked(getAggregateFromServer).mockResolvedValue({
+      data: () => ({ total: 1 }),
+    } as never);
+
+    service.subscribe("ativo", vi.fn());
+    await service.sumByStatus("value", "ativo");
+    await service.countByStatus("ativo");
+
+    expect(where).not.toHaveBeenCalledWith("companyId", "==", expect.anything());
+  });
+
+  it("sumByStatus/countByStatus add a companyId filter when given one", async () => {
+    const service = createCrudService<FakeItem, { name: string }>("fakes", mapFakeItem);
+    vi.mocked(getAggregateFromServer).mockResolvedValue({
+      data: () => ({ total: 7 }),
+    } as never);
+
+    await service.sumByStatus("value", "pendente", "acme");
+    expect(where).toHaveBeenCalledWith("companyId", "==", "acme");
+
+    await service.countByStatus("pendente", "acme");
+    expect(where).toHaveBeenCalledWith("companyId", "==", "acme");
+  });
+
   it("uses a custom filterField for subscribe/sumByStatus/countByStatus when configured", async () => {
     const service = createCrudService<FakeItem, { name: string }>("fakes", mapFakeItem, {
       filterField: "type",

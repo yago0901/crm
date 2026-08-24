@@ -46,13 +46,14 @@ export function createCrudService<T, TInput extends object>(
   function subscribe(
     filterValue: string | "all",
     onChange: (items: T[]) => void,
-    onError?: (error: Error) => void
+    onError?: (error: Error) => void,
+    companyId?: string
   ): Unsubscribe {
-    const constraints = [orderBy(orderByField, orderDirection)];
-    const q =
-      filterValue === "all"
-        ? query(ref, ...constraints)
-        : query(ref, where(filterField, "==", filterValue), ...constraints);
+    const whereConstraints = companyId ? [where("companyId", "==", companyId)] : [];
+    if (filterValue !== "all") {
+      whereConstraints.push(where(filterField, "==", filterValue));
+    }
+    const q = query(ref, ...whereConstraints, orderBy(orderByField, orderDirection));
 
     return onSnapshot(
       q,
@@ -93,19 +94,25 @@ export function createCrudService<T, TInput extends object>(
     await deleteDoc(doc(firestore, collectionName, id));
   }
 
-  async function sumByStatus(field: string, filterValue: string): Promise<number> {
-    const snap = await getAggregateFromServer(
-      query(ref, where(filterField, "==", filterValue)),
-      { total: sum(field) }
-    );
+  async function sumByStatus(
+    field: string,
+    filterValue: string,
+    companyId?: string
+  ): Promise<number> {
+    const whereConstraints = [where(filterField, "==", filterValue)];
+    if (companyId) whereConstraints.push(where("companyId", "==", companyId));
+    const snap = await getAggregateFromServer(query(ref, ...whereConstraints), {
+      total: sum(field),
+    });
     return snap.data().total;
   }
 
-  async function countByStatus(filterValue: string): Promise<number> {
-    const snap = await getAggregateFromServer(
-      query(ref, where(filterField, "==", filterValue)),
-      { total: count() }
-    );
+  async function countByStatus(filterValue: string, companyId?: string): Promise<number> {
+    const whereConstraints = [where(filterField, "==", filterValue)];
+    if (companyId) whereConstraints.push(where("companyId", "==", companyId));
+    const snap = await getAggregateFromServer(query(ref, ...whereConstraints), {
+      total: count(),
+    });
     return snap.data().total;
   }
 
