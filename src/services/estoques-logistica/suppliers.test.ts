@@ -19,12 +19,14 @@ vi.mock("firebase/firestore", () => ({
   onSnapshot: vi.fn(),
 }));
 
-import { addDoc, getDocs } from "firebase/firestore";
+import { addDoc, getDocs, where } from "firebase/firestore";
 import { createSupplier, fetchActiveSuppliers } from "./suppliers";
+import { setCurrentCompanyId } from "../shared/tenant";
 
 describe("createSupplier", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    setCurrentCompanyId(null);
   });
 
   it("creates the supplier with owner info", async () => {
@@ -45,11 +47,27 @@ describe("createSupplier", () => {
       })
     );
   });
+
+  it("stamps the supplier with the current companyId", async () => {
+    vi.mocked(addDoc).mockResolvedValue({ id: "new-id" } as never);
+    setCurrentCompanyId("acme");
+
+    await createSupplier(
+      { name: "Fornecedor X", contactName: "", email: "", phone: "", category: "Insumos", status: "ativo", notes: "" },
+      { uid: "owner1", name: "Yago" }
+    );
+
+    expect(addDoc).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ companyId: "acme" })
+    );
+  });
 });
 
 describe("fetchActiveSuppliers", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    setCurrentCompanyId(null);
   });
 
   it("returns only active suppliers mapped from the snapshot", async () => {
@@ -62,5 +80,14 @@ describe("fetchActiveSuppliers", () => {
 
     expect(suppliers).toHaveLength(1);
     expect(suppliers[0].name).toBe("Fornecedor A");
+  });
+
+  it("adds a companyId filter when a company is set", async () => {
+    vi.mocked(getDocs).mockResolvedValue({ docs: [] } as never);
+    setCurrentCompanyId("acme");
+
+    await fetchActiveSuppliers();
+
+    expect(where).toHaveBeenCalledWith("companyId", "==", "acme");
   });
 });

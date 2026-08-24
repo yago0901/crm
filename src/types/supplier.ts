@@ -4,6 +4,7 @@ export type SupplierStatus = "ativo" | "inativo";
 
 export interface ISupplier {
   id: string;
+  companyId: string;
   name: string;
   contactName?: string;
   email?: string;

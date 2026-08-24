@@ -17,6 +17,7 @@ import {
 } from "firebase/firestore";
 import { firestore } from "../shared/firebase";
 import { createCrudService } from "../shared/crudFactory";
+import { getCurrentCompanyId } from "../shared/tenant";
 import {
   ContactInput,
   ContactStatus,
@@ -29,6 +30,7 @@ export const mapContact = (snap: QueryDocumentSnapshot<DocumentData>): IContact 
   const data = snap.data();
   return {
     id: snap.id,
+    companyId: data.companyId,
     name: data.name,
     email: data.email,
     phone: data.phone ?? "",
@@ -57,7 +59,7 @@ export function subscribeToContacts(
   onChange: (contacts: IContact[]) => void,
   onError?: (error: Error) => void
 ): Unsubscribe {
-  return contactsService.subscribe(status, onChange, onError);
+  return contactsService.subscribe(status, onChange, onError, getCurrentCompanyId() ?? undefined);
 }
 
 export async function createContact(
@@ -65,6 +67,7 @@ export async function createContact(
   owner: { uid: string; name?: string | null }
 ): Promise<string> {
   return contactsService.create(input, owner, {
+    companyId: getCurrentCompanyId(),
     tags: input.tags ?? [],
     lastInteractionAt: null,
     nextContactAt: null,
@@ -140,10 +143,12 @@ export async function searchContacts(
   status: ContactStatus | "all",
   term: string
 ): Promise<IContact[]> {
-  const constraints =
-    status === "all"
-      ? [orderBy("createdAt", "desc")]
-      : [where("status", "==", status), orderBy("createdAt", "desc")];
+  const companyId = getCurrentCompanyId();
+  const constraints = [
+    ...(companyId ? [where("companyId", "==", companyId)] : []),
+    ...(status === "all" ? [] : [where("status", "==", status)]),
+    orderBy("createdAt", "desc"),
+  ];
 
   const snapshot = await getDocs(query(contactsRef, ...constraints));
   const lower = term.trim().toLowerCase();
@@ -154,12 +159,13 @@ export async function searchContacts(
 }
 
 export async function fetchClientContacts(): Promise<IContact[]> {
-  const q = query(
-    contactsRef,
+  const companyId = getCurrentCompanyId();
+  const constraints = [
+    ...(companyId ? [where("companyId", "==", companyId)] : []),
     where("status", "==", "cliente"),
-    orderBy("name", "asc")
-  );
-  const snapshot = await getDocs(q);
+    orderBy("name", "asc"),
+  ];
+  const snapshot = await getDocs(query(contactsRef, ...constraints));
   return snapshot.docs.map(mapContact);
 }
 

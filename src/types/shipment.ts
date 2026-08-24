@@ -4,6 +4,7 @@ export type ShipmentStatus = "preparando" | "em_transito" | "entregue" | "cancel
 
 export interface IShipment {
   id: string;
+  companyId: string;
   description: string;
   destination: string;
   carrier?: string;

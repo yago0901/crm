@@ -21,10 +21,12 @@ vi.mock("firebase/firestore", () => ({
 
 import { addDoc, getAggregateFromServer, updateDoc } from "firebase/firestore";
 import { createPayrollEntry, getPayrollOpenTotal, markPayrollEntryPaid } from "./payroll";
+import { setCurrentCompanyId } from "../shared/tenant";
 
 describe("createPayrollEntry", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    setCurrentCompanyId(null);
   });
 
   it("creates the entry with paidAt null and owner info", async () => {
@@ -55,6 +57,31 @@ describe("createPayrollEntry", () => {
         ownerId: "owner1",
         ownerName: "Yago",
       })
+    );
+  });
+
+  it("stamps the entry with the current companyId", async () => {
+    vi.mocked(addDoc).mockResolvedValue({ id: "new-id" } as never);
+    setCurrentCompanyId("acme");
+
+    await createPayrollEntry(
+      {
+        employeeId: "e1",
+        employeeName: "Maria",
+        competencia: "2026-08",
+        baseSalary: 5000,
+        bonuses: 200,
+        deductions: 100,
+        netValue: 5100,
+        status: "pendente",
+        notes: "",
+      },
+      { uid: "owner1", name: "Yago" }
+    );
+
+    expect(addDoc).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ companyId: "acme" })
     );
   });
 });

@@ -1,5 +1,6 @@
 import { DocumentData, QueryDocumentSnapshot, Unsubscribe } from "firebase/firestore";
 import { createCrudService } from "../shared/crudFactory";
+import { getCurrentCompanyId } from "../shared/tenant";
 import { IShipment, ShipmentInput, ShipmentStatus } from "../../types/shipment";
 
 export const mapShipment = (
@@ -8,6 +9,7 @@ export const mapShipment = (
   const data = snap.data();
   return {
     id: snap.id,
+    companyId: data.companyId,
     description: data.description,
     destination: data.destination ?? "",
     carrier: data.carrier ?? "",
@@ -33,14 +35,14 @@ export function subscribeToShipments(
   onChange: (shipments: IShipment[]) => void,
   onError?: (error: Error) => void
 ): Unsubscribe {
-  return shipmentsService.subscribe(status, onChange, onError);
+  return shipmentsService.subscribe(status, onChange, onError, getCurrentCompanyId() ?? undefined);
 }
 
 export async function createShipment(
   input: ShipmentInput,
   owner: { uid: string; name?: string | null }
 ): Promise<string> {
-  return shipmentsService.create(input, owner);
+  return shipmentsService.create(input, owner, { companyId: getCurrentCompanyId() });
 }
 
 export async function updateShipment(
@@ -55,5 +57,5 @@ export async function deleteShipment(shipmentId: string): Promise<void> {
 }
 
 export async function getInTransitShipmentsCount(): Promise<number> {
-  return shipmentsService.countByStatus("em_transito");
+  return shipmentsService.countByStatus("em_transito", getCurrentCompanyId() ?? undefined);
 }

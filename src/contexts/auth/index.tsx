@@ -3,6 +3,7 @@ import { auth, firestore } from '../../services/shared/firebase';
 import { User, signInWithEmailAndPassword, signOut } from 'firebase/auth';
 import { IAuthContextType, UserLevel } from './types'
 import { doc, getDoc, onSnapshot } from 'firebase/firestore';
+import { setCurrentCompanyId } from '../../services/shared/tenant';
 
 const AuthContext = createContext<IAuthContextType | undefined>(undefined);
 
@@ -35,15 +36,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setUserLevel(null);
       setCompanyId(null);
       setModules([]);
+      setCurrentCompanyId(null);
       return;
     }
 
     const userDocRef = doc(firestore, 'users', currentUser.uid);
     const unsubscribe = onSnapshot(userDocRef, snap => {
       const data = snap.data();
+      const nextCompanyId = (data?.companyId as string) ?? null;
       setUserLevel((data?.level as UserLevel) ?? 'User');
-      setCompanyId((data?.companyId as string) ?? null);
+      setCompanyId(nextCompanyId);
       setModules((data?.modules as string[]) ?? []);
+      setCurrentCompanyId(nextCompanyId);
     });
 
     return unsubscribe;

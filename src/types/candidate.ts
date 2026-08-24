@@ -4,6 +4,7 @@ export type CandidateStatus = "triagem" | "entrevista" | "aprovado" | "reprovado
 
 export interface ICandidate {
   id: string;
+  companyId: string;
   name: string;
   email: string;
   phone?: string;

@@ -19,13 +19,14 @@ vi.mock("firebase/firestore", () => ({
   onSnapshot: vi.fn(),
 }));
 
-import { addDoc, getAggregateFromServer, updateDoc } from "firebase/firestore";
+import { addDoc, getAggregateFromServer, updateDoc, where } from "firebase/firestore";
 import {
   createFollowUp,
   getPendingFollowUpsCount,
   mapFollowUp,
   markFollowUpDone,
 } from "./followUps";
+import { setCurrentCompanyId } from "../shared/tenant";
 
 describe("mapFollowUp", () => {
   it("defaults optional fields when missing from the document", () => {
@@ -56,6 +57,7 @@ describe("mapFollowUp", () => {
 describe("createFollowUp", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    setCurrentCompanyId(null);
   });
 
   it("creates the follow-up with completedAt null and owner info", async () => {
@@ -75,6 +77,21 @@ describe("createFollowUp", () => {
         ownerId: "owner1",
         ownerName: "Yago",
       })
+    );
+  });
+
+  it("stamps the follow-up with the current companyId", async () => {
+    vi.mocked(addDoc).mockResolvedValue({ id: "new-id" } as never);
+    setCurrentCompanyId("acme");
+
+    await createFollowUp(
+      { title: "Enviar proposta", description: "", contactId: "c1", contactName: "Maria", dueDate: null, status: "pendente" },
+      { uid: "owner1", name: "Yago" }
+    );
+
+    expect(addDoc).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ companyId: "acme" })
     );
   });
 });
@@ -101,6 +118,7 @@ describe("markFollowUpDone", () => {
 describe("getPendingFollowUpsCount", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    setCurrentCompanyId(null);
   });
 
   it("returns the aggregate count for pendente follow-ups", async () => {
@@ -111,5 +129,16 @@ describe("getPendingFollowUpsCount", () => {
     const total = await getPendingFollowUpsCount();
 
     expect(total).toBe(7);
+  });
+
+  it("filters by the current companyId when set", async () => {
+    vi.mocked(getAggregateFromServer).mockResolvedValue({
+      data: () => ({ total: 3 }),
+    } as never);
+    setCurrentCompanyId("acme");
+
+    await getPendingFollowUpsCount();
+
+    expect(where).toHaveBeenCalledWith("companyId", "==", "acme");
   });
 });

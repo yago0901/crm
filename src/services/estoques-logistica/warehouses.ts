@@ -1,5 +1,6 @@
 import { DocumentData, QueryDocumentSnapshot, Unsubscribe } from "firebase/firestore";
 import { createCrudService } from "../shared/crudFactory";
+import { getCurrentCompanyId } from "../shared/tenant";
 import { IWarehouse, WarehouseInput, WarehouseStatus } from "../../types/warehouse";
 
 export const mapWarehouse = (
@@ -8,6 +9,7 @@ export const mapWarehouse = (
   const data = snap.data();
   return {
     id: snap.id,
+    companyId: data.companyId,
     name: data.name,
     address: data.address ?? "",
     capacity: data.capacity ?? 0,
@@ -31,14 +33,14 @@ export function subscribeToWarehouses(
   onChange: (warehouses: IWarehouse[]) => void,
   onError?: (error: Error) => void
 ): Unsubscribe {
-  return warehousesService.subscribe(status, onChange, onError);
+  return warehousesService.subscribe(status, onChange, onError, getCurrentCompanyId() ?? undefined);
 }
 
 export async function createWarehouse(
   input: WarehouseInput,
   owner: { uid: string; name?: string | null }
 ): Promise<string> {
-  return warehousesService.create(input, owner);
+  return warehousesService.create(input, owner, { companyId: getCurrentCompanyId() });
 }
 
 export async function updateWarehouse(
@@ -53,5 +55,5 @@ export async function deleteWarehouse(warehouseId: string): Promise<void> {
 }
 
 export async function getActiveWarehousesCount(): Promise<number> {
-  return warehousesService.countByStatus("ativo");
+  return warehousesService.countByStatus("ativo", getCurrentCompanyId() ?? undefined);
 }

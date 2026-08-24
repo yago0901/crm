@@ -4,6 +4,7 @@ export type ContractStatus = "rascunho" | "ativo" | "encerrado" | "cancelado";
 
 export interface IContract {
   id: string;
+  companyId: string;
   title: string;
   contactId: string;
   contactName: string;

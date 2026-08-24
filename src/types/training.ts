@@ -4,6 +4,7 @@ export type TrainingStatus = "planejado" | "em_andamento" | "concluido" | "cance
 
 export interface ITraining {
   id: string;
+  companyId: string;
   title: string;
   description?: string;
   category: string;

@@ -21,10 +21,12 @@ vi.mock("firebase/firestore", () => ({
 
 import { addDoc, getAggregateFromServer } from "firebase/firestore";
 import { createWarehouse, getActiveWarehousesCount } from "./warehouses";
+import { setCurrentCompanyId } from "../shared/tenant";
 
 describe("createWarehouse", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    setCurrentCompanyId(null);
   });
 
   it("creates the warehouse with owner info", async () => {
@@ -39,6 +41,21 @@ describe("createWarehouse", () => {
     expect(addDoc).toHaveBeenCalledWith(
       expect.anything(),
       expect.objectContaining({ name: "Galpão Central", ownerId: "owner1" })
+    );
+  });
+
+  it("stamps the warehouse with the current companyId", async () => {
+    vi.mocked(addDoc).mockResolvedValue({ id: "new-id" } as never);
+    setCurrentCompanyId("acme");
+
+    await createWarehouse(
+      { name: "Galpão Central", address: "Rod. BR-101, km 12", capacity: 5000, manager: "Carlos", status: "ativo", notes: "" },
+      { uid: "owner1", name: "Yago" }
+    );
+
+    expect(addDoc).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ companyId: "acme" })
     );
   });
 });

@@ -4,6 +4,7 @@ export type PayrollStatus = "pendente" | "pago";
 
 export interface IPayrollEntry {
   id: string;
+  companyId: string;
   employeeId: string;
   employeeName: string;
   competencia: string;

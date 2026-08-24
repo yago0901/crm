@@ -4,6 +4,7 @@ export type LedgerEntryType = "debito" | "credito";
 
 export interface ILedgerEntry {
   id: string;
+  companyId: string;
   description: string;
   category: string;
   type: LedgerEntryType;

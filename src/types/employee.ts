@@ -4,6 +4,7 @@ export type EmployeeStatus = "ativo" | "ferias" | "desligado";
 
 export interface IEmployee {
   id: string;
+  companyId: string;
   name: string;
   email: string;
   phone?: string;

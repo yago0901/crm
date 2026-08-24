@@ -18,8 +18,9 @@ vi.mock("firebase/firestore", () => ({
   onSnapshot: vi.fn(),
 }));
 
-import { addDoc, getDocs } from "firebase/firestore";
+import { addDoc, getDocs, where } from "firebase/firestore";
 import { createContact, searchContacts } from "./contacts";
+import { setCurrentCompanyId } from "../shared/tenant";
 
 const makeSnap = (id: string, data: Record<string, unknown>) => ({
   id,
@@ -29,6 +30,7 @@ const makeSnap = (id: string, data: Record<string, unknown>) => ({
 describe("createContact", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    setCurrentCompanyId(null);
   });
 
   it("adds the contact with owner info, empty tags default, and timestamps", async () => {
@@ -67,11 +69,27 @@ describe("createContact", () => {
       expect.objectContaining({ ownerName: "" })
     );
   });
+
+  it("stamps the contact with the current companyId", async () => {
+    vi.mocked(addDoc).mockResolvedValue({ id: "new-id" } as never);
+    setCurrentCompanyId("acme");
+
+    await createContact(
+      { name: "Maria", email: "maria@example.com", status: "lead" } as never,
+      { uid: "owner1" }
+    );
+
+    expect(addDoc).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ companyId: "acme" })
+    );
+  });
 });
 
 describe("searchContacts", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    setCurrentCompanyId(null);
   });
 
   const docs = [
@@ -94,5 +112,14 @@ describe("searchContacts", () => {
     const result = await searchContacts("all", "");
 
     expect(result).toHaveLength(3);
+  });
+
+  it("adds a companyId filter when a company is set", async () => {
+    vi.mocked(getDocs).mockResolvedValue({ docs } as never);
+    setCurrentCompanyId("acme");
+
+    await searchContacts("all", "");
+
+    expect(where).toHaveBeenCalledWith("companyId", "==", "acme");
   });
 });

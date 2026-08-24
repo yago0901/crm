@@ -1,5 +1,6 @@
 import { DocumentData, QueryDocumentSnapshot, Unsubscribe } from "firebase/firestore";
 import { createCrudService } from "../shared/crudFactory";
+import { getCurrentCompanyId } from "../shared/tenant";
 import { IPurchaseOrder, PurchaseOrderInput, PurchaseOrderStatus } from "../../types/purchaseOrder";
 
 export const mapPurchaseOrder = (
@@ -8,6 +9,7 @@ export const mapPurchaseOrder = (
   const data = snap.data();
   return {
     id: snap.id,
+    companyId: data.companyId,
     supplierId: data.supplierId,
     supplierName: data.supplierName ?? "",
     description: data.description,
@@ -34,14 +36,14 @@ export function subscribeToPurchaseOrders(
   onChange: (orders: IPurchaseOrder[]) => void,
   onError?: (error: Error) => void
 ): Unsubscribe {
-  return purchaseOrdersService.subscribe(status, onChange, onError);
+  return purchaseOrdersService.subscribe(status, onChange, onError, getCurrentCompanyId() ?? undefined);
 }
 
 export async function createPurchaseOrder(
   input: PurchaseOrderInput,
   owner: { uid: string; name?: string | null }
 ): Promise<string> {
-  return purchaseOrdersService.create(input, owner);
+  return purchaseOrdersService.create(input, owner, { companyId: getCurrentCompanyId() });
 }
 
 export async function updatePurchaseOrder(
@@ -56,5 +58,5 @@ export async function deletePurchaseOrder(orderId: string): Promise<void> {
 }
 
 export async function getPendingPurchaseOrdersTotal(): Promise<number> {
-  return purchaseOrdersService.sumByStatus("value", "pendente");
+  return purchaseOrdersService.sumByStatus("value", "pendente", getCurrentCompanyId() ?? undefined);
 }

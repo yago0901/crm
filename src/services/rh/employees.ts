@@ -8,6 +8,7 @@ import {
   where,
 } from "firebase/firestore";
 import { createCrudService } from "../shared/crudFactory";
+import { getCurrentCompanyId } from "../shared/tenant";
 import { EmployeeInput, EmployeeStatus, IEmployee } from "../../types/employee";
 
 export const mapEmployee = (
@@ -16,6 +17,7 @@ export const mapEmployee = (
   const data = snap.data();
   return {
     id: snap.id,
+    companyId: data.companyId,
     name: data.name,
     email: data.email,
     phone: data.phone ?? "",
@@ -42,14 +44,14 @@ export function subscribeToEmployees(
   onChange: (employees: IEmployee[]) => void,
   onError?: (error: Error) => void
 ): Unsubscribe {
-  return employeesService.subscribe(status, onChange, onError);
+  return employeesService.subscribe(status, onChange, onError, getCurrentCompanyId() ?? undefined);
 }
 
 export async function createEmployee(
   input: EmployeeInput,
   owner: { uid: string; name?: string | null }
 ): Promise<string> {
-  return employeesService.create(input, owner);
+  return employeesService.create(input, owner, { companyId: getCurrentCompanyId() });
 }
 
 export async function updateEmployee(
@@ -64,15 +66,17 @@ export async function deleteEmployee(employeeId: string): Promise<void> {
 }
 
 export async function getActivePayrollTotal(): Promise<number> {
-  return employeesService.sumByStatus("salary", "ativo");
+  return employeesService.sumByStatus("salary", "ativo", getCurrentCompanyId() ?? undefined);
 }
 
 export async function fetchActiveEmployees(): Promise<IEmployee[]> {
-  const q = query(
-    employeesService.ref,
+  const companyId = getCurrentCompanyId();
+  const constraints = [
+    ...(companyId ? [where("companyId", "==", companyId)] : []),
     where("status", "==", "ativo"),
-    orderBy("name", "asc")
-  );
+    orderBy("name", "asc"),
+  ];
+  const q = query(employeesService.ref, ...constraints);
   const snapshot = await getDocs(q);
   return snapshot.docs.map(mapEmployee);
 }

@@ -21,6 +21,7 @@ vi.mock("firebase/firestore", () => ({
 
 import { addDoc, getAggregateFromServer } from "firebase/firestore";
 import { createInventoryItem, getActiveInventoryTotal, mapInventoryItem } from "./inventory";
+import { setCurrentCompanyId } from "../shared/tenant";
 
 describe("mapInventoryItem", () => {
   it("defaults optional fields when missing from the document", () => {
@@ -45,6 +46,7 @@ describe("mapInventoryItem", () => {
 describe("createInventoryItem", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    setCurrentCompanyId(null);
   });
 
   it("creates the item with owner info", async () => {
@@ -59,6 +61,21 @@ describe("createInventoryItem", () => {
     expect(addDoc).toHaveBeenCalledWith(
       expect.anything(),
       expect.objectContaining({ name: "Parafuso M4", ownerId: "owner1" })
+    );
+  });
+
+  it("stamps the item with the current companyId", async () => {
+    vi.mocked(addDoc).mockResolvedValue({ id: "new-id" } as never);
+    setCurrentCompanyId("acme");
+
+    await createInventoryItem(
+      { name: "Parafuso M4", sku: "PRF-M4", category: "Fixadores", quantity: 100, minQuantity: 20, unit: "un", unitCost: 0.5, status: "ativo", notes: "" },
+      { uid: "owner1", name: "Yago" }
+    );
+
+    expect(addDoc).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ companyId: "acme" })
     );
   });
 });
