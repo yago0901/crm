@@ -4,6 +4,7 @@ export type ProductionOrderStatus = "pendente" | "em_producao" | "concluida" | "
 
 export interface IProductionOrder {
   id: string;
+  companyId: string;
   description: string;
   productName: string;
   quantity: number;

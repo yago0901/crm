@@ -20,12 +20,14 @@ vi.mock("firebase/firestore", () => ({
   onSnapshot: vi.fn(),
 }));
 
-import { addDoc, getAggregateFromServer, getDocs } from "firebase/firestore";
+import { addDoc, getAggregateFromServer, getDocs, where } from "firebase/firestore";
 import { createProject, fetchActiveProjects, getActiveProjectsCount } from "./projects";
+import { setCurrentCompanyId } from "../shared/tenant";
 
 describe("createProject", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    setCurrentCompanyId(null);
   });
 
   it("creates the project with owner info", async () => {
@@ -42,11 +44,27 @@ describe("createProject", () => {
       expect.objectContaining({ name: "Implantação ERP", ownerId: "owner1" })
     );
   });
+
+  it("stamps the project with the current companyId", async () => {
+    vi.mocked(addDoc).mockResolvedValue({ id: "new-id" } as never);
+    setCurrentCompanyId("acme");
+
+    await createProject(
+      { name: "Implantação ERP", description: "", budget: 50000, startDate: null, endDate: null, status: "planejamento", notes: "" },
+      { uid: "owner1", name: "Yago" }
+    );
+
+    expect(addDoc).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ companyId: "acme" })
+    );
+  });
 });
 
 describe("getActiveProjectsCount", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    setCurrentCompanyId(null);
   });
 
   it("counts projects em_andamento", async () => {
@@ -61,6 +79,7 @@ describe("getActiveProjectsCount", () => {
 describe("fetchActiveProjects", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    setCurrentCompanyId(null);
   });
 
   it("returns active projects mapped from the snapshot", async () => {
@@ -73,5 +92,14 @@ describe("fetchActiveProjects", () => {
 
     expect(projects).toHaveLength(1);
     expect(projects[0].name).toBe("Implantação ERP");
+  });
+
+  it("adds a companyId filter when a company is set", async () => {
+    vi.mocked(getDocs).mockResolvedValue({ docs: [] } as never);
+    setCurrentCompanyId("acme");
+
+    await fetchActiveProjects();
+
+    expect(where).toHaveBeenCalledWith("companyId", "==", "acme");
   });
 });

@@ -4,6 +4,7 @@ export type ComplianceStatus = "conforme" | "nao_conforme" | "em_analise";
 
 export interface IComplianceItem {
   id: string;
+  companyId: string;
   title: string;
   category: string;
   responsible?: string;

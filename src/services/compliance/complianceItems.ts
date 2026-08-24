@@ -1,5 +1,6 @@
 import { DocumentData, QueryDocumentSnapshot, Unsubscribe } from "firebase/firestore";
 import { createCrudService } from "../shared/crudFactory";
+import { getCurrentCompanyId } from "../shared/tenant";
 import { ComplianceItemInput, ComplianceStatus, IComplianceItem } from "../../types/complianceItem";
 
 export const mapComplianceItem = (
@@ -8,6 +9,7 @@ export const mapComplianceItem = (
   const data = snap.data();
   return {
     id: snap.id,
+    companyId: data.companyId,
     title: data.title,
     category: data.category ?? "",
     responsible: data.responsible ?? "",
@@ -32,14 +34,14 @@ export function subscribeToComplianceItems(
   onChange: (items: IComplianceItem[]) => void,
   onError?: (error: Error) => void
 ): Unsubscribe {
-  return complianceItemsService.subscribe(status, onChange, onError);
+  return complianceItemsService.subscribe(status, onChange, onError, getCurrentCompanyId() ?? undefined);
 }
 
 export async function createComplianceItem(
   input: ComplianceItemInput,
   owner: { uid: string; name?: string | null }
 ): Promise<string> {
-  return complianceItemsService.create(input, owner);
+  return complianceItemsService.create(input, owner, { companyId: getCurrentCompanyId() });
 }
 
 export async function updateComplianceItem(
@@ -54,5 +56,5 @@ export async function deleteComplianceItem(itemId: string): Promise<void> {
 }
 
 export async function getNonConformitiesCount(): Promise<number> {
-  return complianceItemsService.countByStatus("nao_conforme");
+  return complianceItemsService.countByStatus("nao_conforme", getCurrentCompanyId() ?? undefined);
 }

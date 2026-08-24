@@ -4,6 +4,7 @@ export type DepartmentInitiativeStatus = "proposta" | "em_andamento" | "concluid
 
 export interface IDepartmentInitiative {
   id: string;
+  companyId: string;
   title: string;
   departments: string;
   description?: string;

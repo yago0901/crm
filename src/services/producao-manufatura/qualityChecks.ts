@@ -1,5 +1,6 @@
 import { DocumentData, QueryDocumentSnapshot, Unsubscribe } from "firebase/firestore";
 import { createCrudService } from "../shared/crudFactory";
+import { getCurrentCompanyId } from "../shared/tenant";
 import { IQualityCheck, QualityCheckInput, QualityCheckStatus } from "../../types/qualityCheck";
 
 export const mapQualityCheck = (
@@ -8,6 +9,7 @@ export const mapQualityCheck = (
   const data = snap.data();
   return {
     id: snap.id,
+    companyId: data.companyId,
     item: data.item,
     category: data.category ?? "",
     inspector: data.inspector ?? "",
@@ -32,14 +34,14 @@ export function subscribeToQualityChecks(
   onChange: (checks: IQualityCheck[]) => void,
   onError?: (error: Error) => void
 ): Unsubscribe {
-  return qualityChecksService.subscribe(status, onChange, onError);
+  return qualityChecksService.subscribe(status, onChange, onError, getCurrentCompanyId() ?? undefined);
 }
 
 export async function createQualityCheck(
   input: QualityCheckInput,
   owner: { uid: string; name?: string | null }
 ): Promise<string> {
-  return qualityChecksService.create(input, owner);
+  return qualityChecksService.create(input, owner, { companyId: getCurrentCompanyId() });
 }
 
 export async function updateQualityCheck(
@@ -54,5 +56,5 @@ export async function deleteQualityCheck(checkId: string): Promise<void> {
 }
 
 export async function getFailedQualityChecksCount(): Promise<number> {
-  return qualityChecksService.countByStatus("reprovado");
+  return qualityChecksService.countByStatus("reprovado", getCurrentCompanyId() ?? undefined);
 }

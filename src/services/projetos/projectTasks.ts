@@ -1,5 +1,6 @@
 import { DocumentData, QueryDocumentSnapshot, Unsubscribe } from "firebase/firestore";
 import { createCrudService } from "../shared/crudFactory";
+import { getCurrentCompanyId } from "../shared/tenant";
 import { IProjectTask, ProjectTaskInput, ProjectTaskStatus } from "../../types/projectTask";
 
 export const mapProjectTask = (
@@ -8,6 +9,7 @@ export const mapProjectTask = (
   const data = snap.data();
   return {
     id: snap.id,
+    companyId: data.companyId,
     projectId: data.projectId,
     projectName: data.projectName ?? "",
     title: data.title,
@@ -33,14 +35,14 @@ export function subscribeToProjectTasks(
   onChange: (tasks: IProjectTask[]) => void,
   onError?: (error: Error) => void
 ): Unsubscribe {
-  return projectTasksService.subscribe(status, onChange, onError);
+  return projectTasksService.subscribe(status, onChange, onError, getCurrentCompanyId() ?? undefined);
 }
 
 export async function createProjectTask(
   input: ProjectTaskInput,
   owner: { uid: string; name?: string | null }
 ): Promise<string> {
-  return projectTasksService.create(input, owner);
+  return projectTasksService.create(input, owner, { companyId: getCurrentCompanyId() });
 }
 
 export async function updateProjectTask(
@@ -55,5 +57,5 @@ export async function deleteProjectTask(taskId: string): Promise<void> {
 }
 
 export async function getBacklogTasksCount(): Promise<number> {
-  return projectTasksService.countByStatus("a_fazer");
+  return projectTasksService.countByStatus("a_fazer", getCurrentCompanyId() ?? undefined);
 }

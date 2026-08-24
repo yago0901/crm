@@ -21,10 +21,12 @@ vi.mock("firebase/firestore", () => ({
 
 import { addDoc, getAggregateFromServer } from "firebase/firestore";
 import { createProductionPlan, getActiveProductionPlansCount } from "./productionPlans";
+import { setCurrentCompanyId } from "../shared/tenant";
 
 describe("createProductionPlan", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    setCurrentCompanyId(null);
   });
 
   it("creates the plan with owner info", async () => {
@@ -39,6 +41,21 @@ describe("createProductionPlan", () => {
     expect(addDoc).toHaveBeenCalledWith(
       expect.anything(),
       expect.objectContaining({ productName: "Cadeira modelo X", ownerId: "owner1" })
+    );
+  });
+
+  it("stamps the plan with the current companyId", async () => {
+    vi.mocked(addDoc).mockResolvedValue({ id: "new-id" } as never);
+    setCurrentCompanyId("acme");
+
+    await createProductionPlan(
+      { productName: "Cadeira modelo X", targetQuantity: 200, startDate: null, endDate: null, status: "planejado", notes: "" },
+      { uid: "owner1", name: "Yago" }
+    );
+
+    expect(addDoc).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ companyId: "acme" })
     );
   });
 });

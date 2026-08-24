@@ -4,6 +4,7 @@ export type ProjectMilestoneStatus = "pendente" | "concluido" | "atrasado";
 
 export interface IProjectMilestone {
   id: string;
+  companyId: string;
   projectId: string;
   projectName: string;
   title: string;

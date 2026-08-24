@@ -4,6 +4,7 @@ export type ProductionPlanStatus = "planejado" | "em_andamento" | "concluido" | 
 
 export interface IProductionPlan {
   id: string;
+  companyId: string;
   productName: string;
   targetQuantity: number;
   startDate: Timestamp | null;

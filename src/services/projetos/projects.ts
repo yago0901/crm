@@ -8,6 +8,7 @@ import {
   where,
 } from "firebase/firestore";
 import { createCrudService } from "../shared/crudFactory";
+import { getCurrentCompanyId } from "../shared/tenant";
 import { IProject, ProjectInput, ProjectStatus } from "../../types/project";
 
 export const mapProject = (
@@ -16,6 +17,7 @@ export const mapProject = (
   const data = snap.data();
   return {
     id: snap.id,
+    companyId: data.companyId,
     name: data.name,
     description: data.description ?? "",
     budget: data.budget ?? 0,
@@ -41,14 +43,14 @@ export function subscribeToProjects(
   onChange: (projects: IProject[]) => void,
   onError?: (error: Error) => void
 ): Unsubscribe {
-  return projectsService.subscribe(status, onChange, onError);
+  return projectsService.subscribe(status, onChange, onError, getCurrentCompanyId() ?? undefined);
 }
 
 export async function createProject(
   input: ProjectInput,
   owner: { uid: string; name?: string | null }
 ): Promise<string> {
-  return projectsService.create(input, owner);
+  return projectsService.create(input, owner, { companyId: getCurrentCompanyId() });
 }
 
 export async function updateProject(
@@ -63,15 +65,17 @@ export async function deleteProject(projectId: string): Promise<void> {
 }
 
 export async function getActiveProjectsCount(): Promise<number> {
-  return projectsService.countByStatus("em_andamento");
+  return projectsService.countByStatus("em_andamento", getCurrentCompanyId() ?? undefined);
 }
 
 export async function fetchActiveProjects(): Promise<IProject[]> {
-  const q = query(
-    projectsService.ref,
+  const companyId = getCurrentCompanyId();
+  const constraints = [
+    ...(companyId ? [where("companyId", "==", companyId)] : []),
     where("status", "==", "em_andamento"),
-    orderBy("name", "asc")
-  );
+    orderBy("name", "asc"),
+  ];
+  const q = query(projectsService.ref, ...constraints);
   const snapshot = await getDocs(q);
   return snapshot.docs.map(mapProject);
 }

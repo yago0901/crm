@@ -21,10 +21,12 @@ vi.mock("firebase/firestore", () => ({
 
 import { addDoc, getAggregateFromServer } from "firebase/firestore";
 import { createResourceAllocation, getActiveAllocationsCount } from "./resourceAllocations";
+import { setCurrentCompanyId } from "../shared/tenant";
 
 describe("createResourceAllocation", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    setCurrentCompanyId(null);
   });
 
   it("creates the allocation with owner info", async () => {
@@ -50,6 +52,32 @@ describe("createResourceAllocation", () => {
     expect(addDoc).toHaveBeenCalledWith(
       expect.anything(),
       expect.objectContaining({ projectName: "Implantação ERP", employeeName: "Maria", ownerId: "owner1" })
+    );
+  });
+
+  it("stamps the allocation with the current companyId", async () => {
+    vi.mocked(addDoc).mockResolvedValue({ id: "new-id" } as never);
+    setCurrentCompanyId("acme");
+
+    await createResourceAllocation(
+      {
+        projectId: "p1",
+        projectName: "Implantação ERP",
+        employeeId: "e1",
+        employeeName: "Maria",
+        role: "Analista",
+        allocationPercent: 50,
+        startDate: null,
+        endDate: null,
+        status: "ativa",
+        notes: "",
+      },
+      { uid: "owner1", name: "Yago" }
+    );
+
+    expect(addDoc).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ companyId: "acme" })
     );
   });
 });

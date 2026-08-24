@@ -4,6 +4,7 @@ export type MaintenanceRequestStatus = "agendada" | "em_andamento" | "concluida"
 
 export interface IMaintenanceRequest {
   id: string;
+  companyId: string;
   equipmentName: string;
   description: string;
   technician?: string;

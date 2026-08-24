@@ -1,5 +1,6 @@
 import { DocumentData, QueryDocumentSnapshot, Unsubscribe } from "firebase/firestore";
 import { createCrudService } from "../shared/crudFactory";
+import { getCurrentCompanyId } from "../shared/tenant";
 import {
   IResourceAllocation,
   ResourceAllocationInput,
@@ -12,6 +13,7 @@ export const mapResourceAllocation = (
   const data = snap.data();
   return {
     id: snap.id,
+    companyId: data.companyId,
     projectId: data.projectId,
     projectName: data.projectName ?? "",
     employeeId: data.employeeId,
@@ -42,14 +44,21 @@ export function subscribeToResourceAllocations(
   onChange: (allocations: IResourceAllocation[]) => void,
   onError?: (error: Error) => void
 ): Unsubscribe {
-  return resourceAllocationsService.subscribe(status, onChange, onError);
+  return resourceAllocationsService.subscribe(
+    status,
+    onChange,
+    onError,
+    getCurrentCompanyId() ?? undefined
+  );
 }
 
 export async function createResourceAllocation(
   input: ResourceAllocationInput,
   owner: { uid: string; name?: string | null }
 ): Promise<string> {
-  return resourceAllocationsService.create(input, owner);
+  return resourceAllocationsService.create(input, owner, {
+    companyId: getCurrentCompanyId(),
+  });
 }
 
 export async function updateResourceAllocation(
@@ -64,5 +73,5 @@ export async function deleteResourceAllocation(allocationId: string): Promise<vo
 }
 
 export async function getActiveAllocationsCount(): Promise<number> {
-  return resourceAllocationsService.countByStatus("ativa");
+  return resourceAllocationsService.countByStatus("ativa", getCurrentCompanyId() ?? undefined);
 }

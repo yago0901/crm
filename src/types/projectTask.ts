@@ -4,6 +4,7 @@ export type ProjectTaskStatus = "a_fazer" | "em_andamento" | "concluida";
 
 export interface IProjectTask {
   id: string;
+  companyId: string;
   projectId: string;
   projectName: string;
   title: string;

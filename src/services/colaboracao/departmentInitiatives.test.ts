@@ -21,10 +21,12 @@ vi.mock("firebase/firestore", () => ({
 
 import { addDoc, getAggregateFromServer } from "firebase/firestore";
 import { createDepartmentInitiative, getActiveInitiativesCount } from "./departmentInitiatives";
+import { setCurrentCompanyId } from "../shared/tenant";
 
 describe("createDepartmentInitiative", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    setCurrentCompanyId(null);
   });
 
   it("creates the initiative with owner info", async () => {
@@ -39,6 +41,21 @@ describe("createDepartmentInitiative", () => {
     expect(addDoc).toHaveBeenCalledWith(
       expect.anything(),
       expect.objectContaining({ title: "Padronizar onboarding", ownerId: "owner1" })
+    );
+  });
+
+  it("stamps the initiative with the current companyId", async () => {
+    vi.mocked(addDoc).mockResolvedValue({ id: "new-id" } as never);
+    setCurrentCompanyId("acme");
+
+    await createDepartmentInitiative(
+      { title: "Padronizar onboarding", departments: "RH + TI", description: "", leadName: "Bruna", status: "proposta", notes: "" },
+      { uid: "owner1", name: "Yago" }
+    );
+
+    expect(addDoc).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ companyId: "acme" })
     );
   });
 });

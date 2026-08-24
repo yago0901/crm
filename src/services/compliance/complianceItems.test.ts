@@ -21,10 +21,12 @@ vi.mock("firebase/firestore", () => ({
 
 import { addDoc, getAggregateFromServer } from "firebase/firestore";
 import { createComplianceItem, getNonConformitiesCount } from "./complianceItems";
+import { setCurrentCompanyId } from "../shared/tenant";
 
 describe("createComplianceItem", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    setCurrentCompanyId(null);
   });
 
   it("creates the item with owner info", async () => {
@@ -39,6 +41,21 @@ describe("createComplianceItem", () => {
     expect(addDoc).toHaveBeenCalledWith(
       expect.anything(),
       expect.objectContaining({ title: "Política de senhas", ownerId: "owner1" })
+    );
+  });
+
+  it("stamps the item with the current companyId", async () => {
+    vi.mocked(addDoc).mockResolvedValue({ id: "new-id" } as never);
+    setCurrentCompanyId("acme");
+
+    await createComplianceItem(
+      { title: "Política de senhas", category: "Segurança", responsible: "TI", reviewDate: null, status: "em_analise", notes: "" },
+      { uid: "owner1", name: "Yago" }
+    );
+
+    expect(addDoc).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ companyId: "acme" })
     );
   });
 });

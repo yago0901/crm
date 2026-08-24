@@ -21,10 +21,12 @@ vi.mock("firebase/firestore", () => ({
 
 import { addDoc, getAggregateFromServer } from "firebase/firestore";
 import { createMaintenanceRequest, getScheduledMaintenanceCount } from "./maintenanceRequests";
+import { setCurrentCompanyId } from "../shared/tenant";
 
 describe("createMaintenanceRequest", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    setCurrentCompanyId(null);
   });
 
   it("creates the request with owner info", async () => {
@@ -39,6 +41,21 @@ describe("createMaintenanceRequest", () => {
     expect(addDoc).toHaveBeenCalledWith(
       expect.anything(),
       expect.objectContaining({ equipmentName: "Torno CNC 03", ownerId: "owner1" })
+    );
+  });
+
+  it("stamps the request with the current companyId", async () => {
+    vi.mocked(addDoc).mockResolvedValue({ id: "new-id" } as never);
+    setCurrentCompanyId("acme");
+
+    await createMaintenanceRequest(
+      { equipmentName: "Torno CNC 03", description: "Revisão preventiva", technician: "Bruno", scheduledDate: null, status: "agendada", notes: "" },
+      { uid: "owner1", name: "Yago" }
+    );
+
+    expect(addDoc).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ companyId: "acme" })
     );
   });
 });

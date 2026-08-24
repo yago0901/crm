@@ -4,6 +4,7 @@ export type QualityCheckStatus = "pendente" | "aprovado" | "reprovado";
 
 export interface IQualityCheck {
   id: string;
+  companyId: string;
   item: string;
   category: string;
   inspector?: string;

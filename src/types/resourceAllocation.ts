@@ -4,6 +4,7 @@ export type ResourceAllocationStatus = "ativa" | "encerrada";
 
 export interface IResourceAllocation {
   id: string;
+  companyId: string;
   projectId: string;
   projectName: string;
   employeeId: string;

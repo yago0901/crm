@@ -1,5 +1,6 @@
 import { DocumentData, QueryDocumentSnapshot, Unsubscribe } from "firebase/firestore";
 import { createCrudService } from "../shared/crudFactory";
+import { getCurrentCompanyId } from "../shared/tenant";
 import { IInternalAudit, InternalAuditInput, InternalAuditStatus } from "../../types/internalAudit";
 
 export const mapInternalAudit = (
@@ -8,6 +9,7 @@ export const mapInternalAudit = (
   const data = snap.data();
   return {
     id: snap.id,
+    companyId: data.companyId,
     title: data.title,
     department: data.department ?? "",
     auditor: data.auditor ?? "",
@@ -33,14 +35,14 @@ export function subscribeToInternalAudits(
   onChange: (audits: IInternalAudit[]) => void,
   onError?: (error: Error) => void
 ): Unsubscribe {
-  return internalAuditsService.subscribe(status, onChange, onError);
+  return internalAuditsService.subscribe(status, onChange, onError, getCurrentCompanyId() ?? undefined);
 }
 
 export async function createInternalAudit(
   input: InternalAuditInput,
   owner: { uid: string; name?: string | null }
 ): Promise<string> {
-  return internalAuditsService.create(input, owner);
+  return internalAuditsService.create(input, owner, { companyId: getCurrentCompanyId() });
 }
 
 export async function updateInternalAudit(
@@ -55,5 +57,5 @@ export async function deleteInternalAudit(auditId: string): Promise<void> {
 }
 
 export async function getPlannedAuditsCount(): Promise<number> {
-  return internalAuditsService.countByStatus("planejada");
+  return internalAuditsService.countByStatus("planejada", getCurrentCompanyId() ?? undefined);
 }

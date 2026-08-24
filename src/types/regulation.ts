@@ -4,6 +4,7 @@ export type RegulationStatus = "pendente" | "atendido" | "vencido";
 
 export interface IRegulation {
   id: string;
+  companyId: string;
   name: string;
   category: string;
   responsible?: string;
