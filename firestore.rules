@@ -26,7 +26,7 @@ service cloud.firestore {
     // which is safe (it just means nobody matches it yet).
     function belongsToCompany(companyId) {
       return isSignedIn()
-        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.companyId == companyId;
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('companyId', null) == companyId;
     }
 
     match /platformAdmins/{uid} {
@@ -64,7 +64,7 @@ service cloud.firestore {
     }
 
     match /contacts/{contactId} {
-      allow read: if belongsToCompany(resource.data.companyId);
+      allow read: if belongsToCompany(resource.data.get('companyId', null));
 
       allow create: if isSignedIn()
         && belongsToCompany(request.resource.data.companyId)
@@ -73,20 +73,20 @@ service cloud.firestore {
         && request.resource.data.name.size() > 0
         && request.resource.data.status in ['lead', 'cliente', 'inativo'];
 
-      allow update: if belongsToCompany(resource.data.companyId)
-        && request.resource.data.companyId == resource.data.companyId
+      allow update: if belongsToCompany(resource.data.get('companyId', null))
+        && request.resource.data.companyId == resource.data.get('companyId', null)
         && (
           isAdmin()
           || (resource.data.ownerId == request.auth.uid
             && request.resource.data.ownerId == resource.data.ownerId)
         );
 
-      allow delete: if belongsToCompany(resource.data.companyId)
+      allow delete: if belongsToCompany(resource.data.get('companyId', null))
         && (isAdmin() || resource.data.ownerId == request.auth.uid);
 
       match /interactions/{interactionId} {
         function parentCompanyId() {
-          return get(/databases/$(database)/documents/contacts/$(contactId)).data.companyId;
+          return get(/databases/$(database)/documents/contacts/$(contactId)).data.get('companyId', null);
         }
 
         allow read: if belongsToCompany(parentCompanyId());
@@ -104,7 +104,7 @@ service cloud.firestore {
     }
 
     match /contracts/{contractId} {
-      allow read: if belongsToCompany(resource.data.companyId);
+      allow read: if belongsToCompany(resource.data.get('companyId', null));
 
       allow create: if isSignedIn()
         && belongsToCompany(request.resource.data.companyId)
@@ -114,20 +114,20 @@ service cloud.firestore {
         && request.resource.data.contactId is string
         && request.resource.data.status in ['rascunho', 'ativo', 'encerrado', 'cancelado'];
 
-      allow update: if belongsToCompany(resource.data.companyId)
-        && request.resource.data.companyId == resource.data.companyId
+      allow update: if belongsToCompany(resource.data.get('companyId', null))
+        && request.resource.data.companyId == resource.data.get('companyId', null)
         && (
           isAdmin()
           || (resource.data.ownerId == request.auth.uid
             && request.resource.data.ownerId == resource.data.ownerId)
         );
 
-      allow delete: if belongsToCompany(resource.data.companyId)
+      allow delete: if belongsToCompany(resource.data.get('companyId', null))
         && (isAdmin() || resource.data.ownerId == request.auth.uid);
     }
 
     match /employees/{employeeId} {
-      allow read: if belongsToCompany(resource.data.companyId);
+      allow read: if belongsToCompany(resource.data.get('companyId', null));
 
       allow create: if isSignedIn()
         && belongsToCompany(request.resource.data.companyId)
@@ -136,20 +136,20 @@ service cloud.firestore {
         && request.resource.data.name.size() > 0
         && request.resource.data.status in ['ativo', 'ferias', 'desligado'];
 
-      allow update: if belongsToCompany(resource.data.companyId)
-        && request.resource.data.companyId == resource.data.companyId
+      allow update: if belongsToCompany(resource.data.get('companyId', null))
+        && request.resource.data.companyId == resource.data.get('companyId', null)
         && (
           isAdmin()
           || (resource.data.ownerId == request.auth.uid
             && request.resource.data.ownerId == resource.data.ownerId)
         );
 
-      allow delete: if belongsToCompany(resource.data.companyId)
+      allow delete: if belongsToCompany(resource.data.get('companyId', null))
         && (isAdmin() || resource.data.ownerId == request.auth.uid);
     }
 
     match /payables/{payableId} {
-      allow read: if belongsToCompany(resource.data.companyId);
+      allow read: if belongsToCompany(resource.data.get('companyId', null));
 
       allow create: if isSignedIn()
         && belongsToCompany(request.resource.data.companyId)
@@ -158,20 +158,20 @@ service cloud.firestore {
         && request.resource.data.description.size() > 0
         && request.resource.data.status in ['pendente', 'pago', 'atrasado'];
 
-      allow update: if belongsToCompany(resource.data.companyId)
-        && request.resource.data.companyId == resource.data.companyId
+      allow update: if belongsToCompany(resource.data.get('companyId', null))
+        && request.resource.data.companyId == resource.data.get('companyId', null)
         && (
           isAdmin()
           || (resource.data.ownerId == request.auth.uid
             && request.resource.data.ownerId == resource.data.ownerId)
         );
 
-      allow delete: if belongsToCompany(resource.data.companyId)
+      allow delete: if belongsToCompany(resource.data.get('companyId', null))
         && (isAdmin() || resource.data.ownerId == request.auth.uid);
     }
 
     match /receivables/{receivableId} {
-      allow read: if belongsToCompany(resource.data.companyId);
+      allow read: if belongsToCompany(resource.data.get('companyId', null));
 
       allow create: if isSignedIn()
         && belongsToCompany(request.resource.data.companyId)
@@ -180,20 +180,20 @@ service cloud.firestore {
         && request.resource.data.description.size() > 0
         && request.resource.data.status in ['pendente', 'pago', 'atrasado'];
 
-      allow update: if belongsToCompany(resource.data.companyId)
-        && request.resource.data.companyId == resource.data.companyId
+      allow update: if belongsToCompany(resource.data.get('companyId', null))
+        && request.resource.data.companyId == resource.data.get('companyId', null)
         && (
           isAdmin()
           || (resource.data.ownerId == request.auth.uid
             && request.resource.data.ownerId == resource.data.ownerId)
         );
 
-      allow delete: if belongsToCompany(resource.data.companyId)
+      allow delete: if belongsToCompany(resource.data.get('companyId', null))
         && (isAdmin() || resource.data.ownerId == request.auth.uid);
     }
 
     match /followUps/{followUpId} {
-      allow read: if belongsToCompany(resource.data.companyId);
+      allow read: if belongsToCompany(resource.data.get('companyId', null));
 
       allow create: if isSignedIn()
         && belongsToCompany(request.resource.data.companyId)
@@ -202,20 +202,20 @@ service cloud.firestore {
         && request.resource.data.title.size() > 0
         && request.resource.data.status in ['pendente', 'concluido', 'cancelado'];
 
-      allow update: if belongsToCompany(resource.data.companyId)
-        && request.resource.data.companyId == resource.data.companyId
+      allow update: if belongsToCompany(resource.data.get('companyId', null))
+        && request.resource.data.companyId == resource.data.get('companyId', null)
         && (
           isAdmin()
           || (resource.data.ownerId == request.auth.uid
             && request.resource.data.ownerId == resource.data.ownerId)
         );
 
-      allow delete: if belongsToCompany(resource.data.companyId)
+      allow delete: if belongsToCompany(resource.data.get('companyId', null))
         && (isAdmin() || resource.data.ownerId == request.auth.uid);
     }
 
     match /ledgerEntries/{entryId} {
-      allow read: if belongsToCompany(resource.data.companyId);
+      allow read: if belongsToCompany(resource.data.get('companyId', null));
 
       allow create: if isSignedIn()
         && belongsToCompany(request.resource.data.companyId)
@@ -224,20 +224,20 @@ service cloud.firestore {
         && request.resource.data.description.size() > 0
         && request.resource.data.type in ['debito', 'credito'];
 
-      allow update: if belongsToCompany(resource.data.companyId)
-        && request.resource.data.companyId == resource.data.companyId
+      allow update: if belongsToCompany(resource.data.get('companyId', null))
+        && request.resource.data.companyId == resource.data.get('companyId', null)
         && (
           isAdmin()
           || (resource.data.ownerId == request.auth.uid
             && request.resource.data.ownerId == resource.data.ownerId)
         );
 
-      allow delete: if belongsToCompany(resource.data.companyId)
+      allow delete: if belongsToCompany(resource.data.get('companyId', null))
         && (isAdmin() || resource.data.ownerId == request.auth.uid);
     }
 
     match /payrollEntries/{entryId} {
-      allow read: if belongsToCompany(resource.data.companyId);
+      allow read: if belongsToCompany(resource.data.get('companyId', null));
 
       allow create: if isSignedIn()
         && belongsToCompany(request.resource.data.companyId)
@@ -246,20 +246,20 @@ service cloud.firestore {
         && request.resource.data.employeeId.size() > 0
         && request.resource.data.status in ['pendente', 'pago'];
 
-      allow update: if belongsToCompany(resource.data.companyId)
-        && request.resource.data.companyId == resource.data.companyId
+      allow update: if belongsToCompany(resource.data.get('companyId', null))
+        && request.resource.data.companyId == resource.data.get('companyId', null)
         && (
           isAdmin()
           || (resource.data.ownerId == request.auth.uid
             && request.resource.data.ownerId == resource.data.ownerId)
         );
 
-      allow delete: if belongsToCompany(resource.data.companyId)
+      allow delete: if belongsToCompany(resource.data.get('companyId', null))
         && (isAdmin() || resource.data.ownerId == request.auth.uid);
     }
 
     match /candidates/{candidateId} {
-      allow read: if belongsToCompany(resource.data.companyId);
+      allow read: if belongsToCompany(resource.data.get('companyId', null));
 
       allow create: if isSignedIn()
         && belongsToCompany(request.resource.data.companyId)
@@ -268,20 +268,20 @@ service cloud.firestore {
         && request.resource.data.name.size() > 0
         && request.resource.data.status in ['triagem', 'entrevista', 'aprovado', 'reprovado'];
 
-      allow update: if belongsToCompany(resource.data.companyId)
-        && request.resource.data.companyId == resource.data.companyId
+      allow update: if belongsToCompany(resource.data.get('companyId', null))
+        && request.resource.data.companyId == resource.data.get('companyId', null)
         && (
           isAdmin()
           || (resource.data.ownerId == request.auth.uid
             && request.resource.data.ownerId == resource.data.ownerId)
         );
 
-      allow delete: if belongsToCompany(resource.data.companyId)
+      allow delete: if belongsToCompany(resource.data.get('companyId', null))
         && (isAdmin() || resource.data.ownerId == request.auth.uid);
     }
 
     match /trainings/{trainingId} {
-      allow read: if belongsToCompany(resource.data.companyId);
+      allow read: if belongsToCompany(resource.data.get('companyId', null));
 
       allow create: if isSignedIn()
         && belongsToCompany(request.resource.data.companyId)
@@ -290,20 +290,20 @@ service cloud.firestore {
         && request.resource.data.title.size() > 0
         && request.resource.data.status in ['planejado', 'em_andamento', 'concluido', 'cancelado'];
 
-      allow update: if belongsToCompany(resource.data.companyId)
-        && request.resource.data.companyId == resource.data.companyId
+      allow update: if belongsToCompany(resource.data.get('companyId', null))
+        && request.resource.data.companyId == resource.data.get('companyId', null)
         && (
           isAdmin()
           || (resource.data.ownerId == request.auth.uid
             && request.resource.data.ownerId == resource.data.ownerId)
         );
 
-      allow delete: if belongsToCompany(resource.data.companyId)
+      allow delete: if belongsToCompany(resource.data.get('companyId', null))
         && (isAdmin() || resource.data.ownerId == request.auth.uid);
     }
 
     match /performanceReviews/{reviewId} {
-      allow read: if belongsToCompany(resource.data.companyId);
+      allow read: if belongsToCompany(resource.data.get('companyId', null));
 
       allow create: if isSignedIn()
         && belongsToCompany(request.resource.data.companyId)
@@ -312,20 +312,20 @@ service cloud.firestore {
         && request.resource.data.employeeId.size() > 0
         && request.resource.data.status in ['rascunho', 'finalizada'];
 
-      allow update: if belongsToCompany(resource.data.companyId)
-        && request.resource.data.companyId == resource.data.companyId
+      allow update: if belongsToCompany(resource.data.get('companyId', null))
+        && request.resource.data.companyId == resource.data.get('companyId', null)
         && (
           isAdmin()
           || (resource.data.ownerId == request.auth.uid
             && request.resource.data.ownerId == resource.data.ownerId)
         );
 
-      allow delete: if belongsToCompany(resource.data.companyId)
+      allow delete: if belongsToCompany(resource.data.get('companyId', null))
         && (isAdmin() || resource.data.ownerId == request.auth.uid);
     }
 
     match /suppliers/{supplierId} {
-      allow read: if belongsToCompany(resource.data.companyId);
+      allow read: if belongsToCompany(resource.data.get('companyId', null));
 
       allow create: if isSignedIn()
         && belongsToCompany(request.resource.data.companyId)
@@ -334,20 +334,20 @@ service cloud.firestore {
         && request.resource.data.name.size() > 0
         && request.resource.data.status in ['ativo', 'inativo'];
 
-      allow update: if belongsToCompany(resource.data.companyId)
-        && request.resource.data.companyId == resource.data.companyId
+      allow update: if belongsToCompany(resource.data.get('companyId', null))
+        && request.resource.data.companyId == resource.data.get('companyId', null)
         && (
           isAdmin()
           || (resource.data.ownerId == request.auth.uid
             && request.resource.data.ownerId == resource.data.ownerId)
         );
 
-      allow delete: if belongsToCompany(resource.data.companyId)
+      allow delete: if belongsToCompany(resource.data.get('companyId', null))
         && (isAdmin() || resource.data.ownerId == request.auth.uid);
     }
 
     match /inventoryItems/{itemId} {
-      allow read: if belongsToCompany(resource.data.companyId);
+      allow read: if belongsToCompany(resource.data.get('companyId', null));
 
       allow create: if isSignedIn()
         && belongsToCompany(request.resource.data.companyId)
@@ -356,20 +356,20 @@ service cloud.firestore {
         && request.resource.data.name.size() > 0
         && request.resource.data.status in ['ativo', 'descontinuado'];
 
-      allow update: if belongsToCompany(resource.data.companyId)
-        && request.resource.data.companyId == resource.data.companyId
+      allow update: if belongsToCompany(resource.data.get('companyId', null))
+        && request.resource.data.companyId == resource.data.get('companyId', null)
         && (
           isAdmin()
           || (resource.data.ownerId == request.auth.uid
             && request.resource.data.ownerId == resource.data.ownerId)
         );
 
-      allow delete: if belongsToCompany(resource.data.companyId)
+      allow delete: if belongsToCompany(resource.data.get('companyId', null))
         && (isAdmin() || resource.data.ownerId == request.auth.uid);
     }
 
     match /purchaseOrders/{orderId} {
-      allow read: if belongsToCompany(resource.data.companyId);
+      allow read: if belongsToCompany(resource.data.get('companyId', null));
 
       allow create: if isSignedIn()
         && belongsToCompany(request.resource.data.companyId)
@@ -378,20 +378,20 @@ service cloud.firestore {
         && request.resource.data.supplierId.size() > 0
         && request.resource.data.status in ['pendente', 'aprovado', 'recebido', 'cancelado'];
 
-      allow update: if belongsToCompany(resource.data.companyId)
-        && request.resource.data.companyId == resource.data.companyId
+      allow update: if belongsToCompany(resource.data.get('companyId', null))
+        && request.resource.data.companyId == resource.data.get('companyId', null)
         && (
           isAdmin()
           || (resource.data.ownerId == request.auth.uid
             && request.resource.data.ownerId == resource.data.ownerId)
         );
 
-      allow delete: if belongsToCompany(resource.data.companyId)
+      allow delete: if belongsToCompany(resource.data.get('companyId', null))
         && (isAdmin() || resource.data.ownerId == request.auth.uid);
     }
 
     match /shipments/{shipmentId} {
-      allow read: if belongsToCompany(resource.data.companyId);
+      allow read: if belongsToCompany(resource.data.get('companyId', null));
 
       allow create: if isSignedIn()
         && belongsToCompany(request.resource.data.companyId)
@@ -400,20 +400,20 @@ service cloud.firestore {
         && request.resource.data.description.size() > 0
         && request.resource.data.status in ['preparando', 'em_transito', 'entregue', 'cancelado'];
 
-      allow update: if belongsToCompany(resource.data.companyId)
-        && request.resource.data.companyId == resource.data.companyId
+      allow update: if belongsToCompany(resource.data.get('companyId', null))
+        && request.resource.data.companyId == resource.data.get('companyId', null)
         && (
           isAdmin()
           || (resource.data.ownerId == request.auth.uid
             && request.resource.data.ownerId == resource.data.ownerId)
         );
 
-      allow delete: if belongsToCompany(resource.data.companyId)
+      allow delete: if belongsToCompany(resource.data.get('companyId', null))
         && (isAdmin() || resource.data.ownerId == request.auth.uid);
     }
 
     match /warehouses/{warehouseId} {
-      allow read: if belongsToCompany(resource.data.companyId);
+      allow read: if belongsToCompany(resource.data.get('companyId', null));
 
       allow create: if isSignedIn()
         && belongsToCompany(request.resource.data.companyId)
@@ -422,15 +422,15 @@ service cloud.firestore {
         && request.resource.data.name.size() > 0
         && request.resource.data.status in ['ativo', 'inativo'];
 
-      allow update: if belongsToCompany(resource.data.companyId)
-        && request.resource.data.companyId == resource.data.companyId
+      allow update: if belongsToCompany(resource.data.get('companyId', null))
+        && request.resource.data.companyId == resource.data.get('companyId', null)
         && (
           isAdmin()
           || (resource.data.ownerId == request.auth.uid
             && request.resource.data.ownerId == resource.data.ownerId)
         );
 
-      allow delete: if belongsToCompany(resource.data.companyId)
+      allow delete: if belongsToCompany(resource.data.get('companyId', null))
         && (isAdmin() || resource.data.ownerId == request.auth.uid);
     }
 
