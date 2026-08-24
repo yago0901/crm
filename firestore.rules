@@ -16,6 +16,41 @@ service cloud.firestore {
         && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.level == 'Admin';
     }
 
+    function isSuperAdmin() {
+      return isSignedIn()
+        && exists(/databases/$(database)/documents/platformAdmins/$(request.auth.uid));
+    }
+
+    // NOTE: users/{uid} does not have a companyId field yet — that lands in
+    // the Fase 0 passo 2 migration. Until then this always evaluates false,
+    // which is safe (it just means nobody matches it yet).
+    function belongsToCompany(companyId) {
+      return isSignedIn()
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.companyId == companyId;
+    }
+
+    match /platformAdmins/{uid} {
+      allow read: if isOwner(uid);
+      allow write: if false;
+    }
+
+    match /companies/{companyId} {
+      allow read: if isSuperAdmin() || belongsToCompany(companyId);
+
+      allow create: if isSignedIn()
+        && request.resource.data.primaryUserId == request.auth.uid
+        && request.resource.data.slug == companyId
+        && request.resource.data.plan == 'trial'
+        && request.resource.data.maxUsers is int
+        && request.resource.data.maxUsers <= 5
+        && request.resource.data.userCount == 1
+        && !exists(/databases/$(database)/documents/users/$(request.auth.uid));
+
+      allow update: if isSuperAdmin() || (belongsToCompany(companyId) && isAdmin());
+
+      allow delete: if isSuperAdmin();
+    }
+
     match /users/{uid} {
       allow read: if isOwner(uid);
 
