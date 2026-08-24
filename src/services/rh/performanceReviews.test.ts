@@ -20,6 +20,7 @@ vi.mock("firebase/firestore", () => ({
 
 import { addDoc } from "firebase/firestore";
 import { createPerformanceReview, mapPerformanceReview } from "./performanceReviews";
+import { setCurrentCompanyId } from "../shared/tenant";
 
 describe("mapPerformanceReview", () => {
   it("defaults optional fields when missing from the document", () => {
@@ -49,6 +50,7 @@ describe("mapPerformanceReview", () => {
 describe("createPerformanceReview", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    setCurrentCompanyId(null);
   });
 
   it("creates the review with owner info", async () => {
@@ -76,6 +78,29 @@ describe("createPerformanceReview", () => {
         ownerId: "owner1",
         ownerName: "Yago",
       })
+    );
+  });
+
+  it("stamps the review with the current companyId", async () => {
+    vi.mocked(addDoc).mockResolvedValue({ id: "new-id" } as never);
+    setCurrentCompanyId("acme");
+
+    await createPerformanceReview(
+      {
+        employeeId: "e1",
+        employeeName: "Maria",
+        period: "2026-Q3",
+        score: 4,
+        strengths: "Proatividade",
+        improvements: "Comunicação",
+        status: "rascunho",
+      },
+      { uid: "owner1", name: "Yago" }
+    );
+
+    expect(addDoc).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ companyId: "acme" })
     );
   });
 });

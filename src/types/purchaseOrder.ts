@@ -4,6 +4,7 @@ export type PurchaseOrderStatus = "pendente" | "aprovado" | "recebido" | "cancel
 
 export interface IPurchaseOrder {
   id: string;
+  companyId: string;
   supplierId: string;
   supplierName: string;
   description: string;

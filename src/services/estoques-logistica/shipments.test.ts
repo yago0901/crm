@@ -21,10 +21,12 @@ vi.mock("firebase/firestore", () => ({
 
 import { addDoc, getAggregateFromServer } from "firebase/firestore";
 import { createShipment, getInTransitShipmentsCount } from "./shipments";
+import { setCurrentCompanyId } from "../shared/tenant";
 
 describe("createShipment", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    setCurrentCompanyId(null);
   });
 
   it("creates the shipment with owner info", async () => {
@@ -39,6 +41,21 @@ describe("createShipment", () => {
     expect(addDoc).toHaveBeenCalledWith(
       expect.anything(),
       expect.objectContaining({ description: "Lote 42", ownerId: "owner1" })
+    );
+  });
+
+  it("stamps the shipment with the current companyId", async () => {
+    vi.mocked(addDoc).mockResolvedValue({ id: "new-id" } as never);
+    setCurrentCompanyId("acme");
+
+    await createShipment(
+      { description: "Lote 42", destination: "São Paulo", carrier: "Transportadora Y", trackingCode: "", status: "preparando", shipDate: null, notes: "" },
+      { uid: "owner1", name: "Yago" }
+    );
+
+    expect(addDoc).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ companyId: "acme" })
     );
   });
 });

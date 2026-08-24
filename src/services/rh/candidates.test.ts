@@ -21,10 +21,12 @@ vi.mock("firebase/firestore", () => ({
 
 import { addDoc, getAggregateFromServer } from "firebase/firestore";
 import { createCandidate, getCandidatesInScreeningCount } from "./candidates";
+import { setCurrentCompanyId } from "../shared/tenant";
 
 describe("createCandidate", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    setCurrentCompanyId(null);
   });
 
   it("creates the candidate with owner info", async () => {
@@ -44,6 +46,21 @@ describe("createCandidate", () => {
         ownerId: "owner1",
         ownerName: "Yago",
       })
+    );
+  });
+
+  it("stamps the candidate with the current companyId", async () => {
+    vi.mocked(addDoc).mockResolvedValue({ id: "new-id" } as never);
+    setCurrentCompanyId("acme");
+
+    await createCandidate(
+      { name: "João", email: "joao@x.com", phone: "", position: "Dev Frontend", status: "triagem", notes: "" },
+      { uid: "owner1", name: "Yago" }
+    );
+
+    expect(addDoc).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ companyId: "acme" })
     );
   });
 });

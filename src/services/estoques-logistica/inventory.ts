@@ -1,5 +1,6 @@
 import { DocumentData, QueryDocumentSnapshot, Unsubscribe } from "firebase/firestore";
 import { createCrudService } from "../shared/crudFactory";
+import { getCurrentCompanyId } from "../shared/tenant";
 import { IInventoryItem, InventoryItemInput, InventoryItemStatus } from "../../types/inventoryItem";
 
 export const mapInventoryItem = (
@@ -8,6 +9,7 @@ export const mapInventoryItem = (
   const data = snap.data();
   return {
     id: snap.id,
+    companyId: data.companyId,
     name: data.name,
     sku: data.sku ?? "",
     category: data.category ?? "",
@@ -34,14 +36,14 @@ export function subscribeToInventoryItems(
   onChange: (items: IInventoryItem[]) => void,
   onError?: (error: Error) => void
 ): Unsubscribe {
-  return inventoryService.subscribe(status, onChange, onError);
+  return inventoryService.subscribe(status, onChange, onError, getCurrentCompanyId() ?? undefined);
 }
 
 export async function createInventoryItem(
   input: InventoryItemInput,
   owner: { uid: string; name?: string | null }
 ): Promise<string> {
-  return inventoryService.create(input, owner);
+  return inventoryService.create(input, owner, { companyId: getCurrentCompanyId() });
 }
 
 export async function updateInventoryItem(
@@ -56,5 +58,5 @@ export async function deleteInventoryItem(itemId: string): Promise<void> {
 }
 
 export async function getActiveInventoryTotal(): Promise<number> {
-  return inventoryService.countByStatus("ativo");
+  return inventoryService.countByStatus("ativo", getCurrentCompanyId() ?? undefined);
 }

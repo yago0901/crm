@@ -1,5 +1,6 @@
 import { DocumentData, QueryDocumentSnapshot, Unsubscribe } from "firebase/firestore";
 import { createCrudService } from "../shared/crudFactory";
+import { getCurrentCompanyId } from "../shared/tenant";
 import { ITraining, TrainingInput, TrainingStatus } from "../../types/training";
 
 export const mapTraining = (
@@ -8,6 +9,7 @@ export const mapTraining = (
   const data = snap.data();
   return {
     id: snap.id,
+    companyId: data.companyId,
     title: data.title,
     description: data.description ?? "",
     category: data.category ?? "",
@@ -32,14 +34,14 @@ export function subscribeToTrainings(
   onChange: (trainings: ITraining[]) => void,
   onError?: (error: Error) => void
 ): Unsubscribe {
-  return trainingsService.subscribe(status, onChange, onError);
+  return trainingsService.subscribe(status, onChange, onError, getCurrentCompanyId() ?? undefined);
 }
 
 export async function createTraining(
   input: TrainingInput,
   owner: { uid: string; name?: string | null }
 ): Promise<string> {
-  return trainingsService.create(input, owner);
+  return trainingsService.create(input, owner, { companyId: getCurrentCompanyId() });
 }
 
 export async function updateTraining(
@@ -54,5 +56,5 @@ export async function deleteTraining(trainingId: string): Promise<void> {
 }
 
 export async function getScheduledTrainingsCount(): Promise<number> {
-  return trainingsService.countByStatus("planejado");
+  return trainingsService.countByStatus("planejado", getCurrentCompanyId() ?? undefined);
 }

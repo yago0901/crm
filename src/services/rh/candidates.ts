@@ -1,5 +1,6 @@
 import { DocumentData, QueryDocumentSnapshot, Unsubscribe } from "firebase/firestore";
 import { createCrudService } from "../shared/crudFactory";
+import { getCurrentCompanyId } from "../shared/tenant";
 import { CandidateInput, CandidateStatus, ICandidate } from "../../types/candidate";
 
 export const mapCandidate = (
@@ -8,6 +9,7 @@ export const mapCandidate = (
   const data = snap.data();
   return {
     id: snap.id,
+    companyId: data.companyId,
     name: data.name,
     email: data.email,
     phone: data.phone ?? "",
@@ -31,14 +33,14 @@ export function subscribeToCandidates(
   onChange: (candidates: ICandidate[]) => void,
   onError?: (error: Error) => void
 ): Unsubscribe {
-  return candidatesService.subscribe(status, onChange, onError);
+  return candidatesService.subscribe(status, onChange, onError, getCurrentCompanyId() ?? undefined);
 }
 
 export async function createCandidate(
   input: CandidateInput,
   owner: { uid: string; name?: string | null }
 ): Promise<string> {
-  return candidatesService.create(input, owner);
+  return candidatesService.create(input, owner, { companyId: getCurrentCompanyId() });
 }
 
 export async function updateCandidate(
@@ -53,5 +55,5 @@ export async function deleteCandidate(candidateId: string): Promise<void> {
 }
 
 export async function getCandidatesInScreeningCount(): Promise<number> {
-  return candidatesService.countByStatus("triagem");
+  return candidatesService.countByStatus("triagem", getCurrentCompanyId() ?? undefined);
 }

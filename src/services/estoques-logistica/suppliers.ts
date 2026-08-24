@@ -8,6 +8,7 @@ import {
   where,
 } from "firebase/firestore";
 import { createCrudService } from "../shared/crudFactory";
+import { getCurrentCompanyId } from "../shared/tenant";
 import { ISupplier, SupplierInput, SupplierStatus } from "../../types/supplier";
 
 export const mapSupplier = (
@@ -16,6 +17,7 @@ export const mapSupplier = (
   const data = snap.data();
   return {
     id: snap.id,
+    companyId: data.companyId,
     name: data.name,
     contactName: data.contactName ?? "",
     email: data.email ?? "",
@@ -40,14 +42,14 @@ export function subscribeToSuppliers(
   onChange: (suppliers: ISupplier[]) => void,
   onError?: (error: Error) => void
 ): Unsubscribe {
-  return suppliersService.subscribe(status, onChange, onError);
+  return suppliersService.subscribe(status, onChange, onError, getCurrentCompanyId() ?? undefined);
 }
 
 export async function createSupplier(
   input: SupplierInput,
   owner: { uid: string; name?: string | null }
 ): Promise<string> {
-  return suppliersService.create(input, owner);
+  return suppliersService.create(input, owner, { companyId: getCurrentCompanyId() });
 }
 
 export async function updateSupplier(
@@ -62,11 +64,13 @@ export async function deleteSupplier(supplierId: string): Promise<void> {
 }
 
 export async function fetchActiveSuppliers(): Promise<ISupplier[]> {
-  const q = query(
-    suppliersService.ref,
+  const companyId = getCurrentCompanyId();
+  const constraints = [
+    ...(companyId ? [where("companyId", "==", companyId)] : []),
     where("status", "==", "ativo"),
-    orderBy("name", "asc")
-  );
+    orderBy("name", "asc"),
+  ];
+  const q = query(suppliersService.ref, ...constraints);
   const snapshot = await getDocs(q);
   return snapshot.docs.map(mapSupplier);
 }

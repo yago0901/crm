@@ -4,6 +4,7 @@ export type FinanceStatus = "pendente" | "pago" | "atrasado";
 
 export interface IPayable {
   id: string;
+  companyId: string;
   description: string;
   supplier: string;
   category: string;
@@ -25,6 +26,7 @@ export type PayableInput = Pick<
 
 export interface IReceivable {
   id: string;
+  companyId: string;
   description: string;
   contactId: string;
   contactName: string;

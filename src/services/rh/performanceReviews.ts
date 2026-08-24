@@ -1,5 +1,6 @@
 import { DocumentData, QueryDocumentSnapshot, Unsubscribe } from "firebase/firestore";
 import { createCrudService } from "../shared/crudFactory";
+import { getCurrentCompanyId } from "../shared/tenant";
 import {
   IPerformanceReview,
   PerformanceReviewInput,
@@ -12,6 +13,7 @@ export const mapPerformanceReview = (
   const data = snap.data();
   return {
     id: snap.id,
+    companyId: data.companyId,
     employeeId: data.employeeId,
     employeeName: data.employeeName ?? "",
     period: data.period,
@@ -36,14 +38,21 @@ export function subscribeToPerformanceReviews(
   onChange: (reviews: IPerformanceReview[]) => void,
   onError?: (error: Error) => void
 ): Unsubscribe {
-  return performanceReviewsService.subscribe(status, onChange, onError);
+  return performanceReviewsService.subscribe(
+    status,
+    onChange,
+    onError,
+    getCurrentCompanyId() ?? undefined
+  );
 }
 
 export async function createPerformanceReview(
   input: PerformanceReviewInput,
   owner: { uid: string; name?: string | null }
 ): Promise<string> {
-  return performanceReviewsService.create(input, owner);
+  return performanceReviewsService.create(input, owner, {
+    companyId: getCurrentCompanyId(),
+  });
 }
 
 export async function updatePerformanceReview(

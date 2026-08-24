@@ -4,6 +4,7 @@ export type WarehouseStatus = "ativo" | "inativo";
 
 export interface IWarehouse {
   id: string;
+  companyId: string;
   name: string;
   address?: string;
   capacity: number;

@@ -4,6 +4,7 @@ export type FollowUpStatus = "pendente" | "concluido" | "cancelado";
 
 export interface IFollowUp {
   id: string;
+  companyId: string;
   title: string;
   description?: string;
   contactId?: string;

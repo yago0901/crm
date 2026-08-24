@@ -21,10 +21,12 @@ vi.mock("firebase/firestore", () => ({
 
 import { addDoc, getAggregateFromServer } from "firebase/firestore";
 import { createPurchaseOrder, getPendingPurchaseOrdersTotal } from "./purchaseOrders";
+import { setCurrentCompanyId } from "../shared/tenant";
 
 describe("createPurchaseOrder", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    setCurrentCompanyId(null);
   });
 
   it("creates the order with owner info", async () => {
@@ -52,6 +54,30 @@ describe("createPurchaseOrder", () => {
         value: 1500,
         ownerId: "owner1",
       })
+    );
+  });
+
+  it("stamps the order with the current companyId", async () => {
+    vi.mocked(addDoc).mockResolvedValue({ id: "new-id" } as never);
+    setCurrentCompanyId("acme");
+
+    await createPurchaseOrder(
+      {
+        supplierId: "s1",
+        supplierName: "Fornecedor X",
+        description: "Reposição de insumos",
+        value: 1500,
+        status: "pendente",
+        orderDate: null,
+        expectedDate: null,
+        notes: "",
+      },
+      { uid: "owner1", name: "Yago" }
+    );
+
+    expect(addDoc).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ companyId: "acme" })
     );
   });
 });

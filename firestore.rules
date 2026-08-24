@@ -64,305 +64,374 @@ service cloud.firestore {
     }
 
     match /contacts/{contactId} {
-      allow read: if isSignedIn();
+      allow read: if belongsToCompany(resource.data.companyId);
 
       allow create: if isSignedIn()
+        && belongsToCompany(request.resource.data.companyId)
         && request.resource.data.ownerId == request.auth.uid
         && request.resource.data.name is string
         && request.resource.data.name.size() > 0
         && request.resource.data.status in ['lead', 'cliente', 'inativo'];
 
-      allow update: if isSignedIn() && (
-        isAdmin()
-        || (resource.data.ownerId == request.auth.uid
-          && request.resource.data.ownerId == resource.data.ownerId)
-      );
+      allow update: if belongsToCompany(resource.data.companyId)
+        && request.resource.data.companyId == resource.data.companyId
+        && (
+          isAdmin()
+          || (resource.data.ownerId == request.auth.uid
+            && request.resource.data.ownerId == resource.data.ownerId)
+        );
 
-      allow delete: if isSignedIn() && (isAdmin() || resource.data.ownerId == request.auth.uid);
+      allow delete: if belongsToCompany(resource.data.companyId)
+        && (isAdmin() || resource.data.ownerId == request.auth.uid);
 
       match /interactions/{interactionId} {
-        allow read: if isSignedIn();
+        function parentCompanyId() {
+          return get(/databases/$(database)/documents/contacts/$(contactId)).data.companyId;
+        }
 
-        allow create: if isSignedIn()
+        allow read: if belongsToCompany(parentCompanyId());
+
+        allow create: if belongsToCompany(parentCompanyId())
           && request.resource.data.createdBy == request.auth.uid
           && request.resource.data.description is string
           && request.resource.data.description.size() > 0;
 
         allow update: if false;
 
-        allow delete: if isSignedIn() && (isAdmin() || resource.data.createdBy == request.auth.uid);
+        allow delete: if belongsToCompany(parentCompanyId())
+          && (isAdmin() || resource.data.createdBy == request.auth.uid);
       }
     }
 
     match /contracts/{contractId} {
-      allow read: if isSignedIn();
+      allow read: if belongsToCompany(resource.data.companyId);
 
       allow create: if isSignedIn()
+        && belongsToCompany(request.resource.data.companyId)
         && request.resource.data.ownerId == request.auth.uid
         && request.resource.data.title is string
         && request.resource.data.title.size() > 0
         && request.resource.data.contactId is string
         && request.resource.data.status in ['rascunho', 'ativo', 'encerrado', 'cancelado'];
 
-      allow update: if isSignedIn() && (
-        isAdmin()
-        || (resource.data.ownerId == request.auth.uid
-          && request.resource.data.ownerId == resource.data.ownerId)
-      );
+      allow update: if belongsToCompany(resource.data.companyId)
+        && request.resource.data.companyId == resource.data.companyId
+        && (
+          isAdmin()
+          || (resource.data.ownerId == request.auth.uid
+            && request.resource.data.ownerId == resource.data.ownerId)
+        );
 
-      allow delete: if isSignedIn() && (isAdmin() || resource.data.ownerId == request.auth.uid);
+      allow delete: if belongsToCompany(resource.data.companyId)
+        && (isAdmin() || resource.data.ownerId == request.auth.uid);
     }
 
     match /employees/{employeeId} {
-      allow read: if isSignedIn();
+      allow read: if belongsToCompany(resource.data.companyId);
 
       allow create: if isSignedIn()
+        && belongsToCompany(request.resource.data.companyId)
         && request.resource.data.ownerId == request.auth.uid
         && request.resource.data.name is string
         && request.resource.data.name.size() > 0
         && request.resource.data.status in ['ativo', 'ferias', 'desligado'];
 
-      allow update: if isSignedIn() && (
-        isAdmin()
-        || (resource.data.ownerId == request.auth.uid
-          && request.resource.data.ownerId == resource.data.ownerId)
-      );
+      allow update: if belongsToCompany(resource.data.companyId)
+        && request.resource.data.companyId == resource.data.companyId
+        && (
+          isAdmin()
+          || (resource.data.ownerId == request.auth.uid
+            && request.resource.data.ownerId == resource.data.ownerId)
+        );
 
-      allow delete: if isSignedIn() && (isAdmin() || resource.data.ownerId == request.auth.uid);
+      allow delete: if belongsToCompany(resource.data.companyId)
+        && (isAdmin() || resource.data.ownerId == request.auth.uid);
     }
 
     match /payables/{payableId} {
-      allow read: if isSignedIn();
+      allow read: if belongsToCompany(resource.data.companyId);
 
       allow create: if isSignedIn()
+        && belongsToCompany(request.resource.data.companyId)
         && request.resource.data.ownerId == request.auth.uid
         && request.resource.data.description is string
         && request.resource.data.description.size() > 0
         && request.resource.data.status in ['pendente', 'pago', 'atrasado'];
 
-      allow update: if isSignedIn() && (
-        isAdmin()
-        || (resource.data.ownerId == request.auth.uid
-          && request.resource.data.ownerId == resource.data.ownerId)
-      );
+      allow update: if belongsToCompany(resource.data.companyId)
+        && request.resource.data.companyId == resource.data.companyId
+        && (
+          isAdmin()
+          || (resource.data.ownerId == request.auth.uid
+            && request.resource.data.ownerId == resource.data.ownerId)
+        );
 
-      allow delete: if isSignedIn() && (isAdmin() || resource.data.ownerId == request.auth.uid);
+      allow delete: if belongsToCompany(resource.data.companyId)
+        && (isAdmin() || resource.data.ownerId == request.auth.uid);
     }
 
     match /receivables/{receivableId} {
-      allow read: if isSignedIn();
+      allow read: if belongsToCompany(resource.data.companyId);
 
       allow create: if isSignedIn()
+        && belongsToCompany(request.resource.data.companyId)
         && request.resource.data.ownerId == request.auth.uid
         && request.resource.data.description is string
         && request.resource.data.description.size() > 0
         && request.resource.data.status in ['pendente', 'pago', 'atrasado'];
 
-      allow update: if isSignedIn() && (
-        isAdmin()
-        || (resource.data.ownerId == request.auth.uid
-          && request.resource.data.ownerId == resource.data.ownerId)
-      );
+      allow update: if belongsToCompany(resource.data.companyId)
+        && request.resource.data.companyId == resource.data.companyId
+        && (
+          isAdmin()
+          || (resource.data.ownerId == request.auth.uid
+            && request.resource.data.ownerId == resource.data.ownerId)
+        );
 
-      allow delete: if isSignedIn() && (isAdmin() || resource.data.ownerId == request.auth.uid);
+      allow delete: if belongsToCompany(resource.data.companyId)
+        && (isAdmin() || resource.data.ownerId == request.auth.uid);
     }
 
     match /followUps/{followUpId} {
-      allow read: if isSignedIn();
+      allow read: if belongsToCompany(resource.data.companyId);
 
       allow create: if isSignedIn()
+        && belongsToCompany(request.resource.data.companyId)
         && request.resource.data.ownerId == request.auth.uid
         && request.resource.data.title is string
         && request.resource.data.title.size() > 0
         && request.resource.data.status in ['pendente', 'concluido', 'cancelado'];
 
-      allow update: if isSignedIn() && (
-        isAdmin()
-        || (resource.data.ownerId == request.auth.uid
-          && request.resource.data.ownerId == resource.data.ownerId)
-      );
+      allow update: if belongsToCompany(resource.data.companyId)
+        && request.resource.data.companyId == resource.data.companyId
+        && (
+          isAdmin()
+          || (resource.data.ownerId == request.auth.uid
+            && request.resource.data.ownerId == resource.data.ownerId)
+        );
 
-      allow delete: if isSignedIn() && (isAdmin() || resource.data.ownerId == request.auth.uid);
+      allow delete: if belongsToCompany(resource.data.companyId)
+        && (isAdmin() || resource.data.ownerId == request.auth.uid);
     }
 
     match /ledgerEntries/{entryId} {
-      allow read: if isSignedIn();
+      allow read: if belongsToCompany(resource.data.companyId);
 
       allow create: if isSignedIn()
+        && belongsToCompany(request.resource.data.companyId)
         && request.resource.data.ownerId == request.auth.uid
         && request.resource.data.description is string
         && request.resource.data.description.size() > 0
         && request.resource.data.type in ['debito', 'credito'];
 
-      allow update: if isSignedIn() && (
-        isAdmin()
-        || (resource.data.ownerId == request.auth.uid
-          && request.resource.data.ownerId == resource.data.ownerId)
-      );
+      allow update: if belongsToCompany(resource.data.companyId)
+        && request.resource.data.companyId == resource.data.companyId
+        && (
+          isAdmin()
+          || (resource.data.ownerId == request.auth.uid
+            && request.resource.data.ownerId == resource.data.ownerId)
+        );
 
-      allow delete: if isSignedIn() && (isAdmin() || resource.data.ownerId == request.auth.uid);
+      allow delete: if belongsToCompany(resource.data.companyId)
+        && (isAdmin() || resource.data.ownerId == request.auth.uid);
     }
 
     match /payrollEntries/{entryId} {
-      allow read: if isSignedIn();
+      allow read: if belongsToCompany(resource.data.companyId);
 
       allow create: if isSignedIn()
+        && belongsToCompany(request.resource.data.companyId)
         && request.resource.data.ownerId == request.auth.uid
         && request.resource.data.employeeId is string
         && request.resource.data.employeeId.size() > 0
         && request.resource.data.status in ['pendente', 'pago'];
 
-      allow update: if isSignedIn() && (
-        isAdmin()
-        || (resource.data.ownerId == request.auth.uid
-          && request.resource.data.ownerId == resource.data.ownerId)
-      );
+      allow update: if belongsToCompany(resource.data.companyId)
+        && request.resource.data.companyId == resource.data.companyId
+        && (
+          isAdmin()
+          || (resource.data.ownerId == request.auth.uid
+            && request.resource.data.ownerId == resource.data.ownerId)
+        );
 
-      allow delete: if isSignedIn() && (isAdmin() || resource.data.ownerId == request.auth.uid);
+      allow delete: if belongsToCompany(resource.data.companyId)
+        && (isAdmin() || resource.data.ownerId == request.auth.uid);
     }
 
     match /candidates/{candidateId} {
-      allow read: if isSignedIn();
+      allow read: if belongsToCompany(resource.data.companyId);
 
       allow create: if isSignedIn()
+        && belongsToCompany(request.resource.data.companyId)
         && request.resource.data.ownerId == request.auth.uid
         && request.resource.data.name is string
         && request.resource.data.name.size() > 0
         && request.resource.data.status in ['triagem', 'entrevista', 'aprovado', 'reprovado'];
 
-      allow update: if isSignedIn() && (
-        isAdmin()
-        || (resource.data.ownerId == request.auth.uid
-          && request.resource.data.ownerId == resource.data.ownerId)
-      );
+      allow update: if belongsToCompany(resource.data.companyId)
+        && request.resource.data.companyId == resource.data.companyId
+        && (
+          isAdmin()
+          || (resource.data.ownerId == request.auth.uid
+            && request.resource.data.ownerId == resource.data.ownerId)
+        );
 
-      allow delete: if isSignedIn() && (isAdmin() || resource.data.ownerId == request.auth.uid);
+      allow delete: if belongsToCompany(resource.data.companyId)
+        && (isAdmin() || resource.data.ownerId == request.auth.uid);
     }
 
     match /trainings/{trainingId} {
-      allow read: if isSignedIn();
+      allow read: if belongsToCompany(resource.data.companyId);
 
       allow create: if isSignedIn()
+        && belongsToCompany(request.resource.data.companyId)
         && request.resource.data.ownerId == request.auth.uid
         && request.resource.data.title is string
         && request.resource.data.title.size() > 0
         && request.resource.data.status in ['planejado', 'em_andamento', 'concluido', 'cancelado'];
 
-      allow update: if isSignedIn() && (
-        isAdmin()
-        || (resource.data.ownerId == request.auth.uid
-          && request.resource.data.ownerId == resource.data.ownerId)
-      );
+      allow update: if belongsToCompany(resource.data.companyId)
+        && request.resource.data.companyId == resource.data.companyId
+        && (
+          isAdmin()
+          || (resource.data.ownerId == request.auth.uid
+            && request.resource.data.ownerId == resource.data.ownerId)
+        );
 
-      allow delete: if isSignedIn() && (isAdmin() || resource.data.ownerId == request.auth.uid);
+      allow delete: if belongsToCompany(resource.data.companyId)
+        && (isAdmin() || resource.data.ownerId == request.auth.uid);
     }
 
     match /performanceReviews/{reviewId} {
-      allow read: if isSignedIn();
+      allow read: if belongsToCompany(resource.data.companyId);
 
       allow create: if isSignedIn()
+        && belongsToCompany(request.resource.data.companyId)
         && request.resource.data.ownerId == request.auth.uid
         && request.resource.data.employeeId is string
         && request.resource.data.employeeId.size() > 0
         && request.resource.data.status in ['rascunho', 'finalizada'];
 
-      allow update: if isSignedIn() && (
-        isAdmin()
-        || (resource.data.ownerId == request.auth.uid
-          && request.resource.data.ownerId == resource.data.ownerId)
-      );
+      allow update: if belongsToCompany(resource.data.companyId)
+        && request.resource.data.companyId == resource.data.companyId
+        && (
+          isAdmin()
+          || (resource.data.ownerId == request.auth.uid
+            && request.resource.data.ownerId == resource.data.ownerId)
+        );
 
-      allow delete: if isSignedIn() && (isAdmin() || resource.data.ownerId == request.auth.uid);
+      allow delete: if belongsToCompany(resource.data.companyId)
+        && (isAdmin() || resource.data.ownerId == request.auth.uid);
     }
 
     match /suppliers/{supplierId} {
-      allow read: if isSignedIn();
+      allow read: if belongsToCompany(resource.data.companyId);
 
       allow create: if isSignedIn()
+        && belongsToCompany(request.resource.data.companyId)
         && request.resource.data.ownerId == request.auth.uid
         && request.resource.data.name is string
         && request.resource.data.name.size() > 0
         && request.resource.data.status in ['ativo', 'inativo'];
 
-      allow update: if isSignedIn() && (
-        isAdmin()
-        || (resource.data.ownerId == request.auth.uid
-          && request.resource.data.ownerId == resource.data.ownerId)
-      );
+      allow update: if belongsToCompany(resource.data.companyId)
+        && request.resource.data.companyId == resource.data.companyId
+        && (
+          isAdmin()
+          || (resource.data.ownerId == request.auth.uid
+            && request.resource.data.ownerId == resource.data.ownerId)
+        );
 
-      allow delete: if isSignedIn() && (isAdmin() || resource.data.ownerId == request.auth.uid);
+      allow delete: if belongsToCompany(resource.data.companyId)
+        && (isAdmin() || resource.data.ownerId == request.auth.uid);
     }
 
     match /inventoryItems/{itemId} {
-      allow read: if isSignedIn();
+      allow read: if belongsToCompany(resource.data.companyId);
 
       allow create: if isSignedIn()
+        && belongsToCompany(request.resource.data.companyId)
         && request.resource.data.ownerId == request.auth.uid
         && request.resource.data.name is string
         && request.resource.data.name.size() > 0
         && request.resource.data.status in ['ativo', 'descontinuado'];
 
-      allow update: if isSignedIn() && (
-        isAdmin()
-        || (resource.data.ownerId == request.auth.uid
-          && request.resource.data.ownerId == resource.data.ownerId)
-      );
+      allow update: if belongsToCompany(resource.data.companyId)
+        && request.resource.data.companyId == resource.data.companyId
+        && (
+          isAdmin()
+          || (resource.data.ownerId == request.auth.uid
+            && request.resource.data.ownerId == resource.data.ownerId)
+        );
 
-      allow delete: if isSignedIn() && (isAdmin() || resource.data.ownerId == request.auth.uid);
+      allow delete: if belongsToCompany(resource.data.companyId)
+        && (isAdmin() || resource.data.ownerId == request.auth.uid);
     }
 
     match /purchaseOrders/{orderId} {
-      allow read: if isSignedIn();
+      allow read: if belongsToCompany(resource.data.companyId);
 
       allow create: if isSignedIn()
+        && belongsToCompany(request.resource.data.companyId)
         && request.resource.data.ownerId == request.auth.uid
         && request.resource.data.supplierId is string
         && request.resource.data.supplierId.size() > 0
         && request.resource.data.status in ['pendente', 'aprovado', 'recebido', 'cancelado'];
 
-      allow update: if isSignedIn() && (
-        isAdmin()
-        || (resource.data.ownerId == request.auth.uid
-          && request.resource.data.ownerId == resource.data.ownerId)
-      );
+      allow update: if belongsToCompany(resource.data.companyId)
+        && request.resource.data.companyId == resource.data.companyId
+        && (
+          isAdmin()
+          || (resource.data.ownerId == request.auth.uid
+            && request.resource.data.ownerId == resource.data.ownerId)
+        );
 
-      allow delete: if isSignedIn() && (isAdmin() || resource.data.ownerId == request.auth.uid);
+      allow delete: if belongsToCompany(resource.data.companyId)
+        && (isAdmin() || resource.data.ownerId == request.auth.uid);
     }
 
     match /shipments/{shipmentId} {
-      allow read: if isSignedIn();
+      allow read: if belongsToCompany(resource.data.companyId);
 
       allow create: if isSignedIn()
+        && belongsToCompany(request.resource.data.companyId)
         && request.resource.data.ownerId == request.auth.uid
         && request.resource.data.description is string
         && request.resource.data.description.size() > 0
         && request.resource.data.status in ['preparando', 'em_transito', 'entregue', 'cancelado'];
 
-      allow update: if isSignedIn() && (
-        isAdmin()
-        || (resource.data.ownerId == request.auth.uid
-          && request.resource.data.ownerId == resource.data.ownerId)
-      );
+      allow update: if belongsToCompany(resource.data.companyId)
+        && request.resource.data.companyId == resource.data.companyId
+        && (
+          isAdmin()
+          || (resource.data.ownerId == request.auth.uid
+            && request.resource.data.ownerId == resource.data.ownerId)
+        );
 
-      allow delete: if isSignedIn() && (isAdmin() || resource.data.ownerId == request.auth.uid);
+      allow delete: if belongsToCompany(resource.data.companyId)
+        && (isAdmin() || resource.data.ownerId == request.auth.uid);
     }
 
     match /warehouses/{warehouseId} {
-      allow read: if isSignedIn();
+      allow read: if belongsToCompany(resource.data.companyId);
 
       allow create: if isSignedIn()
+        && belongsToCompany(request.resource.data.companyId)
         && request.resource.data.ownerId == request.auth.uid
         && request.resource.data.name is string
         && request.resource.data.name.size() > 0
         && request.resource.data.status in ['ativo', 'inativo'];
 
-      allow update: if isSignedIn() && (
-        isAdmin()
-        || (resource.data.ownerId == request.auth.uid
-          && request.resource.data.ownerId == resource.data.ownerId)
-      );
+      allow update: if belongsToCompany(resource.data.companyId)
+        && request.resource.data.companyId == resource.data.companyId
+        && (
+          isAdmin()
+          || (resource.data.ownerId == request.auth.uid
+            && request.resource.data.ownerId == resource.data.ownerId)
+        );
 
-      allow delete: if isSignedIn() && (isAdmin() || resource.data.ownerId == request.auth.uid);
+      allow delete: if belongsToCompany(resource.data.companyId)
+        && (isAdmin() || resource.data.ownerId == request.auth.uid);
     }
 
     match /productionPlans/{planId} {

@@ -1,5 +1,6 @@
 import { DocumentData, QueryDocumentSnapshot, Unsubscribe } from "firebase/firestore";
 import { createCrudService } from "../shared/crudFactory";
+import { getCurrentCompanyId } from "../shared/tenant";
 import { ILedgerEntry, LedgerEntryInput, LedgerEntryType } from "../../types/ledgerEntry";
 
 export const mapLedgerEntry = (
@@ -8,6 +9,7 @@ export const mapLedgerEntry = (
   const data = snap.data();
   return {
     id: snap.id,
+    companyId: data.companyId,
     description: data.description,
     category: data.category ?? "",
     type: data.type,
@@ -32,14 +34,14 @@ export function subscribeToLedgerEntries(
   onChange: (entries: ILedgerEntry[]) => void,
   onError?: (error: Error) => void
 ): Unsubscribe {
-  return ledgerService.subscribe(type, onChange, onError);
+  return ledgerService.subscribe(type, onChange, onError, getCurrentCompanyId() ?? undefined);
 }
 
 export async function createLedgerEntry(
   input: LedgerEntryInput,
   owner: { uid: string; name?: string | null }
 ): Promise<string> {
-  return ledgerService.create(input, owner);
+  return ledgerService.create(input, owner, { companyId: getCurrentCompanyId() });
 }
 
 export async function updateLedgerEntry(
@@ -54,9 +56,10 @@ export async function deleteLedgerEntry(entryId: string): Promise<void> {
 }
 
 export async function getLedgerBalance(): Promise<number> {
+  const companyId = getCurrentCompanyId() ?? undefined;
   const [credito, debito] = await Promise.all([
-    ledgerService.sumByStatus("value", "credito"),
-    ledgerService.sumByStatus("value", "debito"),
+    ledgerService.sumByStatus("value", "credito", companyId),
+    ledgerService.sumByStatus("value", "debito", companyId),
   ]);
   return credito - debito;
 }

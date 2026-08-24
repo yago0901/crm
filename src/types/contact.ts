@@ -6,6 +6,7 @@ export type InteractionType = "ligacao" | "email" | "reuniao" | "nota";
 
 export interface IContact {
   id: string;
+  companyId: string;
   name: string;
   email: string;
   phone?: string;

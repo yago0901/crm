@@ -15,45 +15,26 @@ vi.mock("firebase/firestore", () => ({
   where: vi.fn((field, op, value) => ({ type: "where", field, op, value })),
   orderBy: vi.fn((field, direction) => ({ type: "orderBy", field, direction })),
   serverTimestamp: vi.fn(() => "SERVER_TIMESTAMP"),
-  count: vi.fn(() => ({ type: "count" })),
+  sum: vi.fn((field) => ({ type: "sum", field })),
   onSnapshot: vi.fn(),
 }));
 
-import { addDoc, getAggregateFromServer } from "firebase/firestore";
-import { createTraining, getScheduledTrainingsCount } from "./trainings";
+import { addDoc, getAggregateFromServer, where } from "firebase/firestore";
+import { createContract, getActiveContractsTotal } from "./contracts";
 import { setCurrentCompanyId } from "../shared/tenant";
 
-describe("createTraining", () => {
+describe("createContract", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     setCurrentCompanyId(null);
   });
 
-  it("creates the training with owner info", async () => {
-    vi.mocked(addDoc).mockResolvedValue({ id: "new-id" } as never);
-
-    const id = await createTraining(
-      { title: "Onboarding", description: "", category: "RH", date: null, status: "planejado", notes: "" },
-      { uid: "owner1", name: "Yago" }
-    );
-
-    expect(id).toBe("new-id");
-    expect(addDoc).toHaveBeenCalledWith(
-      expect.anything(),
-      expect.objectContaining({
-        title: "Onboarding",
-        ownerId: "owner1",
-        ownerName: "Yago",
-      })
-    );
-  });
-
-  it("stamps the training with the current companyId", async () => {
+  it("stamps the contract with the current companyId", async () => {
     vi.mocked(addDoc).mockResolvedValue({ id: "new-id" } as never);
     setCurrentCompanyId("acme");
 
-    await createTraining(
-      { title: "Onboarding", description: "", category: "RH", date: null, status: "planejado", notes: "" },
+    await createContract(
+      { title: "Plano anual", contactId: "c1", contactName: "Maria", value: 1000, status: "rascunho", startDate: null, endDate: null, notes: "" },
       { uid: "owner1", name: "Yago" }
     );
 
@@ -64,16 +45,21 @@ describe("createTraining", () => {
   });
 });
 
-describe("getScheduledTrainingsCount", () => {
+describe("getActiveContractsTotal", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    setCurrentCompanyId(null);
   });
 
-  it("counts trainings that are planejado", async () => {
+  it("sums ativo contracts filtered by the current companyId", async () => {
     vi.mocked(getAggregateFromServer).mockResolvedValue({
-      data: () => ({ total: 2 }),
+      data: () => ({ total: 5000 }),
     } as never);
+    setCurrentCompanyId("acme");
 
-    expect(await getScheduledTrainingsCount()).toBe(2);
+    const total = await getActiveContractsTotal();
+
+    expect(total).toBe(5000);
+    expect(where).toHaveBeenCalledWith("companyId", "==", "acme");
   });
 });

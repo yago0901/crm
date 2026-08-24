@@ -4,6 +4,7 @@ export type InventoryItemStatus = "ativo" | "descontinuado";
 
 export interface IInventoryItem {
   id: string;
+  companyId: string;
   name: string;
   sku: string;
   category: string;

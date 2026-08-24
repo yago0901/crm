@@ -4,6 +4,7 @@ export type PerformanceReviewStatus = "rascunho" | "finalizada";
 
 export interface IPerformanceReview {
   id: string;
+  companyId: string;
   employeeId: string;
   employeeName: string;
   period: string;

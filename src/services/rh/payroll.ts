@@ -1,6 +1,7 @@
 import { doc, DocumentData, QueryDocumentSnapshot, serverTimestamp, Unsubscribe, updateDoc } from "firebase/firestore";
 import { firestore } from "../shared/firebase";
 import { createCrudService } from "../shared/crudFactory";
+import { getCurrentCompanyId } from "../shared/tenant";
 import { IPayrollEntry, PayrollEntryInput, PayrollStatus } from "../../types/payrollEntry";
 
 export const mapPayrollEntry = (
@@ -9,6 +10,7 @@ export const mapPayrollEntry = (
   const data = snap.data();
   return {
     id: snap.id,
+    companyId: data.companyId,
     employeeId: data.employeeId,
     employeeName: data.employeeName ?? "",
     competencia: data.competencia,
@@ -37,14 +39,17 @@ export function subscribeToPayrollEntries(
   onChange: (entries: IPayrollEntry[]) => void,
   onError?: (error: Error) => void
 ): Unsubscribe {
-  return payrollService.subscribe(status, onChange, onError);
+  return payrollService.subscribe(status, onChange, onError, getCurrentCompanyId() ?? undefined);
 }
 
 export async function createPayrollEntry(
   input: PayrollEntryInput,
   owner: { uid: string; name?: string | null }
 ): Promise<string> {
-  return payrollService.create(input, owner, { paidAt: null });
+  return payrollService.create(input, owner, {
+    companyId: getCurrentCompanyId(),
+    paidAt: null,
+  });
 }
 
 export async function updatePayrollEntry(
@@ -67,5 +72,5 @@ export async function deletePayrollEntry(entryId: string): Promise<void> {
 }
 
 export async function getPayrollOpenTotal(): Promise<number> {
-  return payrollService.sumByStatus("netValue", "pendente");
+  return payrollService.sumByStatus("netValue", "pendente", getCurrentCompanyId() ?? undefined);
 }

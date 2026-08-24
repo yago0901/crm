@@ -21,6 +21,7 @@ vi.mock("firebase/firestore", () => ({
 
 import { addDoc, getAggregateFromServer, where } from "firebase/firestore";
 import { createLedgerEntry, getLedgerBalance, mapLedgerEntry } from "./ledger";
+import { setCurrentCompanyId } from "../shared/tenant";
 
 describe("mapLedgerEntry", () => {
   it("defaults optional fields when missing from the document", () => {
@@ -49,6 +50,7 @@ describe("mapLedgerEntry", () => {
 describe("createLedgerEntry", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    setCurrentCompanyId(null);
   });
 
   it("creates the entry with owner info and timestamps", async () => {
@@ -70,11 +72,27 @@ describe("createLedgerEntry", () => {
       })
     );
   });
+
+  it("stamps the entry with the current companyId", async () => {
+    vi.mocked(addDoc).mockResolvedValue({ id: "new-id" } as never);
+    setCurrentCompanyId("acme");
+
+    await createLedgerEntry(
+      { description: "Aluguel", category: "Despesas fixas", type: "debito", value: 1200, date: null, notes: "" },
+      { uid: "owner1", name: "Yago" }
+    );
+
+    expect(addDoc).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ companyId: "acme" })
+    );
+  });
 });
 
 describe("getLedgerBalance", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    setCurrentCompanyId(null);
   });
 
   it("returns credito total minus debito total, filtering by the type field", async () => {

@@ -9,6 +9,7 @@ import {
 } from "firebase/firestore";
 import { firestore } from "../shared/firebase";
 import { createCrudService } from "../shared/crudFactory";
+import { getCurrentCompanyId } from "../shared/tenant";
 import {
   FinanceStatus,
   IPayable,
@@ -21,6 +22,7 @@ export const mapPayable = (snap: QueryDocumentSnapshot<DocumentData>): IPayable 
   const data = snap.data();
   return {
     id: snap.id,
+    companyId: data.companyId,
     description: data.description,
     supplier: data.supplier ?? "",
     category: data.category ?? "",
@@ -42,6 +44,7 @@ export const mapReceivable = (
   const data = snap.data();
   return {
     id: snap.id,
+    companyId: data.companyId,
     description: data.description,
     contactId: data.contactId ?? "",
     contactName: data.contactName ?? "",
@@ -69,14 +72,17 @@ export function subscribeToPayables(
   onChange: (payables: IPayable[]) => void,
   onError?: (error: Error) => void
 ): Unsubscribe {
-  return payablesService.subscribe(status, onChange, onError);
+  return payablesService.subscribe(status, onChange, onError, getCurrentCompanyId() ?? undefined);
 }
 
 export async function createPayable(
   input: PayableInput,
   owner: { uid: string; name?: string | null }
 ): Promise<string> {
-  return payablesService.create(input, owner, { paidAt: null });
+  return payablesService.create(input, owner, {
+    companyId: getCurrentCompanyId(),
+    paidAt: null,
+  });
 }
 
 export async function updatePayable(
@@ -99,9 +105,10 @@ export async function deletePayable(payableId: string): Promise<void> {
 }
 
 export async function getPayablesOpenTotal(): Promise<number> {
+  const companyId = getCurrentCompanyId() ?? undefined;
   const [pendente, atrasado] = await Promise.all([
-    payablesService.sumByStatus("value", "pendente"),
-    payablesService.sumByStatus("value", "atrasado"),
+    payablesService.sumByStatus("value", "pendente", companyId),
+    payablesService.sumByStatus("value", "atrasado", companyId),
   ]);
   return pendente + atrasado;
 }
@@ -117,14 +124,17 @@ export function subscribeToReceivables(
   onChange: (receivables: IReceivable[]) => void,
   onError?: (error: Error) => void
 ): Unsubscribe {
-  return receivablesService.subscribe(status, onChange, onError);
+  return receivablesService.subscribe(status, onChange, onError, getCurrentCompanyId() ?? undefined);
 }
 
 export async function createReceivable(
   input: ReceivableInput,
   owner: { uid: string; name?: string | null }
 ): Promise<string> {
-  return receivablesService.create(input, owner, { receivedAt: null });
+  return receivablesService.create(input, owner, {
+    companyId: getCurrentCompanyId(),
+    receivedAt: null,
+  });
 }
 
 export async function updateReceivable(
@@ -149,9 +159,10 @@ export async function deleteReceivable(receivableId: string): Promise<void> {
 }
 
 export async function getReceivablesOpenTotal(): Promise<number> {
+  const companyId = getCurrentCompanyId() ?? undefined;
   const [pendente, atrasado] = await Promise.all([
-    receivablesService.sumByStatus("value", "pendente"),
-    receivablesService.sumByStatus("value", "atrasado"),
+    receivablesService.sumByStatus("value", "pendente", companyId),
+    receivablesService.sumByStatus("value", "atrasado", companyId),
   ]);
   return pendente + atrasado;
 }

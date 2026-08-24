@@ -8,6 +8,7 @@ import {
 } from "firebase/firestore";
 import { firestore } from "../shared/firebase";
 import { createCrudService } from "../shared/crudFactory";
+import { getCurrentCompanyId } from "../shared/tenant";
 import { FollowUpInput, FollowUpStatus, IFollowUp } from "../../types/followUp";
 
 export const mapFollowUp = (
@@ -16,6 +17,7 @@ export const mapFollowUp = (
   const data = snap.data();
   return {
     id: snap.id,
+    companyId: data.companyId,
     title: data.title,
     description: data.description ?? "",
     contactId: data.contactId ?? "",
@@ -41,14 +43,17 @@ export function subscribeToFollowUps(
   onChange: (followUps: IFollowUp[]) => void,
   onError?: (error: Error) => void
 ): Unsubscribe {
-  return followUpsService.subscribe(status, onChange, onError);
+  return followUpsService.subscribe(status, onChange, onError, getCurrentCompanyId() ?? undefined);
 }
 
 export async function createFollowUp(
   input: FollowUpInput,
   owner: { uid: string; name?: string | null }
 ): Promise<string> {
-  return followUpsService.create(input, owner, { completedAt: null });
+  return followUpsService.create(input, owner, {
+    companyId: getCurrentCompanyId(),
+    completedAt: null,
+  });
 }
 
 export async function updateFollowUp(
@@ -71,5 +76,5 @@ export async function deleteFollowUp(followUpId: string): Promise<void> {
 }
 
 export async function getPendingFollowUpsCount(): Promise<number> {
-  return followUpsService.countByStatus("pendente");
+  return followUpsService.countByStatus("pendente", getCurrentCompanyId() ?? undefined);
 }
