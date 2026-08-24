@@ -1,5 +1,6 @@
 import { DocumentData, QueryDocumentSnapshot, Unsubscribe } from "firebase/firestore";
 import { createCrudService } from "../shared/crudFactory";
+import { getCurrentCompanyId } from "../shared/tenant";
 import { IProductionPlan, ProductionPlanInput, ProductionPlanStatus } from "../../types/productionPlan";
 
 export const mapProductionPlan = (
@@ -8,6 +9,7 @@ export const mapProductionPlan = (
   const data = snap.data();
   return {
     id: snap.id,
+    companyId: data.companyId,
     productName: data.productName,
     targetQuantity: data.targetQuantity ?? 0,
     startDate: data.startDate ?? null,
@@ -32,14 +34,14 @@ export function subscribeToProductionPlans(
   onChange: (plans: IProductionPlan[]) => void,
   onError?: (error: Error) => void
 ): Unsubscribe {
-  return productionPlansService.subscribe(status, onChange, onError);
+  return productionPlansService.subscribe(status, onChange, onError, getCurrentCompanyId() ?? undefined);
 }
 
 export async function createProductionPlan(
   input: ProductionPlanInput,
   owner: { uid: string; name?: string | null }
 ): Promise<string> {
-  return productionPlansService.create(input, owner);
+  return productionPlansService.create(input, owner, { companyId: getCurrentCompanyId() });
 }
 
 export async function updateProductionPlan(
@@ -54,5 +56,5 @@ export async function deleteProductionPlan(planId: string): Promise<void> {
 }
 
 export async function getActiveProductionPlansCount(): Promise<number> {
-  return productionPlansService.countByStatus("em_andamento");
+  return productionPlansService.countByStatus("em_andamento", getCurrentCompanyId() ?? undefined);
 }

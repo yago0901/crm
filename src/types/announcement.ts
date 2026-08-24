@@ -4,6 +4,7 @@ export type AnnouncementStatus = "rascunho" | "publicado";
 
 export interface IAnnouncement {
   id: string;
+  companyId: string;
   title: string;
   body: string;
   audience: string;

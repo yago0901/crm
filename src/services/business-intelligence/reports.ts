@@ -9,6 +9,7 @@ import {
 } from "firebase/firestore";
 import { firestore } from "../shared/firebase";
 import { createCrudService } from "../shared/crudFactory";
+import { getCurrentCompanyId } from "../shared/tenant";
 import { ISavedReport, ReportSource, SavedReportInput } from "../../types/savedReport";
 
 export interface IReportSourceConfig {
@@ -58,6 +59,7 @@ export const mapSavedReport = (
   const data = snap.data();
   return {
     id: snap.id,
+    companyId: data.companyId,
     name: data.name,
     source: data.source,
     statusFilter: data.statusFilter ?? "all",
@@ -78,14 +80,14 @@ export function subscribeToSavedReports(
   onChange: (reports: ISavedReport[]) => void,
   onError?: (error: Error) => void
 ): Unsubscribe {
-  return savedReportsService.subscribe("all", onChange, onError);
+  return savedReportsService.subscribe("all", onChange, onError, getCurrentCompanyId() ?? undefined);
 }
 
 export async function createSavedReport(
   input: SavedReportInput,
   owner: { uid: string; name?: string | null }
 ): Promise<string> {
-  return savedReportsService.create(input, owner);
+  return savedReportsService.create(input, owner, { companyId: getCurrentCompanyId() });
 }
 
 export async function deleteSavedReport(reportId: string): Promise<void> {
@@ -108,7 +110,12 @@ export async function runReport(
   statusFilter: string
 ): Promise<IReportResult> {
   const ref = collection(firestore, source);
-  const q = statusFilter === "all" ? query(ref) : query(ref, where("status", "==", statusFilter));
+  const companyId = getCurrentCompanyId();
+  const constraints = [
+    ...(companyId ? [where("companyId", "==", companyId)] : []),
+    ...(statusFilter === "all" ? [] : [where("status", "==", statusFilter)]),
+  ];
+  const q = query(ref, ...constraints);
   const snapshot = await getDocs(q);
   const { labelField } = REPORT_SOURCES[source];
 

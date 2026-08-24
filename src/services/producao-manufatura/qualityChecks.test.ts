@@ -21,10 +21,12 @@ vi.mock("firebase/firestore", () => ({
 
 import { addDoc, getAggregateFromServer } from "firebase/firestore";
 import { createQualityCheck, getFailedQualityChecksCount } from "./qualityChecks";
+import { setCurrentCompanyId } from "../shared/tenant";
 
 describe("createQualityCheck", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    setCurrentCompanyId(null);
   });
 
   it("creates the check with owner info", async () => {
@@ -39,6 +41,21 @@ describe("createQualityCheck", () => {
     expect(addDoc).toHaveBeenCalledWith(
       expect.anything(),
       expect.objectContaining({ item: "Lote 12 - Cadeira modelo X", ownerId: "owner1" })
+    );
+  });
+
+  it("stamps the check with the current companyId", async () => {
+    vi.mocked(addDoc).mockResolvedValue({ id: "new-id" } as never);
+    setCurrentCompanyId("acme");
+
+    await createQualityCheck(
+      { item: "Lote 12 - Cadeira modelo X", category: "Estrutural", inspector: "Ana", inspectionDate: null, status: "pendente", notes: "" },
+      { uid: "owner1", name: "Yago" }
+    );
+
+    expect(addDoc).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ companyId: "acme" })
     );
   });
 });

@@ -1,5 +1,6 @@
 import { DocumentData, QueryDocumentSnapshot, Unsubscribe } from "firebase/firestore";
 import { createCrudService } from "../shared/crudFactory";
+import { getCurrentCompanyId } from "../shared/tenant";
 import {
   DepartmentInitiativeInput,
   DepartmentInitiativeStatus,
@@ -12,6 +13,7 @@ export const mapDepartmentInitiative = (
   const data = snap.data();
   return {
     id: snap.id,
+    companyId: data.companyId,
     title: data.title,
     departments: data.departments ?? "",
     description: data.description ?? "",
@@ -35,14 +37,21 @@ export function subscribeToDepartmentInitiatives(
   onChange: (initiatives: IDepartmentInitiative[]) => void,
   onError?: (error: Error) => void
 ): Unsubscribe {
-  return departmentInitiativesService.subscribe(status, onChange, onError);
+  return departmentInitiativesService.subscribe(
+    status,
+    onChange,
+    onError,
+    getCurrentCompanyId() ?? undefined
+  );
 }
 
 export async function createDepartmentInitiative(
   input: DepartmentInitiativeInput,
   owner: { uid: string; name?: string | null }
 ): Promise<string> {
-  return departmentInitiativesService.create(input, owner);
+  return departmentInitiativesService.create(input, owner, {
+    companyId: getCurrentCompanyId(),
+  });
 }
 
 export async function updateDepartmentInitiative(
@@ -57,5 +66,5 @@ export async function deleteDepartmentInitiative(initiativeId: string): Promise<
 }
 
 export async function getActiveInitiativesCount(): Promise<number> {
-  return departmentInitiativesService.countByStatus("em_andamento");
+  return departmentInitiativesService.countByStatus("em_andamento", getCurrentCompanyId() ?? undefined);
 }

@@ -21,10 +21,12 @@ vi.mock("firebase/firestore", () => ({
 
 import { addDoc, getAggregateFromServer } from "firebase/firestore";
 import { createRegulation, getOverdueRegulationsCount } from "./regulations";
+import { setCurrentCompanyId } from "../shared/tenant";
 
 describe("createRegulation", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    setCurrentCompanyId(null);
   });
 
   it("creates the regulation with owner info", async () => {
@@ -39,6 +41,21 @@ describe("createRegulation", () => {
     expect(addDoc).toHaveBeenCalledWith(
       expect.anything(),
       expect.objectContaining({ name: "LGPD - Relatório de impacto", ownerId: "owner1" })
+    );
+  });
+
+  it("stamps the regulation with the current companyId", async () => {
+    vi.mocked(addDoc).mockResolvedValue({ id: "new-id" } as never);
+    setCurrentCompanyId("acme");
+
+    await createRegulation(
+      { name: "LGPD - Relatório de impacto", category: "Dados", responsible: "Jurídico", deadline: null, status: "pendente", notes: "" },
+      { uid: "owner1", name: "Yago" }
+    );
+
+    expect(addDoc).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ companyId: "acme" })
     );
   });
 });

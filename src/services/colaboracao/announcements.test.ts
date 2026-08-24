@@ -21,10 +21,12 @@ vi.mock("firebase/firestore", () => ({
 
 import { addDoc, getAggregateFromServer, updateDoc } from "firebase/firestore";
 import { createAnnouncement, getDraftAnnouncementsCount, publishAnnouncement } from "./announcements";
+import { setCurrentCompanyId } from "../shared/tenant";
 
 describe("createAnnouncement", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    setCurrentCompanyId(null);
   });
 
   it("creates the announcement with publishedAt null and owner info", async () => {
@@ -39,6 +41,21 @@ describe("createAnnouncement", () => {
     expect(addDoc).toHaveBeenCalledWith(
       expect.anything(),
       expect.objectContaining({ title: "Novo horário de expediente", publishedAt: null, ownerId: "owner1" })
+    );
+  });
+
+  it("stamps the announcement with the current companyId", async () => {
+    vi.mocked(addDoc).mockResolvedValue({ id: "new-id" } as never);
+    setCurrentCompanyId("acme");
+
+    await createAnnouncement(
+      { title: "Novo horário de expediente", body: "A partir de segunda...", audience: "Todos", status: "rascunho" },
+      { uid: "owner1", name: "Yago" }
+    );
+
+    expect(addDoc).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ companyId: "acme" })
     );
   });
 });

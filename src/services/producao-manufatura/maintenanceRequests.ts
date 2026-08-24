@@ -1,5 +1,6 @@
 import { DocumentData, QueryDocumentSnapshot, Unsubscribe } from "firebase/firestore";
 import { createCrudService } from "../shared/crudFactory";
+import { getCurrentCompanyId } from "../shared/tenant";
 import { IMaintenanceRequest, MaintenanceRequestInput, MaintenanceRequestStatus } from "../../types/maintenanceRequest";
 
 export const mapMaintenanceRequest = (
@@ -8,6 +9,7 @@ export const mapMaintenanceRequest = (
   const data = snap.data();
   return {
     id: snap.id,
+    companyId: data.companyId,
     equipmentName: data.equipmentName,
     description: data.description ?? "",
     technician: data.technician ?? "",
@@ -32,14 +34,14 @@ export function subscribeToMaintenanceRequests(
   onChange: (requests: IMaintenanceRequest[]) => void,
   onError?: (error: Error) => void
 ): Unsubscribe {
-  return maintenanceRequestsService.subscribe(status, onChange, onError);
+  return maintenanceRequestsService.subscribe(status, onChange, onError, getCurrentCompanyId() ?? undefined);
 }
 
 export async function createMaintenanceRequest(
   input: MaintenanceRequestInput,
   owner: { uid: string; name?: string | null }
 ): Promise<string> {
-  return maintenanceRequestsService.create(input, owner);
+  return maintenanceRequestsService.create(input, owner, { companyId: getCurrentCompanyId() });
 }
 
 export async function updateMaintenanceRequest(
@@ -54,5 +56,5 @@ export async function deleteMaintenanceRequest(requestId: string): Promise<void>
 }
 
 export async function getScheduledMaintenanceCount(): Promise<number> {
-  return maintenanceRequestsService.countByStatus("agendada");
+  return maintenanceRequestsService.countByStatus("agendada", getCurrentCompanyId() ?? undefined);
 }

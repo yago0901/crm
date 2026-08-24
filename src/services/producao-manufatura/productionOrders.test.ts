@@ -21,10 +21,12 @@ vi.mock("firebase/firestore", () => ({
 
 import { addDoc, getAggregateFromServer } from "firebase/firestore";
 import { createProductionOrder, getPendingProductionOrdersCount } from "./productionOrders";
+import { setCurrentCompanyId } from "../shared/tenant";
 
 describe("createProductionOrder", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    setCurrentCompanyId(null);
   });
 
   it("creates the order with owner info", async () => {
@@ -39,6 +41,21 @@ describe("createProductionOrder", () => {
     expect(addDoc).toHaveBeenCalledWith(
       expect.anything(),
       expect.objectContaining({ description: "Lote 12", ownerId: "owner1" })
+    );
+  });
+
+  it("stamps the order with the current companyId", async () => {
+    vi.mocked(addDoc).mockResolvedValue({ id: "new-id" } as never);
+    setCurrentCompanyId("acme");
+
+    await createProductionOrder(
+      { description: "Lote 12", productName: "Cadeira modelo X", quantity: 50, status: "pendente", dueDate: null, notes: "" },
+      { uid: "owner1", name: "Yago" }
+    );
+
+    expect(addDoc).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ companyId: "acme" })
     );
   });
 });

@@ -1,5 +1,6 @@
 import { DocumentData, QueryDocumentSnapshot, Unsubscribe } from "firebase/firestore";
 import { createCrudService } from "../shared/crudFactory";
+import { getCurrentCompanyId } from "../shared/tenant";
 import {
   IProjectMilestone,
   ProjectMilestoneInput,
@@ -12,6 +13,7 @@ export const mapProjectMilestone = (
   const data = snap.data();
   return {
     id: snap.id,
+    companyId: data.companyId,
     projectId: data.projectId,
     projectName: data.projectName ?? "",
     title: data.title,
@@ -40,14 +42,21 @@ export function subscribeToProjectMilestones(
   onChange: (milestones: IProjectMilestone[]) => void,
   onError?: (error: Error) => void
 ): Unsubscribe {
-  return projectMilestonesService.subscribe(status, onChange, onError);
+  return projectMilestonesService.subscribe(
+    status,
+    onChange,
+    onError,
+    getCurrentCompanyId() ?? undefined
+  );
 }
 
 export async function createProjectMilestone(
   input: ProjectMilestoneInput,
   owner: { uid: string; name?: string | null }
 ): Promise<string> {
-  return projectMilestonesService.create(input, owner);
+  return projectMilestonesService.create(input, owner, {
+    companyId: getCurrentCompanyId(),
+  });
 }
 
 export async function updateProjectMilestone(
@@ -62,5 +71,5 @@ export async function deleteProjectMilestone(milestoneId: string): Promise<void>
 }
 
 export async function getDelayedMilestonesCount(): Promise<number> {
-  return projectMilestonesService.countByStatus("atrasado");
+  return projectMilestonesService.countByStatus("atrasado", getCurrentCompanyId() ?? undefined);
 }

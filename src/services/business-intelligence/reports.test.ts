@@ -21,10 +21,12 @@ vi.mock("firebase/firestore", () => ({
 
 import { addDoc, getDocs, where } from "firebase/firestore";
 import { createSavedReport, runReport } from "./reports";
+import { setCurrentCompanyId } from "../shared/tenant";
 
 describe("createSavedReport", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    setCurrentCompanyId(null);
   });
 
   it("creates the saved report with owner info", async () => {
@@ -41,11 +43,27 @@ describe("createSavedReport", () => {
       expect.objectContaining({ name: "Contratos ativos", source: "contracts", ownerId: "owner1" })
     );
   });
+
+  it("stamps the saved report with the current companyId", async () => {
+    vi.mocked(addDoc).mockResolvedValue({ id: "new-id" } as never);
+    setCurrentCompanyId("acme");
+
+    await createSavedReport(
+      { name: "Contratos ativos", source: "contracts", statusFilter: "ativo", notes: "" },
+      { uid: "owner1", name: "Yago" }
+    );
+
+    expect(addDoc).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ companyId: "acme" })
+    );
+  });
 });
 
 describe("runReport", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    setCurrentCompanyId(null);
   });
 
   it("queries the given source filtered by status and maps the label field", async () => {
@@ -68,5 +86,14 @@ describe("runReport", () => {
     await runReport("contacts", "all");
 
     expect(where).not.toHaveBeenCalled();
+  });
+
+  it("adds a companyId filter when a company is set", async () => {
+    vi.mocked(getDocs).mockResolvedValue({ docs: [] } as never);
+    setCurrentCompanyId("acme");
+
+    await runReport("contacts", "all");
+
+    expect(where).toHaveBeenCalledWith("companyId", "==", "acme");
   });
 });

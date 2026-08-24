@@ -1,5 +1,6 @@
 import { DocumentData, QueryDocumentSnapshot, Unsubscribe } from "firebase/firestore";
 import { createCrudService } from "../shared/crudFactory";
+import { getCurrentCompanyId } from "../shared/tenant";
 import { IProductionOrder, ProductionOrderInput, ProductionOrderStatus } from "../../types/productionOrder";
 
 export const mapProductionOrder = (
@@ -8,6 +9,7 @@ export const mapProductionOrder = (
   const data = snap.data();
   return {
     id: snap.id,
+    companyId: data.companyId,
     description: data.description,
     productName: data.productName ?? "",
     quantity: data.quantity ?? 0,
@@ -32,14 +34,14 @@ export function subscribeToProductionOrders(
   onChange: (orders: IProductionOrder[]) => void,
   onError?: (error: Error) => void
 ): Unsubscribe {
-  return productionOrdersService.subscribe(status, onChange, onError);
+  return productionOrdersService.subscribe(status, onChange, onError, getCurrentCompanyId() ?? undefined);
 }
 
 export async function createProductionOrder(
   input: ProductionOrderInput,
   owner: { uid: string; name?: string | null }
 ): Promise<string> {
-  return productionOrdersService.create(input, owner);
+  return productionOrdersService.create(input, owner, { companyId: getCurrentCompanyId() });
 }
 
 export async function updateProductionOrder(
@@ -54,5 +56,5 @@ export async function deleteProductionOrder(orderId: string): Promise<void> {
 }
 
 export async function getPendingProductionOrdersCount(): Promise<number> {
-  return productionOrdersService.countByStatus("pendente");
+  return productionOrdersService.countByStatus("pendente", getCurrentCompanyId() ?? undefined);
 }

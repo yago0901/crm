@@ -21,10 +21,12 @@ vi.mock("firebase/firestore", () => ({
 
 import { addDoc, getAggregateFromServer } from "firebase/firestore";
 import { createProjectMilestone, getDelayedMilestonesCount } from "./projectMilestones";
+import { setCurrentCompanyId } from "../shared/tenant";
 
 describe("createProjectMilestone", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    setCurrentCompanyId(null);
   });
 
   it("creates the milestone with owner info", async () => {
@@ -48,6 +50,30 @@ describe("createProjectMilestone", () => {
     expect(addDoc).toHaveBeenCalledWith(
       expect.anything(),
       expect.objectContaining({ title: "Entrega da fase 1", ownerId: "owner1" })
+    );
+  });
+
+  it("stamps the milestone with the current companyId", async () => {
+    vi.mocked(addDoc).mockResolvedValue({ id: "new-id" } as never);
+    setCurrentCompanyId("acme");
+
+    await createProjectMilestone(
+      {
+        projectId: "p1",
+        projectName: "Implantação ERP",
+        title: "Entrega da fase 1",
+        dueDate: null,
+        estimatedCost: 10000,
+        actualCost: 0,
+        status: "pendente",
+        notes: "",
+      },
+      { uid: "owner1", name: "Yago" }
+    );
+
+    expect(addDoc).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ companyId: "acme" })
     );
   });
 });

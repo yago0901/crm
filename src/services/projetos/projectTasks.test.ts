@@ -21,10 +21,12 @@ vi.mock("firebase/firestore", () => ({
 
 import { addDoc, getAggregateFromServer } from "firebase/firestore";
 import { createProjectTask, getBacklogTasksCount } from "./projectTasks";
+import { setCurrentCompanyId } from "../shared/tenant";
 
 describe("createProjectTask", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    setCurrentCompanyId(null);
   });
 
   it("creates the task with owner info", async () => {
@@ -39,6 +41,21 @@ describe("createProjectTask", () => {
     expect(addDoc).toHaveBeenCalledWith(
       expect.anything(),
       expect.objectContaining({ title: "Levantar requisitos", ownerId: "owner1" })
+    );
+  });
+
+  it("stamps the task with the current companyId", async () => {
+    vi.mocked(addDoc).mockResolvedValue({ id: "new-id" } as never);
+    setCurrentCompanyId("acme");
+
+    await createProjectTask(
+      { projectId: "p1", projectName: "Implantação ERP", title: "Levantar requisitos", assignee: "Ana", dueDate: null, status: "a_fazer", notes: "" },
+      { uid: "owner1", name: "Yago" }
+    );
+
+    expect(addDoc).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ companyId: "acme" })
     );
   });
 });

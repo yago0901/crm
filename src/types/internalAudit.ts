@@ -4,6 +4,7 @@ export type InternalAuditStatus = "planejada" | "em_andamento" | "concluida";
 
 export interface IInternalAudit {
   id: string;
+  companyId: string;
   title: string;
   department: string;
   auditor?: string;

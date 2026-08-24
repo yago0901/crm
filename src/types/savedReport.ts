@@ -12,6 +12,7 @@ export type ReportSource =
 
 export interface ISavedReport {
   id: string;
+  companyId: string;
   name: string;
   source: ReportSource;
   statusFilter: string;

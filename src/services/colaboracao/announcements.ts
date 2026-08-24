@@ -1,6 +1,7 @@
 import { doc, DocumentData, QueryDocumentSnapshot, serverTimestamp, Unsubscribe, updateDoc } from "firebase/firestore";
 import { firestore } from "../shared/firebase";
 import { createCrudService } from "../shared/crudFactory";
+import { getCurrentCompanyId } from "../shared/tenant";
 import { AnnouncementInput, AnnouncementStatus, IAnnouncement } from "../../types/announcement";
 
 export const mapAnnouncement = (
@@ -9,6 +10,7 @@ export const mapAnnouncement = (
   const data = snap.data();
   return {
     id: snap.id,
+    companyId: data.companyId,
     title: data.title,
     body: data.body ?? "",
     audience: data.audience ?? "",
@@ -31,14 +33,17 @@ export function subscribeToAnnouncements(
   onChange: (announcements: IAnnouncement[]) => void,
   onError?: (error: Error) => void
 ): Unsubscribe {
-  return announcementsService.subscribe(status, onChange, onError);
+  return announcementsService.subscribe(status, onChange, onError, getCurrentCompanyId() ?? undefined);
 }
 
 export async function createAnnouncement(
   input: AnnouncementInput,
   owner: { uid: string; name?: string | null }
 ): Promise<string> {
-  return announcementsService.create(input, owner, { publishedAt: null });
+  return announcementsService.create(input, owner, {
+    companyId: getCurrentCompanyId(),
+    publishedAt: null,
+  });
 }
 
 export async function updateAnnouncement(
@@ -61,5 +66,5 @@ export async function deleteAnnouncement(announcementId: string): Promise<void> 
 }
 
 export async function getDraftAnnouncementsCount(): Promise<number> {
-  return announcementsService.countByStatus("rascunho");
+  return announcementsService.countByStatus("rascunho", getCurrentCompanyId() ?? undefined);
 }

@@ -1,5 +1,6 @@
 import { DocumentData, QueryDocumentSnapshot, Unsubscribe } from "firebase/firestore";
 import { createCrudService } from "../shared/crudFactory";
+import { getCurrentCompanyId } from "../shared/tenant";
 import { IRegulation, RegulationInput, RegulationStatus } from "../../types/regulation";
 
 export const mapRegulation = (
@@ -8,6 +9,7 @@ export const mapRegulation = (
   const data = snap.data();
   return {
     id: snap.id,
+    companyId: data.companyId,
     name: data.name,
     category: data.category ?? "",
     responsible: data.responsible ?? "",
@@ -32,14 +34,14 @@ export function subscribeToRegulations(
   onChange: (regulations: IRegulation[]) => void,
   onError?: (error: Error) => void
 ): Unsubscribe {
-  return regulationsService.subscribe(status, onChange, onError);
+  return regulationsService.subscribe(status, onChange, onError, getCurrentCompanyId() ?? undefined);
 }
 
 export async function createRegulation(
   input: RegulationInput,
   owner: { uid: string; name?: string | null }
 ): Promise<string> {
-  return regulationsService.create(input, owner);
+  return regulationsService.create(input, owner, { companyId: getCurrentCompanyId() });
 }
 
 export async function updateRegulation(
@@ -54,5 +56,5 @@ export async function deleteRegulation(regulationId: string): Promise<void> {
 }
 
 export async function getOverdueRegulationsCount(): Promise<number> {
-  return regulationsService.countByStatus("vencido");
+  return regulationsService.countByStatus("vencido", getCurrentCompanyId() ?? undefined);
 }

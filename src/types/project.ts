@@ -4,6 +4,7 @@ export type ProjectStatus = "planejamento" | "em_andamento" | "concluido" | "can
 
 export interface IProject {
   id: string;
+  companyId: string;
   name: string;
   description?: string;
   budget: number;
