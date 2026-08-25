@@ -10,7 +10,7 @@ export interface IAuthContextType {
   mustChangePassword: boolean;
   isAdmin: boolean;
   loading: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (loginId: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   changePassword: (newPassword: string) => Promise<void>;
 }

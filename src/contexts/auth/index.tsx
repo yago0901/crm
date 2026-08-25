@@ -56,7 +56,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     return unsubscribe;
   }, [currentUser]);
 
-  const login = async (email: string, password: string) => {
+  const login = async (loginId: string, password: string) => {
+    const loginDoc = await getDoc(doc(firestore, 'logins', loginId));
+    if (!loginDoc.exists()) {
+      throw new Error('Usuário ou senha inválidos.');
+    }
+
+    const email = loginDoc.data().email as string;
     await signInWithEmailAndPassword(auth, email, password);
     const user = auth.currentUser;
     if (!user) return;

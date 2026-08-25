@@ -40,6 +40,7 @@ export async function findAvailableSlug(companyName: string): Promise<string> {
 
 export interface IProvisionCompanyInput {
   companyName: string;
+  slugHint?: string;
   username: string;
   email: string;
 }
@@ -56,7 +57,7 @@ export interface IProvisionedAccount {
 export async function provisionCompanyWithPrimaryAccount(
   input: IProvisionCompanyInput
 ): Promise<IProvisionedAccount> {
-  const slug = await findAvailableSlug(input.companyName);
+  const slug = await findAvailableSlug(input.slugHint || input.companyName);
   const tempPassword = generateTempPassword();
   const login = `${slug}.${input.username}`;
 
