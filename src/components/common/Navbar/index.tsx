@@ -13,11 +13,13 @@ import {
   FaMoneyBillWave,
   FaMoon,
   FaProjectDiagram,
+  FaSignOutAlt,
   FaSun,
   FaUsers,
   FaWarehouse,
 } from 'react-icons/fa';
 import { useTheme } from '../../../hooks/useTheme';
+import { useAuth } from '../../../contexts/auth';
 
 interface MenuChild {
   label: string;
@@ -148,8 +150,14 @@ const Navbar: React.FC<INavbar> = ({ isMenuOpen, onToggleMenu }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { theme, toggleTheme } = useTheme();
+  const { logout } = useAuth();
 
   const [openKey, setOpenKey] = useState<string | null>(findActiveKey(location.pathname));
+
+  const handleLogout = async () => {
+    await logout();
+    navigate('/');
+  };
 
   useEffect(() => {
     const activeKey = findActiveKey(location.pathname);
@@ -220,10 +228,19 @@ const Navbar: React.FC<INavbar> = ({ isMenuOpen, onToggleMenu }) => {
               {theme === 'light' ? <FaMoon /> : <FaSun />}
               <span>{theme === 'light' ? 'Modo escuro' : 'Modo claro'}</span>
             </button>
+
+            <button className="navbar__logout" onClick={handleLogout}>
+              <FaSignOutAlt />
+              <span>Sair</span>
+            </button>
           </nav>
         )}
-        <button className='navbar__button_close' onClick={onToggleMenu}>
-          {isMenuOpen ? 'X' : '>'}
+        <button
+          className='navbar__button_close'
+          onClick={onToggleMenu}
+          aria-label={isMenuOpen ? 'Fechar menu' : 'Abrir menu'}
+        >
+          {isMenuOpen ? '<' : '>'}
         </button>
       </div>
     </>

@@ -57,8 +57,10 @@ const RedefinirSenha = () => {
         <div className="redefinir_senha_background__container__card">
           <h1>Defina sua senha</h1>
           <p>
-            Por segurança, defina uma nova senha antes de continuar. Você só
-            precisa fazer isso uma vez.
+            Por segurança, defina uma nova senha antes de continuar.
+            <span className="redefinir_senha_background__container__card__hint">
+              Você só precisa fazer isso uma vez, no seu primeiro acesso.
+            </span>
           </p>
           <form onSubmit={handleSubmit}>
             <input
@@ -77,18 +79,24 @@ const RedefinirSenha = () => {
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
             />
-            <button type="submit" disabled={saving}>
-              {saving ? "Salvando..." : "Salvar e continuar"}
-            </button>
+            <div className="redefinir_senha_background__container__card__buttons">
+              <button
+                className="redefinir_senha_background__container__card__buttons__save"
+                type="submit"
+                disabled={saving}
+              >
+                {saving ? "Salvando..." : "Salvar"}
+              </button>
+              <button
+                className="redefinir_senha_background__container__card__buttons__logout"
+                type="button"
+                onClick={handleLogout}
+              >
+                Sair
+              </button>
+            </div>
           </form>
           {error && <p className="redefinir_senha_background__container__card__error">{error}</p>}
-          <button
-            className="redefinir_senha_background__container__card__logout"
-            onClick={handleLogout}
-            type="button"
-          >
-            Sair
-          </button>
         </div>
       </div>
     </div>
