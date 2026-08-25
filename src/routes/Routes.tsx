@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 
 // Importe os componentes correspondentes a cada funcionalidade
 import AcompanhamentoLeads from "../components/pages/AcompanhamentoLeads";
@@ -35,6 +35,7 @@ import PlanejamentoProducao from "../components/pages/PlanejamentoProducao";
 import PlanejamentoProjetos from "../components/pages/PlanejamentoProjetos";
 import PrevisaoTendencias from "../components/pages/PrevisaoTendencias";
 import Recrutamento from "../components/pages/Recrutamento";
+import RedefinirSenha from "../components/pages/RedefinirSenha";
 import Register from '../components/pages/Register';
 import RelatoriosFinanceiros from "../components/pages/RelatoriosFinanceiros";
 import RelatoriosPersonalizados from "../components/pages/RelatoriosPersonalizados";
@@ -44,9 +45,16 @@ import { useAuth } from '../contexts/auth';
 import Layout from '../components/pages/Layout';
 
 const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
-  const { currentUser, loading } = useAuth();
+  const { currentUser, loading, mustChangePassword } = useAuth();
+  const location = useLocation();
+
   if (loading) return null;
-  return currentUser ? children : <Navigate to="/" />;
+  if (!currentUser) return <Navigate to="/" />;
+  if (mustChangePassword && location.pathname !== "/redefinir-senha") {
+    return <Navigate to="/redefinir-senha" />;
+  }
+
+  return children;
 };
 
 function Router() {
@@ -54,6 +62,7 @@ function Router() {
     <Routes>
       <Route path="/" element={<Login />} />
       <Route path="/register" element={<Register />} />
+      <Route path="/redefinir-senha" element={<PrivateRoute><RedefinirSenha /></PrivateRoute>} />
       <Route element={<PrivateRoute><Layout /></PrivateRoute>}>
         <Route path="/home" element={<PrivateRoute><Home /></PrivateRoute>} />
 
