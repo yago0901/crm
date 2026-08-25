@@ -133,6 +133,18 @@ describe("provisionCompanyWithPrimaryAccount", () => {
     );
   });
 
+  it("uses slugHint instead of the company name when provided (user-edited slug)", async () => {
+    const result = await provisionCompanyWithPrimaryAccount({
+      companyName: "Acme Comércio e Serviços Ltda",
+      slugHint: "acme",
+      username: "joao",
+      email: "joao@example.com",
+    });
+
+    expect(result.slug).toBe("acme");
+    expect(result.login).toBe("acme.joao");
+  });
+
   it("reports autoSignedIn: false without failing the whole provisioning when the auto sign-in fails", async () => {
     vi.mocked(signInWithEmailAndPassword).mockRejectedValue(new Error("network error"));
 

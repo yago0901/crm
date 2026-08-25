@@ -4,7 +4,7 @@ import { useAuth } from '../../../contexts/auth';
 import './styles.scss';
 
 const Login = () => {
-  const [email, setEmail] = useState<string>('');
+  const [loginId, setLoginId] = useState<string>('');
   const [password, setPassword] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
 
@@ -12,14 +12,14 @@ const Login = () => {
   const { login } = useAuth();
 
   const handleClick = () => {
-    navigate('/registro');
+    navigate('/register');
   };
 
   const handleSign = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     try {
-      await login(email, password);
+      await login(loginId, password);
       navigate("/home");
       setError(null);
     } catch (error: any) {
@@ -48,10 +48,11 @@ const Login = () => {
             <input
               className="login_background__container__card_login__user"
               name='login'
-              placeholder='Usuário/E-mail'
-              aria-label='Usuário ou e-mail'
+              placeholder='empresa.usuario'
+              aria-label='Usuário (empresa.usuario)'
               type="text"
-              onChange={(e) => setEmail(e.target.value)}
+              value={loginId}
+              onChange={(e) => setLoginId(e.target.value)}
             />
             <input
               className="login_background__container__card_login__password"
@@ -62,8 +63,8 @@ const Login = () => {
               onChange={(e) => setPassword(e.target.value)}
             />
             <div className="login_background__container__card_login__buttons">
-              <button className="login_background__container__card_login__buttons__login">LOGIN</button>
-              <button className="login_background__container__card_login__buttons__register" onClick={handleClick}>REGISTRO</button>
+              <button className="login_background__container__card_login__buttons__login" type="submit">LOGIN</button>
+              <button className="login_background__container__card_login__buttons__register" type="button" onClick={handleClick}>REGISTRO</button>
             </div>
             <div className="login_background__container__card_login__settings" >
               <div className="login_background__container__card_login__settings__remember">
