@@ -2,6 +2,19 @@ rules_version = '2';
 
 service firebase.storage {
   match /b/{bucket}/o {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function belongsToCompany(companyId) {
+      return isSignedIn()
+        && firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.get('companyId', null) == companyId;
+    }
+
+    match /companies/{companyId}/{allPaths=**} {
+      allow read, write: if belongsToCompany(companyId);
+    }
+
     match /{allPaths=**} {
       allow read, write: if false;
     }
