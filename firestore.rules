@@ -54,13 +54,33 @@ service cloud.firestore {
     match /users/{uid} {
       allow read: if isOwner(uid);
 
+      // Self-service signup path (Fase 1 passo 1a): a brand-new user may
+      // create their own profile only as the Admin of a company where
+      // they are already registered as primaryUserId (that company doc
+      // is written moments earlier, in the same provisioning flow).
+      // NOTE: this does not yet cover the employee-invite path (Fase 1
+      // passo 1f) — extending this rule to allow a Company Admin to
+      // provision a 'User'-level profile for someone else is still open.
       allow create: if isOwner(uid)
-        && request.resource.data.level == 'User';
+        && request.resource.data.level == 'Admin'
+        && request.resource.data.companyId is string
+        && get(/databases/$(database)/documents/companies/$(request.resource.data.companyId)).data.primaryUserId == uid;
 
       allow update: if isOwner(uid)
-        && request.resource.data.level == resource.data.level;
+        && request.resource.data.level == resource.data.level
+        && request.resource.data.companyId == resource.data.get('companyId', null);
 
       allow delete: if false;
+    }
+
+    match /logins/{loginId} {
+      allow get: if true;
+      allow list: if false;
+
+      allow create: if isSignedIn()
+        && request.resource.data.email == request.auth.token.email;
+
+      allow update, delete: if false;
     }
 
     match /contacts/{contactId} {
