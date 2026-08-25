@@ -39,6 +39,11 @@
         color: #555;
       }
 
+      &__hint {
+        display: block;
+        margin-top: 0.35rem;
+      }
+
       form {
         display: flex;
         gap: 0.5rem;
@@ -48,24 +53,30 @@
         input {
           padding: 0.5rem;
           border-radius: 6px;
+          background-color: #e8f0fe;
         }
+      }
 
-        button {
+      &__buttons {
+        display: flex;
+        justify-content: space-between;
+        gap: 0.5rem;
+
+        &__save {
           padding: 0.5rem;
           border-radius: 6px;
+          flex: 1;
+        }
+
+        &__logout {
+          padding: 0.5rem;
+          border-radius: 6px;
+          flex: 1;
         }
       }
 
       &__error {
         color: red;
-      }
-
-      &__logout {
-        background: none;
-        border: none;
-        text-decoration: underline;
-        cursor: pointer;
-        font-size: 13px;
       }
 
       @media (max-width: 1330px) {
