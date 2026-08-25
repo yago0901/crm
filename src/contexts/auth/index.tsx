@@ -1,8 +1,8 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { auth, firestore } from '../../services/shared/firebase';
-import { User, signInWithEmailAndPassword, signOut } from 'firebase/auth';
+import { User, signInWithEmailAndPassword, signOut, updatePassword } from 'firebase/auth';
 import { IAuthContextType, UserLevel } from './types'
-import { doc, getDoc, onSnapshot } from 'firebase/firestore';
+import { doc, getDoc, onSnapshot, updateDoc } from 'firebase/firestore';
 import { setCurrentCompanyId } from '../../services/shared/tenant';
 
 const AuthContext = createContext<IAuthContextType | undefined>(undefined);
@@ -20,6 +20,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [userLevel, setUserLevel] = useState<UserLevel | null>(null);
   const [companyId, setCompanyId] = useState<string | null>(null);
   const [modules, setModules] = useState<string[]>([]);
+  const [mustChangePassword, setMustChangePassword] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -36,6 +37,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setUserLevel(null);
       setCompanyId(null);
       setModules([]);
+      setMustChangePassword(false);
       setCurrentCompanyId(null);
       return;
     }
@@ -47,6 +49,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setUserLevel((data?.level as UserLevel) ?? 'User');
       setCompanyId(nextCompanyId);
       setModules((data?.modules as string[]) ?? []);
+      setMustChangePassword((data?.mustChangePassword as boolean) ?? false);
       setCurrentCompanyId(nextCompanyId);
     });
 
@@ -76,6 +79,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setCurrentUser(null);
   };
 
+  const changePassword = async (newPassword: string) => {
+    if (!auth.currentUser) {
+      throw new Error('Nenhum usuário autenticado.');
+    }
+
+    await updatePassword(auth.currentUser, newPassword);
+    await updateDoc(doc(firestore, 'users', auth.currentUser.uid), {
+      mustChangePassword: false,
+    });
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -83,10 +97,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         userLevel,
         companyId,
         modules,
+        mustChangePassword,
         isAdmin: userLevel === 'Admin',
         loading,
         login,
         logout,
+        changePassword,
       }}
     >
       {children}
