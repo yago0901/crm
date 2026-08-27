@@ -62,30 +62,42 @@ export async function provisionCompanyWithPrimaryAccount(
   const login = `${slug}.${input.username}`;
 
   await withNewAuthAccount(input.email, tempPassword, async ({ uid, db }) => {
-    await setDoc(doc(db, "companies", slug), {
-      slug,
-      name: input.companyName,
-      plan: "trial",
-      trialEndsAt: null,
-      maxUsers: TRIAL_MAX_USERS,
-      userCount: 1,
-      primaryUserId: uid,
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
-    });
+    try {
+      await setDoc(doc(db, "companies", slug), {
+        slug,
+        name: input.companyName,
+        plan: "trial",
+        trialEndsAt: null,
+        maxUsers: TRIAL_MAX_USERS,
+        userCount: 1,
+        primaryUserId: uid,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      });
+    } catch (err) {
+      throw new Error(`Falha ao criar a empresa (companies): ${(err as Error).message}`);
+    }
 
-    await setDoc(doc(db, "users", uid), {
-      companyId: slug,
-      email: input.email,
-      level: "Admin",
-      modules: [...ALL_MODULE_KEYS],
-      mustChangePassword: true,
-      createdAt: serverTimestamp(),
-    });
+    try {
+      await setDoc(doc(db, "users", uid), {
+        companyId: slug,
+        email: input.email,
+        level: "Admin",
+        modules: [...ALL_MODULE_KEYS],
+        mustChangePassword: true,
+        createdAt: serverTimestamp(),
+      });
+    } catch (err) {
+      throw new Error(`Falha ao criar o perfil do usuário (users): ${(err as Error).message}`);
+    }
 
-    await setDoc(doc(db, "logins", login), {
-      email: input.email,
-    });
+    try {
+      await setDoc(doc(db, "logins", login), {
+        email: input.email,
+      });
+    } catch (err) {
+      throw new Error(`Falha ao criar o login (logins): ${(err as Error).message}`);
+    }
   });
 
   // The account was already created successfully at this point, regardless
