@@ -7,6 +7,7 @@ import {
   where,
 } from "firebase/firestore";
 import { firestore } from "../shared/firebase";
+import { getCurrentCompanyId } from "../shared/tenant";
 import { mapInventoryItem } from "../estoques-logistica/inventory";
 import { InventoryItemStatus } from "../../types/inventoryItem";
 import { ProductionOrderStatus } from "../../types/productionOrder";
@@ -14,13 +15,18 @@ import { ProjectStatus } from "../../types/project";
 import { PurchaseOrderStatus } from "../../types/purchaseOrder";
 import { IStatusCount } from "../shared/dashboard";
 
+function companyConstraints(...extra: ReturnType<typeof where>[]) {
+  const companyId = getCurrentCompanyId();
+  return companyId ? [where("companyId", "==", companyId), ...extra] : extra;
+}
+
 export async function getInventoryStatusBreakdown(): Promise<IStatusCount[]> {
   const statuses: InventoryItemStatus[] = ["ativo", "descontinuado"];
   const ref = collection(firestore, "inventoryItems");
 
   const counts = await Promise.all(
     statuses.map(async (status) => {
-      const snap = await getDocs(query(ref, where("status", "==", status)));
+      const snap = await getDocs(query(ref, ...companyConstraints(where("status", "==", status))));
       return snap.size;
     })
   );
@@ -30,7 +36,7 @@ export async function getInventoryStatusBreakdown(): Promise<IStatusCount[]> {
 
 export async function getLowStockItemsCount(): Promise<number> {
   const snap = await getDocs(
-    query(collection(firestore, "inventoryItems"), where("status", "==", "ativo"))
+    query(collection(firestore, "inventoryItems"), ...companyConstraints(where("status", "==", "ativo")))
   );
   const items = snap.docs.map(mapInventoryItem);
   return items.filter((item) => item.quantity <= item.minQuantity).length;
@@ -47,7 +53,7 @@ export async function getProductionOrdersStatusBreakdown(): Promise<IStatusCount
 
   const counts = await Promise.all(
     statuses.map(async (status) => {
-      const snap = await getDocs(query(ref, where("status", "==", status)));
+      const snap = await getDocs(query(ref, ...companyConstraints(where("status", "==", status))));
       return snap.size;
     })
   );
@@ -66,7 +72,7 @@ export async function getProjectsStatusBreakdown(): Promise<IStatusCount[]> {
 
   const counts = await Promise.all(
     statuses.map(async (status) => {
-      const snap = await getDocs(query(ref, where("status", "==", status)));
+      const snap = await getDocs(query(ref, ...companyConstraints(where("status", "==", status))));
       return snap.size;
     })
   );
@@ -85,7 +91,7 @@ export async function getPurchaseOrdersValueByStatus(): Promise<IValueByStatus[]
 
   const results = await Promise.all(
     statuses.map((status) =>
-      getAggregateFromServer(query(ref, where("status", "==", status)), {
+      getAggregateFromServer(query(ref, ...companyConstraints(where("status", "==", status))), {
         total: sum("value"),
       })
     )

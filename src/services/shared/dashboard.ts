@@ -8,12 +8,18 @@ import {
   where,
 } from "firebase/firestore";
 import { firestore } from "./firebase";
+import { getCurrentCompanyId } from "./tenant";
 import { ContactStatus } from "../../types/contact";
 import { ContractStatus } from "../../types/contract";
 import { EmployeeStatus } from "../../types/employee";
 import { FinanceStatus } from "../../types/finance";
 import { mapEmployee } from "../rh/employees";
 import { mapPayable, mapReceivable, getCashFlowSummary, IMonthlyCashFlow } from "../financeiro/finance";
+
+function companyConstraints(...extra: ReturnType<typeof where>[]) {
+  const companyId = getCurrentCompanyId();
+  return companyId ? [where("companyId", "==", companyId), ...extra] : extra;
+}
 
 export interface IDashboardStats {
   leadsCount: number;
@@ -27,16 +33,18 @@ export async function getDashboardStats(): Promise<IDashboardStats> {
   const contractsRef = collection(firestore, "contracts");
 
   const [leadsSnap, clientesSnap, contratosSnap] = await Promise.all([
-    getAggregateFromServer(query(contactsRef, where("status", "==", "lead")), {
-      total: count(),
-    }),
-    getAggregateFromServer(query(contactsRef, where("status", "==", "cliente")), {
-      total: count(),
-    }),
-    getAggregateFromServer(query(contractsRef, where("status", "==", "ativo")), {
-      total: count(),
-      valor: sum("value"),
-    }),
+    getAggregateFromServer(
+      query(contactsRef, ...companyConstraints(where("status", "==", "lead"))),
+      { total: count() }
+    ),
+    getAggregateFromServer(
+      query(contactsRef, ...companyConstraints(where("status", "==", "cliente"))),
+      { total: count() }
+    ),
+    getAggregateFromServer(
+      query(contractsRef, ...companyConstraints(where("status", "==", "ativo"))),
+      { total: count(), valor: sum("value") }
+    ),
   ]);
 
   return {
@@ -58,7 +66,7 @@ export async function getContactStatusBreakdown(): Promise<IStatusCount[]> {
 
   const results = await Promise.all(
     statuses.map((status) =>
-      getAggregateFromServer(query(ref, where("status", "==", status)), {
+      getAggregateFromServer(query(ref, ...companyConstraints(where("status", "==", status))), {
         total: count(),
       })
     )
@@ -73,7 +81,7 @@ export async function getContractStatusBreakdown(): Promise<IStatusCount[]> {
 
   const results = await Promise.all(
     statuses.map((status) =>
-      getAggregateFromServer(query(ref, where("status", "==", status)), {
+      getAggregateFromServer(query(ref, ...companyConstraints(where("status", "==", status))), {
         total: count(),
       })
     )
@@ -84,8 +92,8 @@ export async function getContractStatusBreakdown(): Promise<IStatusCount[]> {
 
 export async function getMonthlyCashFlow(): Promise<IMonthlyCashFlow[]> {
   const [payablesSnap, receivablesSnap] = await Promise.all([
-    getDocs(collection(firestore, "payables")),
-    getDocs(collection(firestore, "receivables")),
+    getDocs(query(collection(firestore, "payables"), ...companyConstraints())),
+    getDocs(query(collection(firestore, "receivables"), ...companyConstraints())),
   ]);
 
   const payables = payablesSnap.docs.map(mapPayable);
@@ -100,7 +108,7 @@ export async function getEmployeeStatusBreakdown(): Promise<IStatusCount[]> {
 
   const results = await Promise.all(
     statuses.map((status) =>
-      getAggregateFromServer(query(ref, where("status", "==", status)), {
+      getAggregateFromServer(query(ref, ...companyConstraints(where("status", "==", status))), {
         total: count(),
       })
     )
@@ -117,12 +125,14 @@ export async function getFinanceStatusBreakdown(): Promise<IStatusCount[]> {
   const results = await Promise.all(
     statuses.map((status) =>
       Promise.all([
-        getAggregateFromServer(query(payablesRef, where("status", "==", status)), {
-          total: count(),
-        }),
-        getAggregateFromServer(query(receivablesRef, where("status", "==", status)), {
-          total: count(),
-        }),
+        getAggregateFromServer(
+          query(payablesRef, ...companyConstraints(where("status", "==", status))),
+          { total: count() }
+        ),
+        getAggregateFromServer(
+          query(receivablesRef, ...companyConstraints(where("status", "==", status))),
+          { total: count() }
+        ),
       ])
     )
   );
@@ -140,7 +150,7 @@ export interface IDepartmentPayroll {
 
 export async function getPayrollByDepartment(): Promise<IDepartmentPayroll[]> {
   const snap = await getDocs(
-    query(collection(firestore, "employees"), where("status", "==", "ativo"))
+    query(collection(firestore, "employees"), ...companyConstraints(where("status", "==", "ativo")))
   );
   const employees = snap.docs.map(mapEmployee);
 

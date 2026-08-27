@@ -13,17 +13,19 @@ vi.mock("firebase/firestore", () => ({
   sum: vi.fn((field) => ({ type: "sum", field })),
 }));
 
-import { getAggregateFromServer, getDocs } from "firebase/firestore";
+import { getAggregateFromServer, getDocs, where } from "firebase/firestore";
 import {
   getInventoryStatusBreakdown,
   getLowStockItemsCount,
   getProjectsStatusBreakdown,
   getPurchaseOrdersValueByStatus,
 } from "./analytics";
+import { setCurrentCompanyId } from "../shared/tenant";
 
 describe("getInventoryStatusBreakdown", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    setCurrentCompanyId(null);
   });
 
   it("counts documents per status", async () => {
@@ -37,6 +39,15 @@ describe("getInventoryStatusBreakdown", () => {
       { status: "ativo", count: 5 },
       { status: "descontinuado", count: 2 },
     ]);
+  });
+
+  it("adds a companyId filter when a company is set", async () => {
+    vi.mocked(getDocs).mockResolvedValue({ size: 0 } as never);
+    setCurrentCompanyId("acme");
+
+    await getInventoryStatusBreakdown();
+
+    expect(where).toHaveBeenCalledWith("companyId", "==", "acme");
   });
 });
 
@@ -74,6 +85,7 @@ describe("getProjectsStatusBreakdown", () => {
 describe("getPurchaseOrdersValueByStatus", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    setCurrentCompanyId(null);
   });
 
   it("sums the value field per status", async () => {
@@ -84,5 +96,16 @@ describe("getPurchaseOrdersValueByStatus", () => {
     const result = await getPurchaseOrdersValueByStatus();
 
     expect(result[0]).toEqual({ status: "pendente", total: 500 });
+  });
+
+  it("adds a companyId filter when a company is set", async () => {
+    vi.mocked(getAggregateFromServer).mockResolvedValue({
+      data: () => ({ total: 0 }),
+    } as never);
+    setCurrentCompanyId("acme");
+
+    await getPurchaseOrdersValueByStatus();
+
+    expect(where).toHaveBeenCalledWith("companyId", "==", "acme");
   });
 });

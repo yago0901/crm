@@ -35,7 +35,12 @@ service cloud.firestore {
     }
 
     match /companies/{companyId} {
-      allow read: if isSuperAdmin() || belongsToCompany(companyId);
+      // get (fetch by exact id) stays open even signed out -- the
+      // signup form needs to check "is this slug already taken?"
+      // before any account exists yet. list stays restricted so
+      // nobody can enumerate every company.
+      allow get: if true;
+      allow list: if isSuperAdmin() || belongsToCompany(companyId);
 
       allow create: if isSignedIn()
         && request.resource.data.primaryUserId == request.auth.uid
