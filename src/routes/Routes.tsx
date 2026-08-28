@@ -37,6 +37,9 @@ import PrevisaoTendencias from "../components/pages/PrevisaoTendencias";
 import Recrutamento from "../components/pages/Recrutamento";
 import RedefinirSenha from "../components/pages/RedefinirSenha";
 import Register from '../components/pages/Register';
+import SuperAdmin from "../components/pages/SuperAdmin";
+import AdminLayout from "../components/pages/SuperAdmin/AdminLayout";
+import AdminLogin from "../components/pages/SuperAdmin/AdminLogin";
 import RelatoriosFinanceiros from "../components/pages/RelatoriosFinanceiros";
 import RelatoriosPersonalizados from "../components/pages/RelatoriosPersonalizados";
 import Treinamento from "../components/pages/Treinamento";
@@ -57,12 +60,27 @@ const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
   return children;
 };
 
+const SuperAdminRoute = ({ children }: { children: React.ReactNode }) => {
+  const { currentUser, loading, isSuperAdmin } = useAuth();
+
+  if (loading) return null;
+  // No account signed in at all: show the dedicated admin login here,
+  // in place -- never redirect to the client Login screen. Someone
+  // already signed in as a client who isn't a super admin still bounces
+  // to /home, same as before.
+  if (!currentUser) return <AdminLogin />;
+  if (!isSuperAdmin) return <Navigate to="/home" />;
+
+  return <AdminLayout>{children}</AdminLayout>;
+};
+
 function Router() {
   return (
     <Routes>
       <Route path="/" element={<Login />} />
       <Route path="/register" element={<Register />} />
       <Route path="/redefinir-senha" element={<PrivateRoute><RedefinirSenha /></PrivateRoute>} />
+      <Route path="/admin" element={<SuperAdminRoute><SuperAdmin /></SuperAdminRoute>} />
       <Route element={<PrivateRoute><Layout /></PrivateRoute>}>
         <Route path="/home" element={<PrivateRoute><Home /></PrivateRoute>} />
 
