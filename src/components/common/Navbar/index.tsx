@@ -1,7 +1,7 @@
 import { INavbar, NavbarMenuItem } from "./types";
 import "./styles.scss";
 import { useLocation, useNavigate } from 'react-router-dom';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   FaChartLine,
   FaChevronDown,
@@ -25,6 +25,7 @@ const DEFAULT_MENU: NavbarMenuItem[] = [
   { key: 'home', label: 'Home', icon: FaHome, path: '/home' },
   {
     key: 'human-resources',
+    requiredModule: 'human-resources',
     label: 'Recursos Humanos',
     icon: FaUsers,
     children: [
@@ -38,6 +39,7 @@ const DEFAULT_MENU: NavbarMenuItem[] = [
   },
   {
     key: 'sales',
+    requiredModule: 'sales',
     label: 'Vendas / CRM',
     icon: FaHandshake,
     children: [
@@ -49,6 +51,7 @@ const DEFAULT_MENU: NavbarMenuItem[] = [
   },
   {
     key: 'financial',
+    requiredModule: 'financial',
     label: 'Financeiro',
     icon: FaMoneyBillWave,
     children: [
@@ -61,6 +64,7 @@ const DEFAULT_MENU: NavbarMenuItem[] = [
   },
   {
     key: 'inventory-logistics',
+    requiredModule: 'inventory-logistics',
     label: 'Estoques e Logística',
     icon: FaWarehouse,
     children: [
@@ -73,6 +77,7 @@ const DEFAULT_MENU: NavbarMenuItem[] = [
   },
   {
     key: 'production',
+    requiredModule: 'production',
     label: 'Produção e Manufatura',
     icon: FaIndustry,
     children: [
@@ -84,6 +89,7 @@ const DEFAULT_MENU: NavbarMenuItem[] = [
   },
   {
     key: 'projects',
+    requiredModule: 'projects',
     label: 'Projetos',
     icon: FaProjectDiagram,
     children: [
@@ -95,6 +101,7 @@ const DEFAULT_MENU: NavbarMenuItem[] = [
   },
   {
     key: 'business-intelligence',
+    requiredModule: 'business-intelligence',
     label: 'Business Intelligence',
     icon: FaChartLine,
     children: [
@@ -106,6 +113,7 @@ const DEFAULT_MENU: NavbarMenuItem[] = [
   },
   {
     key: 'compliance',
+    requiredModule: 'compliance',
     label: 'Compliance e Regulamentações',
     icon: FaClipboardCheck,
     children: [
@@ -116,6 +124,7 @@ const DEFAULT_MENU: NavbarMenuItem[] = [
   },
   {
     key: 'collaboration',
+    requiredModule: 'collaboration',
     label: 'Colaboração',
     icon: FaCommentDots,
     children: [
@@ -138,9 +147,25 @@ const Navbar: React.FC<INavbar> = ({ isMenuOpen, onToggleMenu, menu = DEFAULT_ME
   const navigate = useNavigate();
   const location = useLocation();
   const { theme, toggleTheme } = useTheme();
-  const { logout, isAdmin } = useAuth();
+  const { logout, isAdmin, modules } = useAuth();
 
-  const [openKey, setOpenKey] = useState<string | null>(findActiveKey(menu, location.pathname));
+  // Admin/Manager see every section regardless of modules[] (same
+  // isAdmin-bypass convention as the Firestore rules). A plain User only
+  // sees sections they've been granted -- items with no requiredModule
+  // (just Home today) show for everyone.
+  // Memoized on purpose: an unmemoized .filter() below would return a new
+  // array every render, and the effect further down that keeps openKey in
+  // sync with the URL depends on this array -- a new reference each render
+  // made it re-fire constantly, snapping a section back open right after
+  // a click tried to close it (only ever visible for non-Admin users,
+  // since the isAdmin branch already reuses the same `menu` reference).
+  const visibleMenu = useMemo(
+    () =>
+      isAdmin ? menu : menu.filter((item) => !item.requiredModule || modules.includes(item.requiredModule)),
+    [menu, isAdmin, modules]
+  );
+
+  const [openKey, setOpenKey] = useState<string | null>(findActiveKey(visibleMenu, location.pathname));
 
   const handleLogout = async () => {
     await logout();
@@ -148,9 +173,9 @@ const Navbar: React.FC<INavbar> = ({ isMenuOpen, onToggleMenu, menu = DEFAULT_ME
   };
 
   useEffect(() => {
-    const activeKey = findActiveKey(menu, location.pathname);
+    const activeKey = findActiveKey(visibleMenu, location.pathname);
     if (activeKey) setOpenKey(activeKey);
-  }, [location.pathname, menu]);
+  }, [location.pathname, visibleMenu]);
 
   const handleNavigate = (where: string) => {
     navigate(where);
@@ -172,7 +197,7 @@ const Navbar: React.FC<INavbar> = ({ isMenuOpen, onToggleMenu, menu = DEFAULT_ME
         {isMenuOpen && (
           <nav>
             <ul>
-              {menu.map((item) => {
+              {visibleMenu.map((item) => {
                 const Icon = item.icon;
                 const isSectionActive = openKey === item.key;
                 return (
