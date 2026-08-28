@@ -1,0 +1,96 @@
+.employee_access_page {
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+
+  h1 {
+    font-size: var(--font-size-lg);
+    color: var(--color-text);
+  }
+
+  &__hint {
+    color: var(--color-text-muted);
+    font-size: var(--font-size-sm);
+  }
+
+  &__empty {
+    color: var(--color-text-muted);
+  }
+
+  &__table_wrapper {
+    overflow-x: auto;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+
+    th,
+    td {
+      padding: 0.5rem 0.75rem;
+      text-align: left;
+      border-bottom: 1px solid var(--color-border);
+      font-size: var(--font-size-sm);
+      white-space: nowrap;
+    }
+  }
+
+  &__create_form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+
+  &__created {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+
+    p:first-child {
+      color: var(--color-text-muted);
+      font-size: var(--font-size-sm);
+    }
+  }
+
+  &__manage {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+  }
+
+  &__modules_label {
+    display: block;
+    font-size: var(--font-size-sm);
+    color: var(--color-text-muted);
+    margin-bottom: 0.5rem;
+  }
+
+  &__modules {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.6rem 1rem;
+  }
+
+  &__module_option {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: var(--font-size-sm);
+    color: var(--color-text);
+
+    input[type="checkbox"] {
+      width: auto;
+      flex: none;
+      margin: 0;
+    }
+  }
+
+  &__manage_actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+  }
+}

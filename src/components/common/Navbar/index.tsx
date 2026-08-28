@@ -29,6 +29,7 @@ const DEFAULT_MENU: NavbarMenuItem[] = [
     icon: FaUsers,
     children: [
       { label: 'Funcionários', path: '/rh/gestao-funcionarios' },
+      { label: 'Acessos', path: '/rh/acessos', adminOnly: true },
       { label: 'Folha de Pagamento', path: '/rh/folha-pagamento' },
       { label: 'Recrutamento', path: '/rh/recrutamento' },
       { label: 'Treinamento', path: '/rh/treinamento' },
@@ -137,7 +138,7 @@ const Navbar: React.FC<INavbar> = ({ isMenuOpen, onToggleMenu, menu = DEFAULT_ME
   const navigate = useNavigate();
   const location = useLocation();
   const { theme, toggleTheme } = useTheme();
-  const { logout } = useAuth();
+  const { logout, isAdmin } = useAuth();
 
   const [openKey, setOpenKey] = useState<string | null>(findActiveKey(menu, location.pathname));
 
@@ -190,20 +191,22 @@ const Navbar: React.FC<INavbar> = ({ isMenuOpen, onToggleMenu, menu = DEFAULT_ME
                     </button>
                     {item.children && isSectionActive && (
                       <ul>
-                        {item.children.map((child) => (
-                          <li key={child.path}>
-                            <button
-                              onClick={() => handleNavigate(child.path)}
-                              className={
-                                location.pathname.startsWith(child.path)
-                                  ? 'navbar__selected'
-                                  : ''
-                              }
-                            >
-                              {child.label}
-                            </button>
-                          </li>
-                        ))}
+                        {item.children
+                          .filter((child) => !child.adminOnly || isAdmin)
+                          .map((child) => (
+                            <li key={child.path}>
+                              <button
+                                onClick={() => handleNavigate(child.path)}
+                                className={
+                                  location.pathname.startsWith(child.path)
+                                    ? 'navbar__selected'
+                                    : ''
+                                }
+                              >
+                                {child.label}
+                              </button>
+                            </li>
+                          ))}
                       </ul>
                     )}
                   </li>
