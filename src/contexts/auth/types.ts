@@ -1,6 +1,7 @@
 import { User } from "firebase/auth";
+import { UserLevel } from "../../types/user";
 
-export type UserLevel = "User" | "Admin";
+export type { UserLevel };
 
 export interface IAuthContextType {
   currentUser: User | null;

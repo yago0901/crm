@@ -68,6 +68,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const userDocRef = doc(firestore, 'users', currentUser.uid);
     const unsubscribe = onSnapshot(userDocRef, snap => {
       const data = snap.data();
+
+      // An account disabled via the employee-access admin action (Admin
+      // SDK, server-side) still holds a technically-valid Auth session for
+      // up to an hour -- this listener is what actually cuts it off in
+      // practice, the moment the flag change reaches the client.
+      if (data?.disabled === true) {
+        signOut(auth);
+        setCurrentUser(null);
+        return;
+      }
+
       const nextCompanyId = (data?.companyId as string) ?? null;
       setUserLevel((data?.level as UserLevel) ?? 'User');
       setCompanyId(nextCompanyId);
@@ -152,7 +163,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         modules,
         mustChangePassword,
         isSuperAdmin,
-        isAdmin: userLevel === 'Admin',
+        isAdmin: userLevel === 'Admin' || userLevel === 'Manager',
         loading,
         login,
         logout,

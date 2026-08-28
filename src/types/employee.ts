@@ -14,6 +14,7 @@ export interface IEmployee {
   salary: number;
   hireDate: Timestamp | null;
   notes?: string;
+  userId: string | null;
   ownerId: string;
   ownerName?: string;
   createdAt: Timestamp | null;

@@ -88,9 +88,12 @@ export async function provisionCompanyWithPrimaryAccount(
       await setDoc(doc(db, "users", uid), {
         companyId: slug,
         email: input.email,
+        login,
         level: "Admin",
         modules: [...ALL_MODULE_KEYS],
         mustChangePassword: true,
+        employeeId: null,
+        disabled: false,
         createdAt: serverTimestamp(),
       });
     } catch (err) {

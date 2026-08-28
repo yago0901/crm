@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 
 // Importe os componentes correspondentes a cada funcionalidade
+import AcessosFuncionarios from "../components/pages/AcessosFuncionarios";
 import AcompanhamentoLeads from "../components/pages/AcompanhamentoLeads";
 import AlocacaoRecursos from "../components/pages/AlocacaoRecursos";
 import AnaliseDados from "../components/pages/AnaliseDados";
@@ -60,6 +61,12 @@ const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
   return children;
 };
 
+const AdminOnlyRoute = ({ children }: { children: React.ReactNode }) => {
+  const { isAdmin } = useAuth();
+  if (!isAdmin) return <Navigate to="/home" />;
+  return children;
+};
+
 const SuperAdminRoute = ({ children }: { children: React.ReactNode }) => {
   const { currentUser, loading, isSuperAdmin } = useAuth();
 
@@ -91,6 +98,7 @@ function Router() {
         <Route path="/financeiro/relatorios-financeiros" element={<PrivateRoute><RelatoriosFinanceiros /></PrivateRoute>} />
 
         <Route path="/rh/gestao-funcionarios" element={<PrivateRoute><GestaoFuncionarios /></PrivateRoute>} />
+        <Route path="/rh/acessos" element={<PrivateRoute><AdminOnlyRoute><AcessosFuncionarios /></AdminOnlyRoute></PrivateRoute>} />
         <Route path="/rh/folha-pagamento" element={<PrivateRoute><FolhaPagamento /></PrivateRoute>} />
         <Route path="/rh/recrutamento" element={<PrivateRoute><Recrutamento /></PrivateRoute>} />
         <Route path="/rh/treinamento" element={<PrivateRoute><Treinamento /></PrivateRoute>} />
