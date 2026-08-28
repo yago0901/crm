@@ -1,11 +1,15 @@
 import {
+  collection,
   doc,
   DocumentData,
   DocumentSnapshot,
   getDoc,
+  onSnapshot,
+  query,
   QueryDocumentSnapshot,
   serverTimestamp,
   setDoc,
+  Unsubscribe,
   updateDoc,
 } from "firebase/firestore";
 import { firestore } from "../shared/firebase";
@@ -26,6 +30,7 @@ export const mapCompany = (
     maxUsers: data.maxUsers,
     userCount: data.userCount ?? 0,
     primaryUserId: data.primaryUserId,
+    primaryEmail: data.primaryEmail ?? "",
     createdAt: data.createdAt ?? null,
     updatedAt: data.updatedAt ?? null,
   };
@@ -54,4 +59,16 @@ export async function updateCompany(
     ...input,
     updatedAt: serverTimestamp(),
   });
+}
+
+export function subscribeToCompanies(
+  onChange: (companies: ICompany[]) => void,
+  onError?: (error: Error) => void
+): Unsubscribe {
+  const q = query(collection(firestore, COLLECTION));
+  return onSnapshot(
+    q,
+    (snapshot) => onChange(snapshot.docs.map(mapCompany)),
+    (error) => onError?.(error)
+  );
 }

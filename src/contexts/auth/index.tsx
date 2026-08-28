@@ -21,12 +21,35 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [companyId, setCompanyId] = useState<string | null>(null);
   const [modules, setModules] = useState<string[]>([]);
   const [mustChangePassword, setMustChangePassword] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+
+  // `loading` must not clear until BOTH the profile (companyId) and the
+  // platformAdmins listeners have delivered their first snapshot -- two
+  // independent, differently-timed Firestore calls. It's derived directly
+  // from these two flags on every render (not mirrored into its own state
+  // via an effect) on purpose: an effect-driven copy lags one render behind
+  // the render where `currentUser` and these flags actually change together,
+  // and route guards reading `loading` during that one stale render would
+  // see it still `false` from before the sign-in -- the same race this is
+  // meant to prevent, just moved instead of fixed.
+  const [profileReady, setProfileReady] = useState(false);
+  const [superAdminReady, setSuperAdminReady] = useState(false);
+  const loading = !(profileReady && superAdminReady);
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(user => {
       setCurrentUser(user);
-      setLoading(false);
+      if (!user) {
+        // Nothing to load for a signed-out visitor.
+        setProfileReady(true);
+        setSuperAdminReady(true);
+      } else {
+        // Reset so a freshly signed-in user's own listeners are what
+        // gate `loading`, not leftover state from whoever was signed in
+        // before.
+        setProfileReady(false);
+        setSuperAdminReady(false);
+      }
     });
 
     return unsubscribe;
@@ -51,7 +74,31 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setModules((data?.modules as string[]) ?? []);
       setMustChangePassword((data?.mustChangePassword as boolean) ?? false);
       setCurrentCompanyId(nextCompanyId);
+      setProfileReady(true);
     });
+
+    return unsubscribe;
+  }, [currentUser]);
+
+  useEffect(() => {
+    if (!currentUser) {
+      setIsSuperAdmin(false);
+      return;
+    }
+
+    const platformAdminRef = doc(firestore, 'platformAdmins', currentUser.uid);
+    const unsubscribe = onSnapshot(
+      platformAdminRef,
+      snap => {
+        setIsSuperAdmin(snap.exists());
+        setSuperAdminReady(true);
+      },
+      error => {
+        console.error('[SuperAdmin check] failed for uid=%s', currentUser.uid, error);
+        setIsSuperAdmin(false);
+        setSuperAdminReady(true);
+      }
+    );
 
     return unsubscribe;
   }, [currentUser]);
@@ -104,6 +151,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         companyId,
         modules,
         mustChangePassword,
+        isSuperAdmin,
         isAdmin: userLevel === 'Admin',
         loading,
         login,

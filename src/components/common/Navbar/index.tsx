@@ -1,4 +1,4 @@
-import { INavbar } from "./types";
+import { INavbar, NavbarMenuItem } from "./types";
 import "./styles.scss";
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
@@ -21,20 +21,7 @@ import {
 import { useTheme } from '../../../hooks/useTheme';
 import { useAuth } from '../../../contexts/auth';
 
-interface MenuChild {
-  label: string;
-  path: string;
-}
-
-interface MenuItem {
-  key: string;
-  label: string;
-  icon: React.ComponentType;
-  path?: string;
-  children?: MenuChild[];
-}
-
-const MENU: MenuItem[] = [
+const DEFAULT_MENU: NavbarMenuItem[] = [
   { key: 'home', label: 'Home', icon: FaHome, path: '/home' },
   {
     key: 'human-resources',
@@ -137,8 +124,8 @@ const MENU: MenuItem[] = [
   },
 ];
 
-const findActiveKey = (pathname: string): string | null => {
-  const item = MENU.find(
+const findActiveKey = (menu: NavbarMenuItem[], pathname: string): string | null => {
+  const item = menu.find(
     (menuItem) =>
       menuItem.path === pathname ||
       menuItem.children?.some((child) => pathname.startsWith(child.path))
@@ -146,23 +133,23 @@ const findActiveKey = (pathname: string): string | null => {
   return item?.key ?? null;
 };
 
-const Navbar: React.FC<INavbar> = ({ isMenuOpen, onToggleMenu }) => {
+const Navbar: React.FC<INavbar> = ({ isMenuOpen, onToggleMenu, menu = DEFAULT_MENU, logoutRedirectTo = '/' }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { theme, toggleTheme } = useTheme();
   const { logout } = useAuth();
 
-  const [openKey, setOpenKey] = useState<string | null>(findActiveKey(location.pathname));
+  const [openKey, setOpenKey] = useState<string | null>(findActiveKey(menu, location.pathname));
 
   const handleLogout = async () => {
     await logout();
-    navigate('/');
+    navigate(logoutRedirectTo);
   };
 
   useEffect(() => {
-    const activeKey = findActiveKey(location.pathname);
+    const activeKey = findActiveKey(menu, location.pathname);
     if (activeKey) setOpenKey(activeKey);
-  }, [location.pathname]);
+  }, [location.pathname, menu]);
 
   const handleNavigate = (where: string) => {
     navigate(where);
@@ -184,7 +171,7 @@ const Navbar: React.FC<INavbar> = ({ isMenuOpen, onToggleMenu }) => {
         {isMenuOpen && (
           <nav>
             <ul>
-              {MENU.map((item) => {
+              {menu.map((item) => {
                 const Icon = item.icon;
                 const isSectionActive = openKey === item.key;
                 return (

@@ -5,15 +5,18 @@ vi.mock("../shared/firebase", () => ({
 }));
 
 vi.mock("firebase/firestore", () => ({
+  collection: vi.fn((_db, ...path) => ({ type: "collection", path })),
   doc: vi.fn((_db, ...path) => ({ type: "doc", path })),
   getDoc: vi.fn(),
   setDoc: vi.fn(),
   updateDoc: vi.fn(),
+  onSnapshot: vi.fn(),
+  query: vi.fn((ref, ...constraints) => ({ type: "query", ref, constraints })),
   serverTimestamp: vi.fn(() => "SERVER_TIMESTAMP"),
 }));
 
-import { getDoc, setDoc, updateDoc } from "firebase/firestore";
-import { createCompany, getCompany, updateCompany } from "./companies";
+import { getDoc, onSnapshot, setDoc, updateDoc } from "firebase/firestore";
+import { createCompany, getCompany, subscribeToCompanies, updateCompany } from "./companies";
 
 describe("createCompany", () => {
   beforeEach(() => {
@@ -30,6 +33,7 @@ describe("createCompany", () => {
       trialEndsAt: null,
       maxUsers: 5,
       primaryUserId: "uid1",
+      primaryEmail: "joao@example.com",
     });
 
     expect(id).toBe("padariadojoao");
@@ -75,6 +79,43 @@ describe("getCompany", () => {
     const company = await getCompany("acme");
     expect(company?.name).toBe("Acme");
     expect(company?.id).toBe("acme");
+  });
+});
+
+describe("subscribeToCompanies", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("maps every company in the snapshot", () => {
+    const docs = [
+      {
+        id: "acme",
+        data: () => ({
+          slug: "acme",
+          name: "Acme",
+          plan: "trial",
+          trialEndsAt: null,
+          maxUsers: 5,
+          userCount: 1,
+          primaryUserId: "uid1",
+          primaryEmail: "joao@example.com",
+          createdAt: null,
+          updatedAt: null,
+        }),
+      },
+    ];
+    vi.mocked(onSnapshot).mockImplementation((_q, onNext) => {
+      (onNext as (snap: unknown) => void)({ docs });
+      return vi.fn();
+    });
+
+    const onChange = vi.fn();
+    subscribeToCompanies(onChange);
+
+    expect(onChange).toHaveBeenCalledWith([
+      expect.objectContaining({ id: "acme", name: "Acme", primaryEmail: "joao@example.com" }),
+    ]);
   });
 });
 

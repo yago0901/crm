@@ -8,6 +8,7 @@ export interface IAuthContextType {
   companyId: string | null;
   modules: string[];
   mustChangePassword: boolean;
+  isSuperAdmin: boolean;
   isAdmin: boolean;
   loading: boolean;
   login: (loginId: string, password: string) => Promise<void>;

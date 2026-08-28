@@ -43,6 +43,11 @@ export interface IProvisionCompanyInput {
   slugHint?: string;
   username: string;
   email: string;
+  // Set by the Super Admin's manual "criar empresa" fallback: skips the
+  // auto-sign-in step below, since the Super Admin already has their own
+  // session that must not be disturbed. Self-service signup never sets
+  // this (there's no prior session to protect in that flow).
+  skipAutoSignIn?: boolean;
 }
 
 export interface IProvisionedAccount {
@@ -71,6 +76,7 @@ export async function provisionCompanyWithPrimaryAccount(
         maxUsers: TRIAL_MAX_USERS,
         userCount: 1,
         primaryUserId: uid,
+        primaryEmail: input.email,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       });
@@ -106,11 +112,14 @@ export async function provisionCompanyWithPrimaryAccount(
   // password-change screen instead of showing the temp password. Nobody
   // else was signed in on the primary app before this (self-service signup
   // has no prior session to protect), so this is safe to attempt directly.
-  let autoSignedIn = true;
-  try {
-    await signInWithEmailAndPassword(auth, input.email, tempPassword);
-  } catch {
-    autoSignedIn = false;
+  let autoSignedIn = false;
+  if (!input.skipAutoSignIn) {
+    autoSignedIn = true;
+    try {
+      await signInWithEmailAndPassword(auth, input.email, tempPassword);
+    } catch {
+      autoSignedIn = false;
+    }
   }
 
   return { companyId: slug, slug, username: input.username, login, tempPassword, autoSignedIn };

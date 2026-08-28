@@ -159,6 +159,31 @@ describe("provisionCompanyWithPrimaryAccount", () => {
     expect(result.tempPassword).toBe("TempPass123");
   });
 
+  it("skips the auto sign-in entirely when skipAutoSignIn is set (Super Admin manual creation)", async () => {
+    const result = await provisionCompanyWithPrimaryAccount({
+      companyName: "Acme Ltda",
+      username: "joao",
+      email: "joao@example.com",
+      skipAutoSignIn: true,
+    });
+
+    expect(result.autoSignedIn).toBe(false);
+    expect(signInWithEmailAndPassword).not.toHaveBeenCalled();
+  });
+
+  it("stamps the company with primaryEmail", async () => {
+    await provisionCompanyWithPrimaryAccount({
+      companyName: "Acme Ltda",
+      username: "joao",
+      email: "joao@example.com",
+    });
+
+    expect(setDoc).toHaveBeenCalledWith(
+      expect.objectContaining({ path: ["companies", "acmeltda"] }),
+      expect.objectContaining({ primaryEmail: "joao@example.com" })
+    );
+  });
+
   it("grants every module to the primary admin account", async () => {
     await provisionCompanyWithPrimaryAccount({
       companyName: "Acme Ltda",
