@@ -33,6 +33,22 @@ service cloud.firestore {
         && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('companyId', null) == companyId;
     }
 
+    // Per-module access, 2026-08-28: Admin/Manager always pass (same as
+    // isAdmin() elsewhere -- they see and manage everything). A plain User
+    // needs the module key present in their own modules[] grant. This only
+    // gates writes and each module's own collections -- reads stay company-
+    // scoped only (via belongsToCompany above), on purpose, so the read-only
+    // Home dashboard can keep showing the same aggregate numbers to every
+    // user regardless of which modules they've been granted (confirmed with
+    // the user: a per-module-customized Home was rejected, since someone
+    // with more than one granted module wouldn't have a single obvious
+    // "preferred" home to land on).
+    function hasModule(moduleKey) {
+      return isAdmin()
+        || (isSignedIn()
+          && moduleKey in get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('modules', []));
+    }
+
     match /platformAdmins/{uid} {
       allow read: if isOwner(uid);
       allow write: if false;
@@ -135,12 +151,14 @@ service cloud.firestore {
 
       allow create: if isSignedIn()
         && belongsToCompany(request.resource.data.companyId)
+        && hasModule('sales')
         && request.resource.data.ownerId == request.auth.uid
         && request.resource.data.name is string
         && request.resource.data.name.size() > 0
         && request.resource.data.status in ['lead', 'cliente', 'inativo'];
 
       allow update: if belongsToCompany(resource.data.get('companyId', null))
+        && hasModule('sales')
         && request.resource.data.companyId == resource.data.get('companyId', null)
         && (
           isAdmin()
@@ -149,6 +167,7 @@ service cloud.firestore {
         );
 
       allow delete: if belongsToCompany(resource.data.get('companyId', null))
+        && hasModule('sales')
         && (isAdmin() || resource.data.ownerId == request.auth.uid);
 
       match /interactions/{interactionId} {
@@ -175,6 +194,7 @@ service cloud.firestore {
 
       allow create: if isSignedIn()
         && belongsToCompany(request.resource.data.companyId)
+        && hasModule('sales')
         && request.resource.data.ownerId == request.auth.uid
         && request.resource.data.title is string
         && request.resource.data.title.size() > 0
@@ -182,6 +202,7 @@ service cloud.firestore {
         && request.resource.data.status in ['rascunho', 'ativo', 'encerrado', 'cancelado'];
 
       allow update: if belongsToCompany(resource.data.get('companyId', null))
+        && hasModule('sales')
         && request.resource.data.companyId == resource.data.get('companyId', null)
         && (
           isAdmin()
@@ -190,6 +211,7 @@ service cloud.firestore {
         );
 
       allow delete: if belongsToCompany(resource.data.get('companyId', null))
+        && hasModule('sales')
         && (isAdmin() || resource.data.ownerId == request.auth.uid);
     }
 
@@ -198,12 +220,14 @@ service cloud.firestore {
 
       allow create: if isSignedIn()
         && belongsToCompany(request.resource.data.companyId)
+        && hasModule('human-resources')
         && request.resource.data.ownerId == request.auth.uid
         && request.resource.data.name is string
         && request.resource.data.name.size() > 0
         && request.resource.data.status in ['ativo', 'ferias', 'desligado'];
 
       allow update: if belongsToCompany(resource.data.get('companyId', null))
+        && hasModule('human-resources')
         && request.resource.data.companyId == resource.data.get('companyId', null)
         && (
           isAdmin()
@@ -212,6 +236,7 @@ service cloud.firestore {
         );
 
       allow delete: if belongsToCompany(resource.data.get('companyId', null))
+        && hasModule('human-resources')
         && (isAdmin() || resource.data.ownerId == request.auth.uid);
     }
 
@@ -220,12 +245,14 @@ service cloud.firestore {
 
       allow create: if isSignedIn()
         && belongsToCompany(request.resource.data.companyId)
+        && hasModule('financial')
         && request.resource.data.ownerId == request.auth.uid
         && request.resource.data.description is string
         && request.resource.data.description.size() > 0
         && request.resource.data.status in ['pendente', 'pago', 'atrasado'];
 
       allow update: if belongsToCompany(resource.data.get('companyId', null))
+        && hasModule('financial')
         && request.resource.data.companyId == resource.data.get('companyId', null)
         && (
           isAdmin()
@@ -234,6 +261,7 @@ service cloud.firestore {
         );
 
       allow delete: if belongsToCompany(resource.data.get('companyId', null))
+        && hasModule('financial')
         && (isAdmin() || resource.data.ownerId == request.auth.uid);
     }
 
@@ -242,12 +270,14 @@ service cloud.firestore {
 
       allow create: if isSignedIn()
         && belongsToCompany(request.resource.data.companyId)
+        && hasModule('financial')
         && request.resource.data.ownerId == request.auth.uid
         && request.resource.data.description is string
         && request.resource.data.description.size() > 0
         && request.resource.data.status in ['pendente', 'pago', 'atrasado'];
 
       allow update: if belongsToCompany(resource.data.get('companyId', null))
+        && hasModule('financial')
         && request.resource.data.companyId == resource.data.get('companyId', null)
         && (
           isAdmin()
@@ -256,6 +286,7 @@ service cloud.firestore {
         );
 
       allow delete: if belongsToCompany(resource.data.get('companyId', null))
+        && hasModule('financial')
         && (isAdmin() || resource.data.ownerId == request.auth.uid);
     }
 
@@ -264,12 +295,14 @@ service cloud.firestore {
 
       allow create: if isSignedIn()
         && belongsToCompany(request.resource.data.companyId)
+        && hasModule('sales')
         && request.resource.data.ownerId == request.auth.uid
         && request.resource.data.title is string
         && request.resource.data.title.size() > 0
         && request.resource.data.status in ['pendente', 'concluido', 'cancelado'];
 
       allow update: if belongsToCompany(resource.data.get('companyId', null))
+        && hasModule('sales')
         && request.resource.data.companyId == resource.data.get('companyId', null)
         && (
           isAdmin()
@@ -278,6 +311,7 @@ service cloud.firestore {
         );
 
       allow delete: if belongsToCompany(resource.data.get('companyId', null))
+        && hasModule('sales')
         && (isAdmin() || resource.data.ownerId == request.auth.uid);
     }
 
@@ -286,12 +320,14 @@ service cloud.firestore {
 
       allow create: if isSignedIn()
         && belongsToCompany(request.resource.data.companyId)
+        && hasModule('financial')
         && request.resource.data.ownerId == request.auth.uid
         && request.resource.data.description is string
         && request.resource.data.description.size() > 0
         && request.resource.data.type in ['debito', 'credito'];
 
       allow update: if belongsToCompany(resource.data.get('companyId', null))
+        && hasModule('financial')
         && request.resource.data.companyId == resource.data.get('companyId', null)
         && (
           isAdmin()
@@ -300,6 +336,7 @@ service cloud.firestore {
         );
 
       allow delete: if belongsToCompany(resource.data.get('companyId', null))
+        && hasModule('financial')
         && (isAdmin() || resource.data.ownerId == request.auth.uid);
     }
 
@@ -308,12 +345,14 @@ service cloud.firestore {
 
       allow create: if isSignedIn()
         && belongsToCompany(request.resource.data.companyId)
+        && hasModule('human-resources')
         && request.resource.data.ownerId == request.auth.uid
         && request.resource.data.employeeId is string
         && request.resource.data.employeeId.size() > 0
         && request.resource.data.status in ['pendente', 'pago'];
 
       allow update: if belongsToCompany(resource.data.get('companyId', null))
+        && hasModule('human-resources')
         && request.resource.data.companyId == resource.data.get('companyId', null)
         && (
           isAdmin()
@@ -322,6 +361,7 @@ service cloud.firestore {
         );
 
       allow delete: if belongsToCompany(resource.data.get('companyId', null))
+        && hasModule('human-resources')
         && (isAdmin() || resource.data.ownerId == request.auth.uid);
     }
 
@@ -330,12 +370,14 @@ service cloud.firestore {
 
       allow create: if isSignedIn()
         && belongsToCompany(request.resource.data.companyId)
+        && hasModule('human-resources')
         && request.resource.data.ownerId == request.auth.uid
         && request.resource.data.name is string
         && request.resource.data.name.size() > 0
         && request.resource.data.status in ['triagem', 'entrevista', 'aprovado', 'reprovado'];
 
       allow update: if belongsToCompany(resource.data.get('companyId', null))
+        && hasModule('human-resources')
         && request.resource.data.companyId == resource.data.get('companyId', null)
         && (
           isAdmin()
@@ -344,6 +386,7 @@ service cloud.firestore {
         );
 
       allow delete: if belongsToCompany(resource.data.get('companyId', null))
+        && hasModule('human-resources')
         && (isAdmin() || resource.data.ownerId == request.auth.uid);
     }
 
@@ -352,12 +395,14 @@ service cloud.firestore {
 
       allow create: if isSignedIn()
         && belongsToCompany(request.resource.data.companyId)
+        && hasModule('human-resources')
         && request.resource.data.ownerId == request.auth.uid
         && request.resource.data.title is string
         && request.resource.data.title.size() > 0
         && request.resource.data.status in ['planejado', 'em_andamento', 'concluido', 'cancelado'];
 
       allow update: if belongsToCompany(resource.data.get('companyId', null))
+        && hasModule('human-resources')
         && request.resource.data.companyId == resource.data.get('companyId', null)
         && (
           isAdmin()
@@ -366,6 +411,7 @@ service cloud.firestore {
         );
 
       allow delete: if belongsToCompany(resource.data.get('companyId', null))
+        && hasModule('human-resources')
         && (isAdmin() || resource.data.ownerId == request.auth.uid);
     }
 
@@ -374,12 +420,14 @@ service cloud.firestore {
 
       allow create: if isSignedIn()
         && belongsToCompany(request.resource.data.companyId)
+        && hasModule('human-resources')
         && request.resource.data.ownerId == request.auth.uid
         && request.resource.data.employeeId is string
         && request.resource.data.employeeId.size() > 0
         && request.resource.data.status in ['rascunho', 'finalizada'];
 
       allow update: if belongsToCompany(resource.data.get('companyId', null))
+        && hasModule('human-resources')
         && request.resource.data.companyId == resource.data.get('companyId', null)
         && (
           isAdmin()
@@ -388,6 +436,7 @@ service cloud.firestore {
         );
 
       allow delete: if belongsToCompany(resource.data.get('companyId', null))
+        && hasModule('human-resources')
         && (isAdmin() || resource.data.ownerId == request.auth.uid);
     }
 
@@ -396,12 +445,14 @@ service cloud.firestore {
 
       allow create: if isSignedIn()
         && belongsToCompany(request.resource.data.companyId)
+        && hasModule('inventory-logistics')
         && request.resource.data.ownerId == request.auth.uid
         && request.resource.data.name is string
         && request.resource.data.name.size() > 0
         && request.resource.data.status in ['ativo', 'inativo'];
 
       allow update: if belongsToCompany(resource.data.get('companyId', null))
+        && hasModule('inventory-logistics')
         && request.resource.data.companyId == resource.data.get('companyId', null)
         && (
           isAdmin()
@@ -410,6 +461,7 @@ service cloud.firestore {
         );
 
       allow delete: if belongsToCompany(resource.data.get('companyId', null))
+        && hasModule('inventory-logistics')
         && (isAdmin() || resource.data.ownerId == request.auth.uid);
     }
 
@@ -418,12 +470,14 @@ service cloud.firestore {
 
       allow create: if isSignedIn()
         && belongsToCompany(request.resource.data.companyId)
+        && hasModule('inventory-logistics')
         && request.resource.data.ownerId == request.auth.uid
         && request.resource.data.name is string
         && request.resource.data.name.size() > 0
         && request.resource.data.status in ['ativo', 'descontinuado'];
 
       allow update: if belongsToCompany(resource.data.get('companyId', null))
+        && hasModule('inventory-logistics')
         && request.resource.data.companyId == resource.data.get('companyId', null)
         && (
           isAdmin()
@@ -432,6 +486,7 @@ service cloud.firestore {
         );
 
       allow delete: if belongsToCompany(resource.data.get('companyId', null))
+        && hasModule('inventory-logistics')
         && (isAdmin() || resource.data.ownerId == request.auth.uid);
     }
 
@@ -440,12 +495,14 @@ service cloud.firestore {
 
       allow create: if isSignedIn()
         && belongsToCompany(request.resource.data.companyId)
+        && hasModule('inventory-logistics')
         && request.resource.data.ownerId == request.auth.uid
         && request.resource.data.supplierId is string
         && request.resource.data.supplierId.size() > 0
         && request.resource.data.status in ['pendente', 'aprovado', 'recebido', 'cancelado'];
 
       allow update: if belongsToCompany(resource.data.get('companyId', null))
+        && hasModule('inventory-logistics')
         && request.resource.data.companyId == resource.data.get('companyId', null)
         && (
           isAdmin()
@@ -454,6 +511,7 @@ service cloud.firestore {
         );
 
       allow delete: if belongsToCompany(resource.data.get('companyId', null))
+        && hasModule('inventory-logistics')
         && (isAdmin() || resource.data.ownerId == request.auth.uid);
     }
 
@@ -462,12 +520,14 @@ service cloud.firestore {
 
       allow create: if isSignedIn()
         && belongsToCompany(request.resource.data.companyId)
+        && hasModule('inventory-logistics')
         && request.resource.data.ownerId == request.auth.uid
         && request.resource.data.description is string
         && request.resource.data.description.size() > 0
         && request.resource.data.status in ['preparando', 'em_transito', 'entregue', 'cancelado'];
 
       allow update: if belongsToCompany(resource.data.get('companyId', null))
+        && hasModule('inventory-logistics')
         && request.resource.data.companyId == resource.data.get('companyId', null)
         && (
           isAdmin()
@@ -476,6 +536,7 @@ service cloud.firestore {
         );
 
       allow delete: if belongsToCompany(resource.data.get('companyId', null))
+        && hasModule('inventory-logistics')
         && (isAdmin() || resource.data.ownerId == request.auth.uid);
     }
 
@@ -484,12 +545,14 @@ service cloud.firestore {
 
       allow create: if isSignedIn()
         && belongsToCompany(request.resource.data.companyId)
+        && hasModule('inventory-logistics')
         && request.resource.data.ownerId == request.auth.uid
         && request.resource.data.name is string
         && request.resource.data.name.size() > 0
         && request.resource.data.status in ['ativo', 'inativo'];
 
       allow update: if belongsToCompany(resource.data.get('companyId', null))
+        && hasModule('inventory-logistics')
         && request.resource.data.companyId == resource.data.get('companyId', null)
         && (
           isAdmin()
@@ -498,6 +561,7 @@ service cloud.firestore {
         );
 
       allow delete: if belongsToCompany(resource.data.get('companyId', null))
+        && hasModule('inventory-logistics')
         && (isAdmin() || resource.data.ownerId == request.auth.uid);
     }
 
@@ -506,12 +570,14 @@ service cloud.firestore {
 
       allow create: if isSignedIn()
         && belongsToCompany(request.resource.data.companyId)
+        && hasModule('production')
         && request.resource.data.ownerId == request.auth.uid
         && request.resource.data.productName is string
         && request.resource.data.productName.size() > 0
         && request.resource.data.status in ['planejado', 'em_andamento', 'concluido', 'cancelado'];
 
       allow update: if belongsToCompany(resource.data.get('companyId', null))
+        && hasModule('production')
         && request.resource.data.companyId == resource.data.get('companyId', null)
         && (
           isAdmin()
@@ -520,6 +586,7 @@ service cloud.firestore {
         );
 
       allow delete: if belongsToCompany(resource.data.get('companyId', null))
+        && hasModule('production')
         && (isAdmin() || resource.data.ownerId == request.auth.uid);
     }
 
@@ -528,12 +595,14 @@ service cloud.firestore {
 
       allow create: if isSignedIn()
         && belongsToCompany(request.resource.data.companyId)
+        && hasModule('production')
         && request.resource.data.ownerId == request.auth.uid
         && request.resource.data.description is string
         && request.resource.data.description.size() > 0
         && request.resource.data.status in ['pendente', 'em_producao', 'concluida', 'cancelada'];
 
       allow update: if belongsToCompany(resource.data.get('companyId', null))
+        && hasModule('production')
         && request.resource.data.companyId == resource.data.get('companyId', null)
         && (
           isAdmin()
@@ -542,6 +611,7 @@ service cloud.firestore {
         );
 
       allow delete: if belongsToCompany(resource.data.get('companyId', null))
+        && hasModule('production')
         && (isAdmin() || resource.data.ownerId == request.auth.uid);
     }
 
@@ -550,12 +620,14 @@ service cloud.firestore {
 
       allow create: if isSignedIn()
         && belongsToCompany(request.resource.data.companyId)
+        && hasModule('production')
         && request.resource.data.ownerId == request.auth.uid
         && request.resource.data.item is string
         && request.resource.data.item.size() > 0
         && request.resource.data.status in ['pendente', 'aprovado', 'reprovado'];
 
       allow update: if belongsToCompany(resource.data.get('companyId', null))
+        && hasModule('production')
         && request.resource.data.companyId == resource.data.get('companyId', null)
         && (
           isAdmin()
@@ -564,6 +636,7 @@ service cloud.firestore {
         );
 
       allow delete: if belongsToCompany(resource.data.get('companyId', null))
+        && hasModule('production')
         && (isAdmin() || resource.data.ownerId == request.auth.uid);
     }
 
@@ -572,12 +645,14 @@ service cloud.firestore {
 
       allow create: if isSignedIn()
         && belongsToCompany(request.resource.data.companyId)
+        && hasModule('production')
         && request.resource.data.ownerId == request.auth.uid
         && request.resource.data.equipmentName is string
         && request.resource.data.equipmentName.size() > 0
         && request.resource.data.status in ['agendada', 'em_andamento', 'concluida', 'cancelada'];
 
       allow update: if belongsToCompany(resource.data.get('companyId', null))
+        && hasModule('production')
         && request.resource.data.companyId == resource.data.get('companyId', null)
         && (
           isAdmin()
@@ -586,6 +661,7 @@ service cloud.firestore {
         );
 
       allow delete: if belongsToCompany(resource.data.get('companyId', null))
+        && hasModule('production')
         && (isAdmin() || resource.data.ownerId == request.auth.uid);
     }
 
@@ -594,12 +670,14 @@ service cloud.firestore {
 
       allow create: if isSignedIn()
         && belongsToCompany(request.resource.data.companyId)
+        && hasModule('projects')
         && request.resource.data.ownerId == request.auth.uid
         && request.resource.data.name is string
         && request.resource.data.name.size() > 0
         && request.resource.data.status in ['planejamento', 'em_andamento', 'concluido', 'cancelado'];
 
       allow update: if belongsToCompany(resource.data.get('companyId', null))
+        && hasModule('projects')
         && request.resource.data.companyId == resource.data.get('companyId', null)
         && (
           isAdmin()
@@ -608,6 +686,7 @@ service cloud.firestore {
         );
 
       allow delete: if belongsToCompany(resource.data.get('companyId', null))
+        && hasModule('projects')
         && (isAdmin() || resource.data.ownerId == request.auth.uid);
     }
 
@@ -616,6 +695,7 @@ service cloud.firestore {
 
       allow create: if isSignedIn()
         && belongsToCompany(request.resource.data.companyId)
+        && hasModule('projects')
         && request.resource.data.ownerId == request.auth.uid
         && request.resource.data.projectId is string
         && request.resource.data.projectId.size() > 0
@@ -624,6 +704,7 @@ service cloud.firestore {
         && request.resource.data.status in ['ativa', 'encerrada'];
 
       allow update: if belongsToCompany(resource.data.get('companyId', null))
+        && hasModule('projects')
         && request.resource.data.companyId == resource.data.get('companyId', null)
         && (
           isAdmin()
@@ -632,6 +713,7 @@ service cloud.firestore {
         );
 
       allow delete: if belongsToCompany(resource.data.get('companyId', null))
+        && hasModule('projects')
         && (isAdmin() || resource.data.ownerId == request.auth.uid);
     }
 
@@ -640,6 +722,7 @@ service cloud.firestore {
 
       allow create: if isSignedIn()
         && belongsToCompany(request.resource.data.companyId)
+        && hasModule('projects')
         && request.resource.data.ownerId == request.auth.uid
         && request.resource.data.projectId is string
         && request.resource.data.projectId.size() > 0
@@ -648,6 +731,7 @@ service cloud.firestore {
         && request.resource.data.status in ['pendente', 'concluido', 'atrasado'];
 
       allow update: if belongsToCompany(resource.data.get('companyId', null))
+        && hasModule('projects')
         && request.resource.data.companyId == resource.data.get('companyId', null)
         && (
           isAdmin()
@@ -656,6 +740,7 @@ service cloud.firestore {
         );
 
       allow delete: if belongsToCompany(resource.data.get('companyId', null))
+        && hasModule('projects')
         && (isAdmin() || resource.data.ownerId == request.auth.uid);
     }
 
@@ -664,6 +749,7 @@ service cloud.firestore {
 
       allow create: if isSignedIn()
         && belongsToCompany(request.resource.data.companyId)
+        && hasModule('projects')
         && request.resource.data.ownerId == request.auth.uid
         && request.resource.data.projectId is string
         && request.resource.data.projectId.size() > 0
@@ -672,6 +758,7 @@ service cloud.firestore {
         && request.resource.data.status in ['a_fazer', 'em_andamento', 'concluida'];
 
       allow update: if belongsToCompany(resource.data.get('companyId', null))
+        && hasModule('projects')
         && request.resource.data.companyId == resource.data.get('companyId', null)
         && (
           isAdmin()
@@ -680,6 +767,7 @@ service cloud.firestore {
         );
 
       allow delete: if belongsToCompany(resource.data.get('companyId', null))
+        && hasModule('projects')
         && (isAdmin() || resource.data.ownerId == request.auth.uid);
     }
 
@@ -688,6 +776,7 @@ service cloud.firestore {
 
       allow create: if isSignedIn()
         && belongsToCompany(request.resource.data.companyId)
+        && hasModule('business-intelligence')
         && request.resource.data.ownerId == request.auth.uid
         && request.resource.data.name is string
         && request.resource.data.name.size() > 0
@@ -697,6 +786,7 @@ service cloud.firestore {
         ];
 
       allow update: if belongsToCompany(resource.data.get('companyId', null))
+        && hasModule('business-intelligence')
         && request.resource.data.companyId == resource.data.get('companyId', null)
         && (
           isAdmin()
@@ -705,6 +795,7 @@ service cloud.firestore {
         );
 
       allow delete: if belongsToCompany(resource.data.get('companyId', null))
+        && hasModule('business-intelligence')
         && (isAdmin() || resource.data.ownerId == request.auth.uid);
     }
 
@@ -713,12 +804,14 @@ service cloud.firestore {
 
       allow create: if isSignedIn()
         && belongsToCompany(request.resource.data.companyId)
+        && hasModule('compliance')
         && request.resource.data.ownerId == request.auth.uid
         && request.resource.data.title is string
         && request.resource.data.title.size() > 0
         && request.resource.data.status in ['conforme', 'nao_conforme', 'em_analise'];
 
       allow update: if belongsToCompany(resource.data.get('companyId', null))
+        && hasModule('compliance')
         && request.resource.data.companyId == resource.data.get('companyId', null)
         && (
           isAdmin()
@@ -727,6 +820,7 @@ service cloud.firestore {
         );
 
       allow delete: if belongsToCompany(resource.data.get('companyId', null))
+        && hasModule('compliance')
         && (isAdmin() || resource.data.ownerId == request.auth.uid);
     }
 
@@ -735,12 +829,14 @@ service cloud.firestore {
 
       allow create: if isSignedIn()
         && belongsToCompany(request.resource.data.companyId)
+        && hasModule('compliance')
         && request.resource.data.ownerId == request.auth.uid
         && request.resource.data.title is string
         && request.resource.data.title.size() > 0
         && request.resource.data.status in ['planejada', 'em_andamento', 'concluida'];
 
       allow update: if belongsToCompany(resource.data.get('companyId', null))
+        && hasModule('compliance')
         && request.resource.data.companyId == resource.data.get('companyId', null)
         && (
           isAdmin()
@@ -749,6 +845,7 @@ service cloud.firestore {
         );
 
       allow delete: if belongsToCompany(resource.data.get('companyId', null))
+        && hasModule('compliance')
         && (isAdmin() || resource.data.ownerId == request.auth.uid);
     }
 
@@ -757,12 +854,14 @@ service cloud.firestore {
 
       allow create: if isSignedIn()
         && belongsToCompany(request.resource.data.companyId)
+        && hasModule('compliance')
         && request.resource.data.ownerId == request.auth.uid
         && request.resource.data.name is string
         && request.resource.data.name.size() > 0
         && request.resource.data.status in ['pendente', 'atendido', 'vencido'];
 
       allow update: if belongsToCompany(resource.data.get('companyId', null))
+        && hasModule('compliance')
         && request.resource.data.companyId == resource.data.get('companyId', null)
         && (
           isAdmin()
@@ -771,6 +870,7 @@ service cloud.firestore {
         );
 
       allow delete: if belongsToCompany(resource.data.get('companyId', null))
+        && hasModule('compliance')
         && (isAdmin() || resource.data.ownerId == request.auth.uid);
     }
 
@@ -779,12 +879,14 @@ service cloud.firestore {
 
       allow create: if isSignedIn()
         && belongsToCompany(request.resource.data.companyId)
+        && hasModule('collaboration')
         && request.resource.data.ownerId == request.auth.uid
         && request.resource.data.title is string
         && request.resource.data.title.size() > 0
         && request.resource.data.status in ['rascunho', 'publicado'];
 
       allow update: if belongsToCompany(resource.data.get('companyId', null))
+        && hasModule('collaboration')
         && request.resource.data.companyId == resource.data.get('companyId', null)
         && (
           isAdmin()
@@ -793,6 +895,7 @@ service cloud.firestore {
         );
 
       allow delete: if belongsToCompany(resource.data.get('companyId', null))
+        && hasModule('collaboration')
         && (isAdmin() || resource.data.ownerId == request.auth.uid);
     }
 
@@ -801,12 +904,14 @@ service cloud.firestore {
 
       allow create: if isSignedIn()
         && belongsToCompany(request.resource.data.companyId)
+        && hasModule('collaboration')
         && request.resource.data.ownerId == request.auth.uid
         && request.resource.data.title is string
         && request.resource.data.title.size() > 0
         && request.resource.data.status in ['proposta', 'em_andamento', 'concluida'];
 
       allow update: if belongsToCompany(resource.data.get('companyId', null))
+        && hasModule('collaboration')
         && request.resource.data.companyId == resource.data.get('companyId', null)
         && (
           isAdmin()
@@ -815,6 +920,7 @@ service cloud.firestore {
         );
 
       allow delete: if belongsToCompany(resource.data.get('companyId', null))
+        && hasModule('collaboration')
         && (isAdmin() || resource.data.ownerId == request.auth.uid);
     }
 
