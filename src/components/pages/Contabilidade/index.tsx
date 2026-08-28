@@ -17,6 +17,7 @@ import {
   updateLedgerEntry,
 } from "../../../services/financeiro/ledger";
 import { ILedgerEntry, LedgerEntryInput, LedgerEntryType } from "../../../types/ledgerEntry";
+import { PAGE_SIZE } from "../../../constants/pagination";
 import "./styles.scss";
 
 const TYPE_LABEL: Record<LedgerEntryType, string> = {
@@ -48,8 +49,6 @@ const toDateInput = (value: Timestamp | null) =>
 
 const fromDateInput = (value: string): Timestamp | null =>
   value ? Timestamp.fromDate(new Date(`${value}T00:00:00`)) : null;
-
-const PAGE_SIZE = 10;
 
 export default function Contabilidade() {
   const { currentUser } = useAuth();

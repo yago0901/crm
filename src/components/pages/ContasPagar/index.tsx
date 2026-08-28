@@ -18,6 +18,7 @@ import {
   updatePayable,
 } from "../../../services/financeiro/finance";
 import { FinanceStatus, IPayable, PayableInput } from "../../../types/finance";
+import { PAGE_SIZE } from "../../../constants/pagination";
 import "./styles.scss";
 
 const STATUS_LABEL: Record<FinanceStatus, string> = {
@@ -52,8 +53,6 @@ const toDateInput = (value: Timestamp | null) =>
 
 const fromDateInput = (value: string): Timestamp | null =>
   value ? Timestamp.fromDate(new Date(`${value}T00:00:00`)) : null;
-
-const PAGE_SIZE = 10;
 
 export default function ContasPagar() {
   const { currentUser } = useAuth();

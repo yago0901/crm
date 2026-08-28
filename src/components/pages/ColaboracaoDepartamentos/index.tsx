@@ -21,6 +21,7 @@ import {
   DepartmentInitiativeStatus,
   IDepartmentInitiative,
 } from "../../../types/departmentInitiative";
+import { PAGE_SIZE } from "../../../constants/pagination";
 import "./styles.scss";
 
 const STATUS_LABEL: Record<DepartmentInitiativeStatus, string> = {
@@ -43,8 +44,6 @@ const EMPTY_FORM: DepartmentInitiativeInput = {
   status: "proposta",
   notes: "",
 };
-
-const PAGE_SIZE = 10;
 
 export default function ColaboracaoDepartamentos() {
   const { currentUser } = useAuth();

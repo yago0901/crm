@@ -17,6 +17,7 @@ import {
   updateProductionPlan,
 } from "../../../services/producao-manufatura/productionPlans";
 import { IProductionPlan, ProductionPlanInput, ProductionPlanStatus } from "../../../types/productionPlan";
+import { PAGE_SIZE } from "../../../constants/pagination";
 import "./styles.scss";
 
 const STATUS_LABEL: Record<ProductionPlanStatus, string> = {
@@ -47,8 +48,6 @@ const toDateInput = (value: Timestamp | null) =>
 
 const fromDateInput = (value: string): Timestamp | null =>
   value ? Timestamp.fromDate(new Date(`${value}T00:00:00`)) : null;
-
-const PAGE_SIZE = 10;
 
 export default function PlanejamentoProducao() {
   const { currentUser } = useAuth();

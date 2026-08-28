@@ -19,6 +19,7 @@ import {
 import { fetchActiveSuppliers } from "../../../services/estoques-logistica/suppliers";
 import { IPurchaseOrder, PurchaseOrderInput, PurchaseOrderStatus } from "../../../types/purchaseOrder";
 import { ISupplier } from "../../../types/supplier";
+import { PAGE_SIZE } from "../../../constants/pagination";
 import "./styles.scss";
 
 const STATUS_LABEL: Record<PurchaseOrderStatus, string> = {
@@ -56,8 +57,6 @@ const toDateInput = (value: Timestamp | null) =>
 
 const fromDateInput = (value: string): Timestamp | null =>
   value ? Timestamp.fromDate(new Date(`${value}T00:00:00`)) : null;
-
-const PAGE_SIZE = 10;
 
 export default function Compras() {
   const { currentUser } = useAuth();

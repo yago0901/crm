@@ -17,6 +17,7 @@ import {
   updateComplianceItem,
 } from "../../../services/compliance/complianceItems";
 import { ComplianceItemInput, ComplianceStatus, IComplianceItem } from "../../../types/complianceItem";
+import { PAGE_SIZE } from "../../../constants/pagination";
 import "./styles.scss";
 
 const STATUS_LABEL: Record<ComplianceStatus, string> = {
@@ -45,8 +46,6 @@ const toDateInput = (value: Timestamp | null) =>
 
 const fromDateInput = (value: string): Timestamp | null =>
   value ? Timestamp.fromDate(new Date(`${value}T00:00:00`)) : null;
-
-const PAGE_SIZE = 10;
 
 export default function GestaoConformidade() {
   const { currentUser } = useAuth();

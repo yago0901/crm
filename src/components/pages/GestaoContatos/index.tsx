@@ -17,6 +17,7 @@ import {
   updateContact,
 } from "../../../services/vendas-crm/contacts";
 import { ContactInput, ContactStatus, IContact } from "../../../types/contact";
+import { PAGE_SIZE } from "../../../constants/pagination";
 import "./styles.scss";
 
 const STATUS_LABEL: Record<ContactStatus, string> = {
@@ -41,8 +42,6 @@ const EMPTY_FORM: ContactInput = {
   tags: [],
   notes: "",
 };
-
-const PAGE_SIZE = 10;
 
 export default function GestaoContatos() {
   const { currentUser } = useAuth();

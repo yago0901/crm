@@ -17,6 +17,7 @@ import {
   updateProject,
 } from "../../../services/projetos/projects";
 import { IProject, ProjectInput, ProjectStatus } from "../../../types/project";
+import { PAGE_SIZE } from "../../../constants/pagination";
 import "./styles.scss";
 
 const STATUS_LABEL: Record<ProjectStatus, string> = {
@@ -53,8 +54,6 @@ const toDateInput = (value: Timestamp | null) =>
 
 const fromDateInput = (value: string): Timestamp | null =>
   value ? Timestamp.fromDate(new Date(`${value}T00:00:00`)) : null;
-
-const PAGE_SIZE = 10;
 
 export default function PlanejamentoProjetos() {
   const { currentUser } = useAuth();

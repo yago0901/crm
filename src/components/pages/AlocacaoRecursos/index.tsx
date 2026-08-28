@@ -25,6 +25,7 @@ import {
 } from "../../../types/resourceAllocation";
 import { IProject } from "../../../types/project";
 import { IEmployee } from "../../../types/employee";
+import { PAGE_SIZE } from "../../../constants/pagination";
 import "./styles.scss";
 
 const STATUS_LABEL: Record<ResourceAllocationStatus, string> = {
@@ -55,8 +56,6 @@ const toDateInput = (value: Timestamp | null) =>
 
 const fromDateInput = (value: string): Timestamp | null =>
   value ? Timestamp.fromDate(new Date(`${value}T00:00:00`)) : null;
-
-const PAGE_SIZE = 10;
 
 export default function AlocacaoRecursos() {
   const { currentUser } = useAuth();

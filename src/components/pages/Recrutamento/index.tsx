@@ -17,6 +17,7 @@ import {
   updateCandidate,
 } from "../../../services/rh/candidates";
 import { CandidateInput, CandidateStatus, ICandidate } from "../../../types/candidate";
+import { PAGE_SIZE } from "../../../constants/pagination";
 import "./styles.scss";
 
 const STATUS_LABEL: Record<CandidateStatus, string> = {
@@ -41,8 +42,6 @@ const EMPTY_FORM: CandidateInput = {
   status: "triagem",
   notes: "",
 };
-
-const PAGE_SIZE = 10;
 
 export default function Recrutamento() {
   const { currentUser } = useAuth();

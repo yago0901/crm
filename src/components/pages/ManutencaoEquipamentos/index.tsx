@@ -17,6 +17,7 @@ import {
   updateMaintenanceRequest,
 } from "../../../services/producao-manufatura/maintenanceRequests";
 import { IMaintenanceRequest, MaintenanceRequestInput, MaintenanceRequestStatus } from "../../../types/maintenanceRequest";
+import { PAGE_SIZE } from "../../../constants/pagination";
 import "./styles.scss";
 
 const STATUS_LABEL: Record<MaintenanceRequestStatus, string> = {
@@ -47,8 +48,6 @@ const toDateInput = (value: Timestamp | null) =>
 
 const fromDateInput = (value: string): Timestamp | null =>
   value ? Timestamp.fromDate(new Date(`${value}T00:00:00`)) : null;
-
-const PAGE_SIZE = 10;
 
 export default function ManutencaoEquipamentos() {
   const { currentUser } = useAuth();

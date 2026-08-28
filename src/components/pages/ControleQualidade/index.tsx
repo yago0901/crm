@@ -17,6 +17,7 @@ import {
   updateQualityCheck,
 } from "../../../services/producao-manufatura/qualityChecks";
 import { IQualityCheck, QualityCheckInput, QualityCheckStatus } from "../../../types/qualityCheck";
+import { PAGE_SIZE } from "../../../constants/pagination";
 import "./styles.scss";
 
 const STATUS_LABEL: Record<QualityCheckStatus, string> = {
@@ -45,8 +46,6 @@ const toDateInput = (value: Timestamp | null) =>
 
 const fromDateInput = (value: string): Timestamp | null =>
   value ? Timestamp.fromDate(new Date(`${value}T00:00:00`)) : null;
-
-const PAGE_SIZE = 10;
 
 export default function ControleQualidade() {
   const { currentUser } = useAuth();

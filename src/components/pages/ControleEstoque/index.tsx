@@ -17,6 +17,7 @@ import {
   updateInventoryItem,
 } from "../../../services/estoques-logistica/inventory";
 import { IInventoryItem, InventoryItemInput, InventoryItemStatus } from "../../../types/inventoryItem";
+import { PAGE_SIZE } from "../../../constants/pagination";
 import "./styles.scss";
 
 const STATUS_LABEL: Record<InventoryItemStatus, string> = {
@@ -45,8 +46,6 @@ const currency = new Intl.NumberFormat("pt-BR", {
   style: "currency",
   currency: "BRL",
 });
-
-const PAGE_SIZE = 10;
 
 export default function ControleEstoque() {
   const { currentUser } = useAuth();

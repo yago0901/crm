@@ -20,6 +20,7 @@ import {
 import { fetchActiveEmployees } from "../../../services/rh/employees";
 import { IPayrollEntry, PayrollEntryInput, PayrollStatus } from "../../../types/payrollEntry";
 import { IEmployee } from "../../../types/employee";
+import { PAGE_SIZE } from "../../../constants/pagination";
 import "./styles.scss";
 
 const STATUS_LABEL: Record<PayrollStatus, string> = {
@@ -48,8 +49,6 @@ const currency = new Intl.NumberFormat("pt-BR", {
   style: "currency",
   currency: "BRL",
 });
-
-const PAGE_SIZE = 10;
 
 export default function FolhaPagamento() {
   const { currentUser } = useAuth();

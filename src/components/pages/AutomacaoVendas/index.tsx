@@ -20,6 +20,7 @@ import {
 import { searchContacts } from "../../../services/vendas-crm/contacts";
 import { FollowUpInput, FollowUpStatus, IFollowUp } from "../../../types/followUp";
 import { IContact } from "../../../types/contact";
+import { PAGE_SIZE } from "../../../constants/pagination";
 import "./styles.scss";
 
 const STATUS_LABEL: Record<FollowUpStatus, string> = {
@@ -48,8 +49,6 @@ const toDateInput = (value: Timestamp | null) =>
 
 const fromDateInput = (value: string): Timestamp | null =>
   value ? Timestamp.fromDate(new Date(`${value}T00:00:00`)) : null;
-
-const PAGE_SIZE = 10;
 
 export default function AutomacaoVendas() {
   const { currentUser } = useAuth();

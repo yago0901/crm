@@ -17,6 +17,7 @@ import {
   updateWarehouse,
 } from "../../../services/estoques-logistica/warehouses";
 import { IWarehouse, WarehouseInput, WarehouseStatus } from "../../../types/warehouse";
+import { PAGE_SIZE } from "../../../constants/pagination";
 import "./styles.scss";
 
 const STATUS_LABEL: Record<WarehouseStatus, string> = {
@@ -37,8 +38,6 @@ const EMPTY_FORM: WarehouseInput = {
   status: "ativo",
   notes: "",
 };
-
-const PAGE_SIZE = 10;
 
 export default function GestaoArmazens() {
   const { currentUser } = useAuth();

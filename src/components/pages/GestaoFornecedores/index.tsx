@@ -16,6 +16,7 @@ import {
   updateSupplier,
 } from "../../../services/estoques-logistica/suppliers";
 import { ISupplier, SupplierInput, SupplierStatus } from "../../../types/supplier";
+import { PAGE_SIZE } from "../../../constants/pagination";
 import "./styles.scss";
 
 const STATUS_LABEL: Record<SupplierStatus, string> = {
@@ -37,8 +38,6 @@ const EMPTY_FORM: SupplierInput = {
   status: "ativo",
   notes: "",
 };
-
-const PAGE_SIZE = 10;
 
 export default function GestaoFornecedores() {
   const { currentUser } = useAuth();

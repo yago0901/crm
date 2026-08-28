@@ -22,6 +22,7 @@ import {
   PerformanceReviewStatus,
 } from "../../../types/performanceReview";
 import { IEmployee } from "../../../types/employee";
+import { PAGE_SIZE } from "../../../constants/pagination";
 import "./styles.scss";
 
 const STATUS_LABEL: Record<PerformanceReviewStatus, string> = {
@@ -43,8 +44,6 @@ const EMPTY_FORM: PerformanceReviewInput = {
   improvements: "",
   status: "rascunho",
 };
-
-const PAGE_SIZE = 10;
 
 export default function AvaliacaoDesempenho() {
   const { currentUser } = useAuth();

@@ -18,6 +18,7 @@ import {
   updateAnnouncement,
 } from "../../../services/colaboracao/announcements";
 import { AnnouncementInput, AnnouncementStatus, IAnnouncement } from "../../../types/announcement";
+import { PAGE_SIZE } from "../../../constants/pagination";
 import "./styles.scss";
 
 const STATUS_LABEL: Record<AnnouncementStatus, string> = {
@@ -36,8 +37,6 @@ const EMPTY_FORM: AnnouncementInput = {
   audience: "Todos",
   status: "rascunho",
 };
-
-const PAGE_SIZE = 10;
 
 export default function ComunicacaoInterna() {
   const { currentUser } = useAuth();
