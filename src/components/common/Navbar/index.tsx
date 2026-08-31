@@ -6,6 +6,7 @@ import {
   FaChartLine,
   FaChevronDown,
   FaClipboardCheck,
+  FaCog,
   FaCommentDots,
   FaHandshake,
   FaHome,
@@ -238,6 +239,13 @@ const Navbar: React.FC<INavbar> = ({ isMenuOpen, onToggleMenu, menu = DEFAULT_ME
                 );
               })}
             </ul>
+
+            {isAdmin && (
+              <button className="navbar__settings" onClick={() => handleNavigate('/configuracoes')}>
+                <FaCog />
+                <span>Configurações</span>
+              </button>
+            )}
 
             <button className="navbar__theme_toggle" onClick={toggleTheme}>
               {theme === 'light' ? <FaMoon /> : <FaSun />}

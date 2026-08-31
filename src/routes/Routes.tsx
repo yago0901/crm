@@ -2,6 +2,7 @@ import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 
 // Importe os componentes correspondentes a cada funcionalidade
 import AcessosFuncionarios from "../components/pages/AcessosFuncionarios";
+import ConfiguracoesEmpresa from "../components/pages/ConfiguracoesEmpresa";
 import AcompanhamentoLeads from "../components/pages/AcompanhamentoLeads";
 import AlocacaoRecursos from "../components/pages/AlocacaoRecursos";
 import AnaliseDados from "../components/pages/AnaliseDados";
@@ -107,6 +108,7 @@ function Router() {
       <Route path="/admin" element={<SuperAdminRoute><SuperAdmin /></SuperAdminRoute>} />
       <Route element={<PrivateRoute><Layout /></PrivateRoute>}>
         <Route path="/home" element={<PrivateRoute><Home /></PrivateRoute>} />
+        <Route path="/configuracoes" element={<PrivateRoute><AdminOnlyRoute><ConfiguracoesEmpresa /></AdminOnlyRoute></PrivateRoute>} />
 
         <Route path="/financeiro/contabilidade" element={<PrivateRoute><ModuleRoute requiredModule="financial"><Contabilidade /></ModuleRoute></PrivateRoute>} />
         <Route path="/financeiro/contas-pagar" element={<PrivateRoute><ModuleRoute requiredModule="financial"><ContasPagar /></ModuleRoute></PrivateRoute>} />
