@@ -19,7 +19,7 @@ vi.mock("firebase/firestore", () => ({
 }));
 
 import { addDoc, getDocs, where } from "firebase/firestore";
-import { createContact, searchContacts } from "./contacts";
+import { createContact, fetchOpenContacts, searchContacts } from "./contacts";
 import { setCurrentCompanyId } from "../shared/tenant";
 
 const makeSnap = (id: string, data: Record<string, unknown>) => ({
@@ -121,5 +121,20 @@ describe("searchContacts", () => {
     await searchContacts("all", "");
 
     expect(where).toHaveBeenCalledWith("companyId", "==", "acme");
+  });
+});
+
+describe("fetchOpenContacts", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    setCurrentCompanyId("acme");
+  });
+
+  it("filters by lead/cliente status", async () => {
+    vi.mocked(getDocs).mockResolvedValue({ docs: [] } as never);
+
+    await fetchOpenContacts();
+
+    expect(where).toHaveBeenCalledWith("status", "in", ["lead", "cliente"]);
   });
 });

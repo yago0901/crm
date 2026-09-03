@@ -137,6 +137,28 @@ service cloud.firestore {
       }
     }
 
+    match /deals/{dealId} {
+      allow read: if belongsToCompany(resource.data.get('companyId', null));
+
+      allow create: if isSignedIn()
+        && belongsToCompany(request.resource.data.companyId)
+        && hasModule('sales')
+        && request.resource.data.ownerId == request.auth.uid
+        && request.resource.data.contactId is string
+        && request.resource.data.contactId.size() > 0
+        && request.resource.data.title is string
+        && request.resource.data.title.size() > 0
+        && request.resource.data.status in ['aberto', 'ganho', 'perdido'];
+
+      allow update: if belongsToCompany(resource.data.get('companyId', null))
+        && hasModule('sales')
+        && request.resource.data.companyId == resource.data.get('companyId', null)
+        && request.resource.data.ownerId == resource.data.ownerId;
+
+      allow delete: if belongsToCompany(resource.data.get('companyId', null))
+        && hasModule('sales');
+    }
+
     match /contracts/{contractId} {
       allow read: if belongsToCompany(resource.data.get('companyId', null));
 
@@ -788,7 +810,7 @@ service cloud.firestore {
         && request.resource.data.entityId is string
         && request.resource.data.entityId.size() > 0
         && request.resource.data.entityType in [
-          'contacts', 'contracts', 'employees', 'payables', 'receivables', 'followUps',
+          'contacts', 'contracts', 'deals', 'employees', 'payables', 'receivables', 'followUps',
           'ledgerEntries', 'payrollEntries', 'candidates', 'trainings', 'performanceReviews',
           'suppliers', 'products', 'inventoryItems', 'purchaseOrders', 'shipments', 'warehouses',
           'productionPlans', 'productionOrders', 'qualityChecks', 'maintenanceRequests',

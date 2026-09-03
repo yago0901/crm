@@ -169,6 +169,17 @@ export async function fetchClientContacts(): Promise<IContact[]> {
   return snapshot.docs.map(mapContact);
 }
 
+export async function fetchOpenContacts(): Promise<IContact[]> {
+  const companyId = getCurrentCompanyId();
+  const constraints = [
+    ...(companyId ? [where("companyId", "==", companyId)] : []),
+    where("status", "in", ["lead", "cliente"]),
+    orderBy("name", "asc"),
+  ];
+  const snapshot = await getDocs(query(contactsRef, ...constraints));
+  return snapshot.docs.map(mapContact);
+}
+
 export async function addInteraction(
   contactId: string,
   contactName: string,
