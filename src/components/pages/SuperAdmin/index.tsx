@@ -6,7 +6,7 @@ import { subscribeToCompanies, updateCompany } from "../../../services/plataform
 import { provisionCompanyWithPrimaryAccount } from "../../../services/plataforma/provisioning";
 import { ICompany } from "../../../types/company";
 import Button from "../../common/Button";
-import { useToast } from "../../common/Toast";
+import { useToast } from "../../common/Toast/ToastContext";
 import "./styles.scss";
 
 const dateInputValue = (value: Timestamp | null) =>

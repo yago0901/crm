@@ -1,12 +1,10 @@
 import { IBatchProduct } from "./type";
 
 export function getProductBatch(): IBatchProduct[] {
-  // Função para gerar um número aleatório entre dois valores
   function getRandomInt(min: number, max: number): number {
     return Math.floor(Math.random() * (max - min + 1)) + min;
   }
 
-  // Lista de nomes de produtos eletrônicos/eletroeletrônicos
   const productNames = [
     "TV",
     "Smartphone",
@@ -20,10 +18,8 @@ export function getProductBatch(): IBatchProduct[] {
     "Gaming Console",
   ];
 
-  // Array para armazenar os produtos
   const productsArray = [];
 
-  // Loop para criar 500 produtos
   for (let i = 0; i < 500; i++) {
     const claim = 12400 + i;
     const status = getRandomInt(1, 4);

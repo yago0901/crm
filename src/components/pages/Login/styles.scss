@@ -69,6 +69,13 @@
         }
       }
 
+      &__reset_hint {
+        width: 80%;
+        text-align: center;
+        font-size: 14px;
+        color: #444;
+      }
+
       &__settings {
         display: inherit;
         align-items: center;
@@ -101,6 +108,11 @@
             font-size: 14px;
             text-align: end;
             width: 100%;
+            cursor: pointer;
+
+            &:hover {
+              text-decoration: underline;
+            }
           }
         }
 

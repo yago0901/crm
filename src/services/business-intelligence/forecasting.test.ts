@@ -44,7 +44,6 @@ describe("getCashFlowForecast", () => {
 
     expect(projected).toHaveLength(2);
     expect(projected.map((m) => m.month)).toEqual(["2026-08", "2026-09"]);
-    // receitas grows by 100/month historically, so the next month should trend up
     expect(projected[0].receitas).toBeGreaterThan(1200);
   });
 

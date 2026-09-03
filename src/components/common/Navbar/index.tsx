@@ -20,7 +20,7 @@ import {
   FaWarehouse,
 } from 'react-icons/fa';
 import { useTheme } from '../../../hooks/useTheme';
-import { useAuth } from '../../../contexts/auth';
+import { useAuth } from '../../../contexts/auth/AuthContext';
 
 const DEFAULT_MENU: NavbarMenuItem[] = [
   { key: 'home', label: 'Home', icon: FaHome, path: '/home' },
@@ -150,16 +150,6 @@ const Navbar: React.FC<INavbar> = ({ isMenuOpen, onToggleMenu, menu = DEFAULT_ME
   const { theme, toggleTheme } = useTheme();
   const { logout, isAdmin, modules } = useAuth();
 
-  // Admin/Manager see every section regardless of modules[] (same
-  // isAdmin-bypass convention as the Firestore rules). A plain User only
-  // sees sections they've been granted -- items with no requiredModule
-  // (just Home today) show for everyone.
-  // Memoized on purpose: an unmemoized .filter() below would return a new
-  // array every render, and the effect further down that keeps openKey in
-  // sync with the URL depends on this array -- a new reference each render
-  // made it re-fire constantly, snapping a section back open right after
-  // a click tried to close it (only ever visible for non-Admin users,
-  // since the isAdmin branch already reuses the same `menu` reference).
   const visibleMenu = useMemo(
     () =>
       isAdmin ? menu : menu.filter((item) => !item.requiredModule || modules.includes(item.requiredModule)),

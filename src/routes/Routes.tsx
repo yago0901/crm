@@ -1,6 +1,5 @@
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 
-// Importe os componentes correspondentes a cada funcionalidade
 import AcessosFuncionarios from "../components/pages/AcessosFuncionarios";
 import ConfiguracoesEmpresa from "../components/pages/ConfiguracoesEmpresa";
 import AcompanhamentoLeads from "../components/pages/AcompanhamentoLeads";
@@ -46,7 +45,7 @@ import RelatoriosFinanceiros from "../components/pages/RelatoriosFinanceiros";
 import RelatoriosPersonalizados from "../components/pages/RelatoriosPersonalizados";
 import Treinamento from "../components/pages/Treinamento";
 import FluxoCaixa from "../components/pages/FluxoCaixa";
-import { useAuth } from '../contexts/auth';
+import { useAuth } from '../contexts/auth/AuthContext';
 import { ModuleKey } from '../services/shared/modules';
 import Layout from '../components/pages/Layout';
 
@@ -69,10 +68,6 @@ const AdminOnlyRoute = ({ children }: { children: React.ReactNode }) => {
   return children;
 };
 
-// Blocks direct URL navigation into a module the signed-in user hasn't
-// been granted -- hiding the section from the Navbar (see Navbar/index.tsx)
-// stops normal clicking-around, but not someone typing the URL directly.
-// Admin/Manager always pass, same bypass used everywhere else.
 const ModuleRoute = ({
   requiredModule,
   children,
@@ -89,10 +84,6 @@ const SuperAdminRoute = ({ children }: { children: React.ReactNode }) => {
   const { currentUser, loading, isSuperAdmin } = useAuth();
 
   if (loading) return null;
-  // No account signed in at all: show the dedicated admin login here,
-  // in place -- never redirect to the client Login screen. Someone
-  // already signed in as a client who isn't a super admin still bounces
-  // to /home, same as before.
   if (!currentUser) return <AdminLogin />;
   if (!isSuperAdmin) return <Navigate to="/home" />;
 

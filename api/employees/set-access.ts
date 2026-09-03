@@ -3,13 +3,6 @@ import { cert, getApps, initializeApp } from "firebase-admin/app";
 import { getAuth } from "firebase-admin/auth";
 import { getFirestore } from "firebase-admin/firestore";
 
-// Runs only server-side (Vercel serverless function) -- this is the one
-// place in the project allowed to hold the Firebase service account key,
-// via a Vercel dashboard environment variable (never a VITE_-prefixed one,
-// which would ship it to every browser). Bypasses Firestore security rules
-// entirely, so this handler is itself the only access-control boundary for
-// what it does: it must verify the caller independently before acting.
-
 function getAdminApp() {
   const existing = getApps();
   if (existing.length) return existing[0];

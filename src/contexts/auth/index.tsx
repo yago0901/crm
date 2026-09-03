@@ -1,19 +1,16 @@
-import { createContext, useContext, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { auth, firestore } from '../../services/shared/firebase';
-import { User, signInWithEmailAndPassword, signOut, updatePassword } from 'firebase/auth';
-import { IAuthContextType, UserLevel } from './types'
+import {
+  User,
+  sendPasswordResetEmail,
+  signInWithEmailAndPassword,
+  signOut,
+  updatePassword,
+} from 'firebase/auth';
+import { UserLevel } from './types'
 import { doc, getDoc, onSnapshot, updateDoc } from 'firebase/firestore';
 import { setCurrentCompanyId } from '../../services/shared/tenant';
-
-const AuthContext = createContext<IAuthContextType | undefined>(undefined);
-
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth deve ser usado dentro de um AuthProvider');
-  }
-  return context;
-};
+import { AuthContext } from './AuthContext';
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -23,15 +20,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [mustChangePassword, setMustChangePassword] = useState(false);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
 
-  // `loading` must not clear until BOTH the profile (companyId) and the
-  // platformAdmins listeners have delivered their first snapshot -- two
-  // independent, differently-timed Firestore calls. It's derived directly
-  // from these two flags on every render (not mirrored into its own state
-  // via an effect) on purpose: an effect-driven copy lags one render behind
-  // the render where `currentUser` and these flags actually change together,
-  // and route guards reading `loading` during that one stale render would
-  // see it still `false` from before the sign-in -- the same race this is
-  // meant to prevent, just moved instead of fixed.
   const [profileReady, setProfileReady] = useState(false);
   const [superAdminReady, setSuperAdminReady] = useState(false);
   const loading = !(profileReady && superAdminReady);
@@ -40,13 +28,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const unsubscribe = auth.onAuthStateChanged(user => {
       setCurrentUser(user);
       if (!user) {
-        // Nothing to load for a signed-out visitor.
         setProfileReady(true);
         setSuperAdminReady(true);
       } else {
-        // Reset so a freshly signed-in user's own listeners are what
-        // gate `loading`, not leftover state from whoever was signed in
-        // before.
         setProfileReady(false);
         setSuperAdminReady(false);
       }
@@ -69,10 +53,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const unsubscribe = onSnapshot(userDocRef, snap => {
       const data = snap.data();
 
-      // An account disabled via the employee-access admin action (Admin
-      // SDK, server-side) still holds a technically-valid Auth session for
-      // up to an hour -- this listener is what actually cuts it off in
-      // practice, the moment the flag change reaches the client.
       if (data?.disabled === true) {
         signOut(auth);
         setCurrentUser(null);
@@ -138,6 +118,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setCurrentUser(user);
   };
 
+  const resetPassword = async (loginId: string) => {
+    try {
+      const loginDoc = await getDoc(doc(firestore, 'logins', loginId));
+      if (!loginDoc.exists()) return;
+
+      const email = loginDoc.data().email as string;
+      await sendPasswordResetEmail(auth, email);
+    } catch (error) {
+      void error;
+    }
+  };
+
   const logout = async () => {
     await signOut(auth);
     setCurrentUser(null);
@@ -168,6 +160,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         login,
         logout,
         changePassword,
+        resetPassword,
       }}
     >
       {children}

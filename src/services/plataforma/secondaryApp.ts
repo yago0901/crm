@@ -23,8 +23,8 @@ export async function withNewAuthAccount<T>(
   } finally {
     try {
       await signOut(getAuth(secondaryApp));
-    } catch {
-      // best-effort cleanup, ignore
+    } catch (error) {
+      void error;
     }
     await deleteApp(secondaryApp);
   }
