@@ -24,6 +24,7 @@ export const mapStockMovement = (
     id: snap.id,
     companyId: data.companyId,
     itemId: data.itemId,
+    warehouseId: data.warehouseId ?? "",
     type: data.type,
     quantity: data.quantity,
     balanceAfter: data.balanceAfter,
@@ -50,6 +51,7 @@ export interface ICreateStockMovementInput {
   type: StockMovementType;
   value: number;
   notes?: string;
+  warehouseId?: string;
 }
 
 export async function createStockMovement(
@@ -63,14 +65,21 @@ export async function createStockMovement(
 
   const itemRef = doc(firestore, "inventoryItems", input.itemId);
   const movementRef = doc(collection(firestore, "stockMovements"));
+  const warehouseStockRef = input.warehouseId
+    ? doc(firestore, "warehouseStock", `${input.itemId}_${input.warehouseId}`)
+    : null;
 
   await runTransaction(firestore, async (transaction) => {
     const itemSnap = await transaction.get(itemRef);
     if (!itemSnap.exists()) {
       throw new Error("Item não encontrado.");
     }
+    const warehouseStockSnap = warehouseStockRef
+      ? await transaction.get(warehouseStockRef)
+      : null;
 
-    const currentQuantity = (itemSnap.data().quantity as number) ?? 0;
+    const itemData = itemSnap.data();
+    const currentQuantity = (itemData.quantity as number) ?? 0;
     const delta = computeMovementDelta(input.type, input.value, currentQuantity);
     const newQuantity = currentQuantity + delta;
 
@@ -86,6 +95,7 @@ export async function createStockMovement(
     transaction.set(movementRef, {
       companyId,
       itemId: input.itemId,
+      warehouseId: input.warehouseId ?? null,
       type: input.type,
       quantity: delta,
       balanceAfter: newQuantity,
@@ -94,6 +104,22 @@ export async function createStockMovement(
       ownerName: owner.name ?? "",
       createdAt: serverTimestamp(),
     });
+
+    if (warehouseStockRef && input.warehouseId) {
+      const currentWarehouseQuantity = warehouseStockSnap?.exists()
+        ? ((warehouseStockSnap.data().quantity as number) ?? 0)
+        : 0;
+      const newWarehouseQuantity = Math.max(0, currentWarehouseQuantity + delta);
+
+      transaction.set(warehouseStockRef, {
+        companyId,
+        itemId: input.itemId,
+        itemName: itemData.name ?? "",
+        warehouseId: input.warehouseId,
+        quantity: newWarehouseQuantity,
+        updatedAt: serverTimestamp(),
+      });
+    }
   });
 }
 

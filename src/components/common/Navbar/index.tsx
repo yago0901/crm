@@ -76,6 +76,7 @@ const DEFAULT_MENU: NavbarMenuItem[] = [
       { label: 'Compras', path: '/estoques-logistica/compras' },
       { label: 'Logística e Distribuição', path: '/estoques-logistica/logistica-distribuicao' },
       { label: 'Gestão de Armazéns', path: '/estoques-logistica/gestao-armazens' },
+      { label: 'Estoque por Armazém', path: '/estoques-logistica/estoque-por-armazem' },
     ],
   },
   {

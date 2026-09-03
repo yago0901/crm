@@ -19,9 +19,11 @@ import {
 } from "../../../services/estoques-logistica/purchaseOrders";
 import { fetchActiveSuppliers } from "../../../services/estoques-logistica/suppliers";
 import { fetchActiveInventoryItems } from "../../../services/estoques-logistica/inventory";
+import { fetchActiveWarehouses } from "../../../services/estoques-logistica/warehouses";
 import { IPurchaseOrder, PurchaseOrderInput, PurchaseOrderStatus } from "../../../types/purchaseOrder";
 import { ISupplier } from "../../../types/supplier";
 import { IInventoryItem } from "../../../types/inventoryItem";
+import { IWarehouse } from "../../../types/warehouse";
 import { PAGE_SIZE } from "../../../constants/pagination";
 import "./styles.scss";
 
@@ -57,6 +59,8 @@ const EMPTY_FORM: PurchaseOrderInput = {
   inventoryItemId: "",
   inventoryItemName: "",
   quantity: 0,
+  warehouseId: "",
+  warehouseName: "",
 };
 
 const currency = new Intl.NumberFormat("pt-BR", {
@@ -76,6 +80,7 @@ export default function Compras() {
 
   const [suppliers, setSuppliers] = useState<ISupplier[]>([]);
   const [inventoryItems, setInventoryItems] = useState<IInventoryItem[]>([]);
+  const [warehouses, setWarehouses] = useState<IWarehouse[]>([]);
   const [totalPendente, setTotalPendente] = useState(0);
   const [loadError, setLoadError] = useState<string | null>(null);
 
@@ -127,6 +132,12 @@ export default function Compras() {
       .catch((err) => setLoadError(err.message));
   }, []);
 
+  useEffect(() => {
+    fetchActiveWarehouses()
+      .then(setWarehouses)
+      .catch((err) => setLoadError(err.message));
+  }, []);
+
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingStatus, setEditingStatus] = useState<PurchaseOrderStatus | null>(null);
@@ -159,6 +170,8 @@ export default function Compras() {
       inventoryItemId: order.inventoryItemId ?? "",
       inventoryItemName: order.inventoryItemName ?? "",
       quantity: order.quantity ?? 0,
+      warehouseId: order.warehouseId ?? "",
+      warehouseName: order.warehouseName ?? "",
     });
     setIsFormOpen(true);
   };
@@ -185,6 +198,15 @@ export default function Compras() {
       ...form,
       inventoryItemId,
       inventoryItemName: item?.name ?? "",
+    });
+  };
+
+  const handleWarehouseChange = (warehouseId: string) => {
+    const warehouse = warehouses.find((w) => w.id === warehouseId);
+    setForm({
+      ...form,
+      warehouseId,
+      warehouseName: warehouse?.name ?? "",
     });
   };
 
@@ -432,6 +454,22 @@ export default function Compras() {
                   value={form.quantity}
                   onChange={(e) => setForm({ ...form, quantity: Number(e.target.value) })}
                 />
+              </FormField>
+            )}
+            {form.inventoryItemId && (
+              <FormField label="Armazém (opcional)">
+                <select
+                  value={form.warehouseId}
+                  disabled={editingStatus === "recebido"}
+                  onChange={(e) => handleWarehouseChange(e.target.value)}
+                >
+                  <option value="">Nenhum (não rastreado por armazém)</option>
+                  {warehouses.map((warehouse) => (
+                    <option key={warehouse.id} value={warehouse.id}>
+                      {warehouse.name}
+                    </option>
+                  ))}
+                </select>
               </FormField>
             )}
             <FormField label="Data do pedido">

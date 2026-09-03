@@ -29,10 +29,21 @@ import {
 } from "./purchaseOrders";
 import { setCurrentCompanyId } from "../shared/tenant";
 
-const mockTransaction = (orderData: Record<string, unknown>, itemData?: Record<string, unknown>) => {
+const mockTransaction = (
+  orderData: Record<string, unknown>,
+  itemData?: Record<string, unknown>,
+  warehouseStockData?: Record<string, unknown>
+) => {
   const get = vi.fn().mockResolvedValueOnce({ exists: () => true, data: () => orderData });
   if (itemData !== undefined) {
     get.mockResolvedValueOnce({ exists: () => true, data: () => itemData });
+  }
+  if (orderData.warehouseId) {
+    get.mockResolvedValueOnce(
+      warehouseStockData !== undefined
+        ? { exists: () => true, data: () => warehouseStockData }
+        : { exists: () => false }
+    );
   }
   const set = vi.fn();
   const update = vi.fn();
@@ -162,6 +173,36 @@ describe("receivePurchaseOrder", () => {
         type: "entrada",
         quantity: 10,
         balanceAfter: 15,
+      })
+    );
+  });
+
+  it("also updates the warehouse balance when the order links to a warehouse", async () => {
+    const { set } = mockTransaction(
+      {
+        description: "Reposição de insumos",
+        supplierName: "Fornecedor X",
+        value: 800,
+        status: "aprovado",
+        expectedDate: null,
+        receivedProcessedAt: null,
+        inventoryItemId: "item1",
+        quantity: 10,
+        warehouseId: "wh1",
+      },
+      { quantity: 5, name: "Parafuso M4" },
+      { quantity: 3 }
+    );
+
+    await receivePurchaseOrder("order1", { uid: "owner1", name: "Yago" });
+
+    expect(set).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        itemId: "item1",
+        itemName: "Parafuso M4",
+        warehouseId: "wh1",
+        quantity: 13,
       })
     );
   });

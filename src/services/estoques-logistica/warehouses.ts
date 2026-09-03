@@ -1,6 +1,16 @@
-import { DocumentData, QueryDocumentSnapshot, Unsubscribe } from "firebase/firestore";
+import {
+  DocumentData,
+  QueryDocumentSnapshot,
+  Unsubscribe,
+  collection,
+  getDocs,
+  orderBy,
+  query,
+  where,
+} from "firebase/firestore";
 import { createCrudService } from "../shared/crudFactory";
 import { getCurrentCompanyId } from "../shared/tenant";
+import { firestore } from "../shared/firebase";
 import { IWarehouse, WarehouseInput, WarehouseStatus } from "../../types/warehouse";
 
 export const mapWarehouse = (
@@ -56,4 +66,18 @@ export async function deleteWarehouse(warehouseId: string): Promise<void> {
 
 export async function getActiveWarehousesCount(): Promise<number> {
   return warehousesService.countByStatus("ativo", getCurrentCompanyId() ?? undefined);
+}
+
+export async function fetchActiveWarehouses(): Promise<IWarehouse[]> {
+  const companyId = getCurrentCompanyId();
+  if (!companyId) return [];
+
+  const q = query(
+    collection(firestore, "warehouses"),
+    where("companyId", "==", companyId),
+    where("status", "==", "ativo"),
+    orderBy("name", "asc")
+  );
+  const snap = await getDocs(q);
+  return snap.docs.map(mapWarehouse);
 }

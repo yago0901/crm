@@ -415,6 +415,21 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
+    match /warehouseStock/{stockId} {
+      allow read: if belongsToCompany(resource.data.get('companyId', null));
+
+      allow create, update: if isSignedIn()
+        && belongsToCompany(request.resource.data.companyId)
+        && hasModule('inventory-logistics')
+        && request.resource.data.itemId is string
+        && request.resource.data.itemId.size() > 0
+        && request.resource.data.warehouseId is string
+        && request.resource.data.warehouseId.size() > 0
+        && request.resource.data.quantity is number;
+
+      allow delete: if false;
+    }
+
     match /purchaseOrders/{orderId} {
       allow read: if belongsToCompany(resource.data.get('companyId', null));
 

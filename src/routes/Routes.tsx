@@ -19,6 +19,7 @@ import ControleEstoque from "../components/pages/ControleEstoque";
 import ControlePrazosCustos from "../components/pages/ControlePrazosCustos";
 import ControleQualidade from "../components/pages/ControleQualidade";
 import ControleRegulamentacoes from "../components/pages/ControleRegulamentacoes";
+import EstoquePorArmazem from "../components/pages/EstoquePorArmazem";
 import FolhaPagamento from "../components/pages/FolhaPagamento";
 import GestaoArmazens from "../components/pages/GestaoArmazens";
 import GestaoConformidade from "../components/pages/GestaoConformidade";
@@ -127,6 +128,7 @@ function Router() {
         <Route path="/estoques-logistica/gestao-fornecedores" element={<PrivateRoute><ModuleRoute requiredModule="inventory-logistics"><GestaoFornecedores /></ModuleRoute></PrivateRoute>} />
         <Route path="/estoques-logistica/logistica-distribuicao" element={<PrivateRoute><ModuleRoute requiredModule="inventory-logistics"><LogisticaDistribuicao /></ModuleRoute></PrivateRoute>} />
         <Route path="/estoques-logistica/gestao-armazens" element={<PrivateRoute><ModuleRoute requiredModule="inventory-logistics"><GestaoArmazens /></ModuleRoute></PrivateRoute>} />
+        <Route path="/estoques-logistica/estoque-por-armazem" element={<PrivateRoute><ModuleRoute requiredModule="inventory-logistics"><EstoquePorArmazem /></ModuleRoute></PrivateRoute>} />
 
         <Route path="/producao-manufatura/planejamento-producao" element={<PrivateRoute><ModuleRoute requiredModule="production"><PlanejamentoProducao /></ModuleRoute></PrivateRoute>} />
         <Route path="/producao-manufatura/controle-qualidade" element={<PrivateRoute><ModuleRoute requiredModule="production"><ControleQualidade /></ModuleRoute></PrivateRoute>} />

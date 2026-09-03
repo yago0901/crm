@@ -31,6 +31,8 @@ export const mapPurchaseOrder = (
     inventoryItemId: data.inventoryItemId ?? "",
     inventoryItemName: data.inventoryItemName ?? "",
     quantity: data.quantity ?? 0,
+    warehouseId: data.warehouseId ?? "",
+    warehouseName: data.warehouseName ?? "",
     receivedProcessedAt: data.receivedProcessedAt ?? null,
     ownerId: data.ownerId,
     ownerName: data.ownerName ?? "",
@@ -104,16 +106,26 @@ export async function receivePurchaseOrder(
 
     const hasStockLink = Boolean(order.inventoryItemId) && Number(order.quantity) > 0;
     const itemRef = hasStockLink ? doc(firestore, "inventoryItems", order.inventoryItemId) : null;
+    const hasWarehouseLink = hasStockLink && Boolean(order.warehouseId);
+    const warehouseStockRef = hasWarehouseLink
+      ? doc(firestore, "warehouseStock", `${order.inventoryItemId}_${order.warehouseId}`)
+      : null;
 
     let newQuantity = 0;
+    let itemName = "";
     if (itemRef) {
       const itemSnap = await transaction.get(itemRef);
       if (!itemSnap.exists()) {
         throw new Error("Item de estoque vinculado não foi encontrado.");
       }
       const currentQuantity = (itemSnap.data().quantity as number) ?? 0;
+      itemName = itemSnap.data().name ?? "";
       newQuantity = currentQuantity + Math.abs(order.quantity);
     }
+
+    const warehouseStockSnap = warehouseStockRef
+      ? await transaction.get(warehouseStockRef)
+      : null;
 
     transaction.update(orderRef, {
       status: "recebido",
@@ -146,6 +158,7 @@ export async function receivePurchaseOrder(
       transaction.set(movementRef, {
         companyId,
         itemId: order.inventoryItemId,
+        warehouseId: order.warehouseId ?? null,
         type: "entrada",
         quantity: Math.abs(order.quantity),
         balanceAfter: newQuantity,
@@ -154,6 +167,21 @@ export async function receivePurchaseOrder(
         ownerName: owner.name ?? "",
         createdAt: serverTimestamp(),
       });
+
+      if (warehouseStockRef) {
+        const currentWarehouseQuantity = warehouseStockSnap?.exists()
+          ? ((warehouseStockSnap.data().quantity as number) ?? 0)
+          : 0;
+
+        transaction.set(warehouseStockRef, {
+          companyId,
+          itemId: order.inventoryItemId,
+          itemName,
+          warehouseId: order.warehouseId,
+          quantity: currentWarehouseQuantity + Math.abs(order.quantity),
+          updatedAt: serverTimestamp(),
+        });
+      }
     }
 
     appendAuditLog(transaction, {
