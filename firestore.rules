@@ -11,10 +11,6 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == uid;
     }
 
-    // Manager is Admin-equivalent for data access, for now (2026-08-28) —
-    // both can manage employee logins/module access. Only the two roles
-    // that actually need elevated access check this; a future pass may
-    // split them further.
     function isAdmin() {
       return isSignedIn()
         && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.level in ['Admin', 'Manager'];
@@ -25,24 +21,19 @@ service cloud.firestore {
         && exists(/databases/$(database)/documents/platformAdmins/$(request.auth.uid));
     }
 
-    // NOTE: users/{uid} does not have a companyId field yet — that lands in
-    // the Fase 0 passo 2 migration. Until then this always evaluates false,
-    // which is safe (it just means nobody matches it yet).
-    function belongsToCompany(companyId) {
-      return isSignedIn()
-        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('companyId', null) == companyId;
+    function companyActive(companyId) {
+      let company = get(/databases/$(database)/documents/companies/$(companyId)).data;
+      return company.plan == 'pago'
+        || company.get('trialEndsAt', null) == null
+        || company.trialEndsAt > request.time;
     }
 
-    // Per-module access, 2026-08-28: Admin/Manager always pass (same as
-    // isAdmin() elsewhere -- they see and manage everything). A plain User
-    // needs the module key present in their own modules[] grant. This only
-    // gates writes and each module's own collections -- reads stay company-
-    // scoped only (via belongsToCompany above), on purpose, so the read-only
-    // Home dashboard can keep showing the same aggregate numbers to every
-    // user regardless of which modules they've been granted (confirmed with
-    // the user: a per-module-customized Home was rejected, since someone
-    // with more than one granted module wouldn't have a single obvious
-    // "preferred" home to land on).
+    function belongsToCompany(companyId) {
+      return isSignedIn()
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('companyId', null) == companyId
+        && companyActive(companyId);
+    }
+
     function hasModule(moduleKey) {
       return isAdmin()
         || (isSignedIn()
@@ -55,10 +46,6 @@ service cloud.firestore {
     }
 
     match /companies/{companyId} {
-      // get (fetch by exact id) stays open even signed out -- the
-      // signup form needs to check "is this slug already taken?"
-      // before any account exists yet. list stays restricted so
-      // nobody can enumerate every company.
       allow get: if true;
       allow list: if isSuperAdmin() || belongsToCompany(companyId);
 
@@ -77,25 +64,9 @@ service cloud.firestore {
     }
 
     match /users/{uid} {
-      // An Admin/Manager can read any profile in their own company (needed
-      // to list employees' current module grants in "Acessos"), not just
-      // their own.
       allow read: if isOwner(uid)
         || (isAdmin() && belongsToCompany(resource.data.get('companyId', null)));
 
-      // Two ways a users/{uid} doc can be created:
-      // Path A — self-service signup (Fase 1 passo 1a): a brand-new user
-      // may create their own profile only as the Admin of a company where
-      // they are already registered as primaryUserId (that company doc is
-      // written moments earlier, in the same provisioning flow).
-      // Path B — employee login provisioning (Fase 1 passo 9, 2026-08-28):
-      // an Admin/Manager creates a profile for one of their own employees.
-      // Always forced to level 'User' here — this path can never create
-      // another Admin/Manager, closing off privilege escalation. Note this
-      // write happens through the *primary* app as the calling Admin/
-      // Manager (request.auth.uid is their own uid, not the new employee's)
-      // — the new Firebase Auth account itself is created separately via a
-      // secondary app instance so the caller's own session is undisturbed.
       allow create: if
         (isOwner(uid)
           && request.resource.data.level == 'Admin'
@@ -105,11 +76,6 @@ service cloud.firestore {
           && belongsToCompany(request.resource.data.companyId)
           && request.resource.data.level == 'User');
 
-      // Same split for update: a person editing their own profile (e.g.
-      // clearing mustChangePassword) can't change their own level/company;
-      // an Admin/Manager editing someone else's profile (granting/revoking
-      // modules) can't change that person's level/company/employeeId link
-      // either — only modules is meant to move through this path.
       allow update: if
         (isOwner(uid)
           && request.resource.data.level == resource.data.level
@@ -127,19 +93,6 @@ service cloud.firestore {
       allow get: if true;
       allow list: if false;
 
-      // A person can always create their own login mapping (self-service
-      // signup). An Admin/Manager can also create one for an employee --
-      // not narrowed to their own company's slug prefix, since that would
-      // need parsing loginId as a string (tried loginId.split('.')[0],
-      // which silently mismatched -- Firestore Rules' split() appears to
-      // treat '.' as regex "any character" rather than a literal dot,
-      // splitting on every character instead of at the separator). Not
-      // narrowing it here is an acceptable trade: this collection only
-      // ever powers a get-by-exact-id email lookup (list is false, so it
-      // can't be enumerated), and the users/{uid} create rule already
-      // strictly enforces the real access boundary -- an Admin/Manager can
-      // only ever provision a profile scoped to their own company there,
-      // regardless of what login ids this rule alone would allow.
       allow create: if isSignedIn()
         && (request.resource.data.email == request.auth.token.email || isAdmin());
 
