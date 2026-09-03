@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { FaCoins, FaFileContract, FaUserCheck, FaUserClock } from "react-icons/fa";
-import { useAuth } from "../../../contexts/auth";
+import { useAuth } from "../../../contexts/auth/AuthContext";
 import QuickActions from "../../common/QuickActions";
 import ContactsStatusChart from "./charts/ContactsStatusChart";
 import ContractsStatusChart from "./charts/ContractsStatusChart";

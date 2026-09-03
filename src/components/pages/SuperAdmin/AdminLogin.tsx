@@ -15,13 +15,8 @@ const AdminLogin = () => {
     setSigningIn(true);
 
     try {
-      // Deliberately not the client login() from AuthContext -- this
-      // account has no company/slug.usuario at all, it authenticates by
-      // plain e-mail. AuthContext's onAuthStateChanged listener picks up
-      // any successful sign-in automatically, from any code path, so
-      // nothing else needs to be wired up here.
       await signInWithEmailAndPassword(auth, email, password);
-    } catch (err: any) {
+    } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao entrar.");
     } finally {
       setSigningIn(false);

@@ -46,12 +46,6 @@ export function usePaginatedCollection<T>({
 
   const cursorCacheKey = (page: number) => `${resetKey}:${page}`;
 
-  // Every collection this hook reads from is scoped to a company by rule
-  // (`belongsToCompany`), and that rule needs an equality filter on
-  // `companyId` to even evaluate for a list/count query -- without it
-  // Firestore rejects the whole query with permission-denied rather than
-  // silently filtering. Callers pass their own status/order constraints;
-  // this prepends the company filter so none of them have to remember to.
   const companyId = getCurrentCompanyId();
   const scopedConstraints = companyId ? [where("companyId", "==", companyId), ...constraints] : constraints;
 

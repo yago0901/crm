@@ -15,4 +15,5 @@ export interface IAuthContextType {
   login: (loginId: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   changePassword: (newPassword: string) => Promise<void>;
+  resetPassword: (loginId: string) => Promise<void>;
 }

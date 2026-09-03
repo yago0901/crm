@@ -1,6 +1,6 @@
 import { FormEvent, useEffect, useState } from "react";
-import { useAuth } from "../../../contexts/auth";
-import { useToast } from "../../common/Toast";
+import { useAuth } from "../../../contexts/auth/AuthContext";
+import { useToast } from "../../common/Toast/ToastContext";
 import Button from "../../common/Button";
 import Badge from "../../common/Badge";
 import FormField from "../../common/FormField";

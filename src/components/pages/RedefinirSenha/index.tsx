@@ -1,6 +1,7 @@
 import { FormEvent, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../../../contexts/auth";
+import { FirebaseError } from "firebase/app";
+import { useAuth } from "../../../contexts/auth/AuthContext";
 import "./styles.scss";
 
 const MIN_PASSWORD_LENGTH = 6;
@@ -32,11 +33,10 @@ const RedefinirSenha = () => {
     try {
       await changePassword(password);
       navigate("/home");
-    } catch (err: any) {
-      const errorCode = err?.code;
-      if (errorCode === "auth/weak-password") {
+    } catch (err) {
+      if (err instanceof FirebaseError && err.code === "auth/weak-password") {
         setError("A senha é muito fraca. Tente outra.");
-      } else if (errorCode === "auth/requires-recent-login") {
+      } else if (err instanceof FirebaseError && err.code === "auth/requires-recent-login") {
         setError("Sua sessão expirou. Saia e entre novamente para trocar a senha.");
       } else {
         setError(err instanceof Error ? err.message : "Erro ao definir a nova senha.");

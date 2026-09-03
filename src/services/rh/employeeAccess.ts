@@ -80,10 +80,6 @@ export async function createEmployeeLogin(
 
   const tempPassword = generateTempPassword();
 
-  // Only the raw Auth account is created through the secondary app -- the
-  // Firestore writes below happen through the primary app, as the Admin/
-  // Manager who's already signed in, so the security rules see their real
-  // (existing) profile rather than the brand-new employee's.
   const { uid } = await withNewAuthAccount(employee.email, tempPassword, async ({ uid }) => ({ uid }));
 
   try {
@@ -112,9 +108,6 @@ export async function updateEmployeeModules(uid: string, modules: ModuleKey[]): 
   await updateDoc(doc(firestore, "users", uid), { modules });
 }
 
-// Real disable/enable (not just a client-side flag) -- goes through the
-// /api/employees/set-access serverless function, the only place that holds
-// the Admin SDK credential needed to actually flip the account off.
 export async function setEmployeeAccess(targetUid: string, disabled: boolean): Promise<void> {
   if (!auth.currentUser) {
     throw new Error("Nenhum usuário autenticado.");

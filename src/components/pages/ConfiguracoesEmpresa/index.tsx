@@ -5,7 +5,7 @@ import { ICompany } from "../../../types/company";
 import Button from "../../common/Button";
 import Badge from "../../common/Badge";
 import FormField from "../../common/FormField";
-import { useToast } from "../../common/Toast";
+import { useToast } from "../../common/Toast/ToastContext";
 import "./styles.scss";
 
 const PLAN_LABEL: Record<ICompany["plan"], string> = {

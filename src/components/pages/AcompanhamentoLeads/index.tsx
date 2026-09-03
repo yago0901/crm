@@ -1,8 +1,8 @@
 import { FormEvent, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Timestamp } from "firebase/firestore";
-import { useAuth } from "../../../contexts/auth";
-import { useToast } from "../../common/Toast";
+import { useAuth } from "../../../contexts/auth/AuthContext";
+import { useToast } from "../../common/Toast/ToastContext";
 import Button from "../../common/Button";
 import ConfirmDialog from "../../common/ConfirmDialog";
 import {

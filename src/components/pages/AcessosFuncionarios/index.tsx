@@ -1,5 +1,5 @@
 import { FormEvent, useEffect, useState } from "react";
-import { useToast } from "../../common/Toast";
+import { useToast } from "../../common/Toast/ToastContext";
 import Modal from "../../common/Modal";
 import ConfirmDialog from "../../common/ConfirmDialog";
 import Button from "../../common/Button";
@@ -68,7 +68,6 @@ export default function AcessosFuncionarios() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ---- criar acesso ----
   const [creatingFor, setCreatingFor] = useState<IEmployee | null>(null);
   const [username, setUsername] = useState("");
   const [creating, setCreating] = useState(false);
@@ -104,7 +103,6 @@ export default function AcessosFuncionarios() {
     }
   };
 
-  // ---- gerenciar acesso (módulos + desativar) ----
   const [managingRow, setManagingRow] = useState<EmployeeRow | null>(null);
   const [selectedModules, setSelectedModules] = useState<ModuleKey[]>([]);
   const [savingModules, setSavingModules] = useState(false);

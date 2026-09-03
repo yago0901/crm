@@ -6,9 +6,6 @@ export interface ICompany {
   id: string;
   slug: string;
   name: string;
-  // Optional business-registration info -- nothing in the app consumes
-  // these yet, kept here so a company can fill them in ahead of Fase 3's
-  // Mercado Pago billing, which will need cnpj/address for nota fiscal.
   cnpj?: string;
   address?: string;
   phone?: string;

@@ -54,7 +54,7 @@ const Register = () => {
       } else {
         setFallback({ login: result.login, tempPassword: result.tempPassword });
       }
-    } catch (err: any) {
+    } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro ao criar a conta.');
     } finally {
       setSaving(false);
