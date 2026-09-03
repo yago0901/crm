@@ -1,5 +1,5 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
-import { orderBy, where } from "firebase/firestore";
+import { Timestamp, orderBy, where } from "firebase/firestore";
 import { useAuth } from "../../../contexts/auth/AuthContext";
 import { useToast } from "../../common/Toast/ToastContext";
 import Modal from "../../common/Modal";
@@ -16,7 +16,9 @@ import {
   mapCandidate,
   updateCandidate,
 } from "../../../services/rh/candidates";
+import { convertCandidateToEmployee } from "../../../services/rh/employees";
 import { CandidateInput, CandidateStatus, ICandidate } from "../../../types/candidate";
+import { EmployeeInput } from "../../../types/employee";
 import { PAGE_SIZE } from "../../../constants/pagination";
 import "./styles.scss";
 
@@ -42,6 +44,24 @@ const EMPTY_FORM: CandidateInput = {
   status: "triagem",
   notes: "",
 };
+
+const EMPTY_CONVERT_FORM: EmployeeInput = {
+  name: "",
+  email: "",
+  phone: "",
+  role: "",
+  department: "",
+  status: "ativo",
+  salary: 0,
+  hireDate: null,
+  notes: "",
+};
+
+const toDateInput = (value: Timestamp | null) =>
+  value ? value.toDate().toISOString().slice(0, 10) : "";
+
+const fromDateInput = (value: string): Timestamp | null =>
+  value ? Timestamp.fromDate(new Date(`${value}T00:00:00`)) : null;
 
 export default function Recrutamento() {
   const { currentUser } = useAuth();
@@ -92,6 +112,49 @@ export default function Recrutamento() {
   const [saving, setSaving] = useState(false);
 
   const [candidateToDelete, setCandidateToDelete] = useState<ICandidate | null>(null);
+
+  const [candidateToConvert, setCandidateToConvert] = useState<ICandidate | null>(null);
+  const [convertForm, setConvertForm] = useState<EmployeeInput>(EMPTY_CONVERT_FORM);
+  const [converting, setConverting] = useState(false);
+
+  const openConvert = (candidate: ICandidate) => {
+    setCandidateToConvert(candidate);
+    setConvertForm({
+      ...EMPTY_CONVERT_FORM,
+      name: candidate.name,
+      email: candidate.email,
+      phone: candidate.phone ?? "",
+      role: candidate.position,
+    });
+  };
+
+  const closeConvert = () => {
+    setCandidateToConvert(null);
+    setConvertForm(EMPTY_CONVERT_FORM);
+  };
+
+  const handleConvertSubmit = async (event: FormEvent) => {
+    event.preventDefault();
+    if (!currentUser || !candidateToConvert) return;
+
+    setConverting(true);
+    try {
+      await convertCandidateToEmployee(candidateToConvert.id, convertForm, {
+        uid: currentUser.uid,
+        name: currentUser.displayName ?? currentUser.email,
+      });
+      showToast("Candidato convertido em funcionário.", "success");
+      refresh();
+      closeConvert();
+    } catch (err) {
+      showToast(
+        err instanceof Error ? err.message : "Erro ao converter candidato",
+        "error"
+      );
+    } finally {
+      setConverting(false);
+    }
+  };
 
   const openCreateForm = () => {
     setEditingId(null);
@@ -221,9 +284,17 @@ export default function Recrutamento() {
                     <Badge tone={STATUS_TONE[candidate.status]}>
                       {STATUS_LABEL[candidate.status]}
                     </Badge>
+                    {candidate.convertedToEmployeeId && (
+                      <Badge tone="neutral">Convertido</Badge>
+                    )}
                   </td>
                   <td>
                     <div className="candidates_page__table__actions">
+                      {candidate.status === "aprovado" && !candidate.convertedToEmployeeId && (
+                        <Button variant="primary" onClick={() => openConvert(candidate)}>
+                          Converter em funcionário
+                        </Button>
+                      )}
                       <Button variant="secondary" onClick={() => openEditForm(candidate)}>
                         Editar
                       </Button>
@@ -320,6 +391,80 @@ export default function Recrutamento() {
         onConfirm={handleDelete}
         onCancel={() => setCandidateToDelete(null)}
       />
+
+      <Modal
+        isOpen={!!candidateToConvert}
+        onClose={closeConvert}
+        title={`Converter em funcionário — ${candidateToConvert?.name ?? ""}`}
+      >
+        <form className="candidates_page__form" onSubmit={handleConvertSubmit}>
+          <div className="candidates_page__form__grid">
+            <FormField label="Nome*">
+              <input
+                required
+                value={convertForm.name}
+                onChange={(e) => setConvertForm({ ...convertForm, name: e.target.value })}
+              />
+            </FormField>
+            <FormField label="E-mail*">
+              <input
+                required
+                type="email"
+                value={convertForm.email}
+                onChange={(e) => setConvertForm({ ...convertForm, email: e.target.value })}
+              />
+            </FormField>
+            <FormField label="Telefone">
+              <input
+                value={convertForm.phone}
+                onChange={(e) => setConvertForm({ ...convertForm, phone: e.target.value })}
+              />
+            </FormField>
+            <FormField label="Cargo*">
+              <input
+                required
+                value={convertForm.role}
+                onChange={(e) => setConvertForm({ ...convertForm, role: e.target.value })}
+              />
+            </FormField>
+            <FormField label="Departamento*">
+              <input
+                required
+                value={convertForm.department}
+                onChange={(e) => setConvertForm({ ...convertForm, department: e.target.value })}
+              />
+            </FormField>
+            <FormField label="Salário (R$)">
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                value={convertForm.salary}
+                onChange={(e) =>
+                  setConvertForm({ ...convertForm, salary: Number(e.target.value) })
+                }
+              />
+            </FormField>
+            <FormField label="Data de admissão">
+              <input
+                type="date"
+                value={toDateInput(convertForm.hireDate)}
+                onChange={(e) =>
+                  setConvertForm({ ...convertForm, hireDate: fromDateInput(e.target.value) })
+                }
+              />
+            </FormField>
+          </div>
+          <div className="candidates_page__form__actions">
+            <Button type="button" variant="secondary" onClick={closeConvert} disabled={converting}>
+              Cancelar
+            </Button>
+            <Button type="submit" variant="primary" disabled={converting}>
+              {converting ? "Convertendo..." : "Converter"}
+            </Button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 }
