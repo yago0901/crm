@@ -6,6 +6,7 @@ export interface IStockMovement {
   id: string;
   companyId: string;
   itemId: string;
+  warehouseId?: string;
   type: StockMovementType;
   quantity: number;
   balanceAfter: number;

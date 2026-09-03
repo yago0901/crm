@@ -115,6 +115,45 @@ describe("createStockMovement", () => {
         ownerId: "owner1",
       })
     );
+    expect(transactionSet).toHaveBeenCalledTimes(1);
+  });
+
+  it("also updates the per-warehouse balance when a warehouseId is given", async () => {
+    transactionGet
+      .mockResolvedValueOnce({ exists: () => true, data: () => ({ quantity: 5, name: "Parafuso M4" }) })
+      .mockResolvedValueOnce({ exists: () => false });
+
+    await createStockMovement(
+      { itemId: "item-1", type: "entrada", value: 10, warehouseId: "wh-1" },
+      { uid: "owner1", name: "Yago" }
+    );
+
+    expect(transactionSet).toHaveBeenCalledTimes(2);
+    expect(transactionSet).toHaveBeenCalledWith(
+      expect.objectContaining({ id: "item-1_wh-1" }),
+      expect.objectContaining({
+        itemId: "item-1",
+        itemName: "Parafuso M4",
+        warehouseId: "wh-1",
+        quantity: 10,
+      })
+    );
+  });
+
+  it("accumulates onto the existing warehouse balance instead of overwriting it", async () => {
+    transactionGet
+      .mockResolvedValueOnce({ exists: () => true, data: () => ({ quantity: 20, name: "Parafuso M4" }) })
+      .mockResolvedValueOnce({ exists: () => true, data: () => ({ quantity: 8 }) });
+
+    await createStockMovement(
+      { itemId: "item-1", type: "entrada", value: 10, warehouseId: "wh-1" },
+      { uid: "owner1", name: "Yago" }
+    );
+
+    expect(transactionSet).toHaveBeenCalledWith(
+      expect.objectContaining({ id: "item-1_wh-1" }),
+      expect.objectContaining({ quantity: 18 })
+    );
   });
 });
 
@@ -153,6 +192,7 @@ describe("fetchMovementsForItem", () => {
         id: "m1",
         companyId: "acme",
         itemId: "item-1",
+        warehouseId: "",
         type: "entrada",
         quantity: 10,
         balanceAfter: 10,

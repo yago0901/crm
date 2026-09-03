@@ -17,12 +17,14 @@ import {
   updateInventoryItem,
 } from "../../../services/estoques-logistica/inventory";
 import { fetchActiveProducts } from "../../../services/shared/products";
+import { fetchActiveWarehouses } from "../../../services/estoques-logistica/warehouses";
 import {
   createStockMovement,
   fetchMovementsForItem,
 } from "../../../services/estoques-logistica/stockMovements";
 import { IInventoryItem, InventoryItemStatus } from "../../../types/inventoryItem";
 import { IProduct } from "../../../types/product";
+import { IWarehouse } from "../../../types/warehouse";
 import { IStockMovement, StockMovementType } from "../../../types/stockMovement";
 import { PAGE_SIZE } from "../../../constants/pagination";
 import "./styles.scss";
@@ -120,6 +122,7 @@ export default function ControleEstoque() {
   }, []);
 
   const [products, setProducts] = useState<IProduct[]>([]);
+  const [warehouses, setWarehouses] = useState<IWarehouse[]>([]);
 
   const loadProducts = () => {
     fetchActiveProducts()
@@ -128,6 +131,12 @@ export default function ControleEstoque() {
         showToast(err instanceof Error ? err.message : "Erro ao carregar produtos.", "error")
       );
   };
+
+  useEffect(() => {
+    fetchActiveWarehouses()
+      .then(setWarehouses)
+      .catch((err) => setLoadError(err.message));
+  }, []);
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -256,6 +265,7 @@ export default function ControleEstoque() {
   const [movementType, setMovementType] = useState<StockMovementType>("entrada");
   const [movementValue, setMovementValue] = useState(0);
   const [movementNotes, setMovementNotes] = useState("");
+  const [movementWarehouseId, setMovementWarehouseId] = useState("");
   const [movementSaving, setMovementSaving] = useState(false);
 
   const loadHistory = (itemId: string) => {
@@ -273,6 +283,7 @@ export default function ControleEstoque() {
     setMovementType("entrada");
     setMovementValue(0);
     setMovementNotes("");
+    setMovementWarehouseId("");
     loadHistory(item.id);
   };
 
@@ -288,7 +299,13 @@ export default function ControleEstoque() {
     setMovementSaving(true);
     try {
       await createStockMovement(
-        { itemId: movingItem.id, type: movementType, value: movementValue, notes: movementNotes },
+        {
+          itemId: movingItem.id,
+          type: movementType,
+          value: movementValue,
+          notes: movementNotes,
+          warehouseId: movementWarehouseId || undefined,
+        },
         { uid: currentUser.uid, name: currentUser.displayName ?? currentUser.email }
       );
       showToast("Movimentação registrada.", "success");
@@ -526,6 +543,19 @@ export default function ControleEstoque() {
                 value={movementValue}
                 onChange={(e) => setMovementValue(Number(e.target.value))}
               />
+            </FormField>
+            <FormField label="Armazém (opcional)">
+              <select
+                value={movementWarehouseId}
+                onChange={(e) => setMovementWarehouseId(e.target.value)}
+              >
+                <option value="">Nenhum (não rastreado por armazém)</option>
+                {warehouses.map((warehouse) => (
+                  <option key={warehouse.id} value={warehouse.id}>
+                    {warehouse.name}
+                  </option>
+                ))}
+              </select>
             </FormField>
             <FormField label="Observações">
               <input
