@@ -16,7 +16,12 @@ import {
   mapInventoryItem,
   updateInventoryItem,
 } from "../../../services/estoques-logistica/inventory";
+import {
+  createStockMovement,
+  fetchMovementsForItem,
+} from "../../../services/estoques-logistica/stockMovements";
 import { IInventoryItem, InventoryItemInput, InventoryItemStatus } from "../../../types/inventoryItem";
+import { IStockMovement, StockMovementType } from "../../../types/stockMovement";
 import { PAGE_SIZE } from "../../../constants/pagination";
 import "./styles.scss";
 
@@ -40,6 +45,24 @@ const EMPTY_FORM: InventoryItemInput = {
   unitCost: 0,
   status: "ativo",
   notes: "",
+};
+
+const MOVEMENT_TYPE_LABEL: Record<StockMovementType, string> = {
+  entrada: "Entrada",
+  saida: "Saída",
+  ajuste: "Ajuste",
+  inventario: "Inventário (contagem)",
+  perda: "Perda",
+  devolucao: "Devolução",
+};
+
+const MOVEMENT_VALUE_LABEL: Record<StockMovementType, string> = {
+  entrada: "Quantidade",
+  saida: "Quantidade",
+  perda: "Quantidade",
+  devolucao: "Quantidade",
+  ajuste: "Quantidade (negativo para diminuir)",
+  inventario: "Quantidade contada agora",
 };
 
 const currency = new Intl.NumberFormat("pt-BR", {
@@ -132,7 +155,16 @@ export default function ControleEstoque() {
     setSaving(true);
     try {
       if (editingId) {
-        await updateInventoryItem(editingId, form);
+        await updateInventoryItem(editingId, {
+          name: form.name,
+          sku: form.sku,
+          category: form.category,
+          minQuantity: form.minQuantity,
+          unit: form.unit,
+          unitCost: form.unitCost,
+          status: form.status,
+          notes: form.notes,
+        });
         showToast("Item atualizado com sucesso.", "success");
       } else {
         await createInventoryItem(form, {
@@ -168,6 +200,63 @@ export default function ControleEstoque() {
       );
     } finally {
       setItemToDelete(null);
+    }
+  };
+
+  const [movingItem, setMovingItem] = useState<IInventoryItem | null>(null);
+  const [movementHistory, setMovementHistory] = useState<IStockMovement[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [movementType, setMovementType] = useState<StockMovementType>("entrada");
+  const [movementValue, setMovementValue] = useState(0);
+  const [movementNotes, setMovementNotes] = useState("");
+  const [movementSaving, setMovementSaving] = useState(false);
+
+  const loadHistory = (itemId: string) => {
+    setHistoryLoading(true);
+    fetchMovementsForItem(itemId)
+      .then(setMovementHistory)
+      .catch((err) =>
+        showToast(err instanceof Error ? err.message : "Erro ao carregar histórico.", "error")
+      )
+      .finally(() => setHistoryLoading(false));
+  };
+
+  const openMovement = (item: IInventoryItem) => {
+    setMovingItem(item);
+    setMovementType("entrada");
+    setMovementValue(0);
+    setMovementNotes("");
+    loadHistory(item.id);
+  };
+
+  const closeMovement = () => {
+    setMovingItem(null);
+    setMovementHistory([]);
+  };
+
+  const handleMovementSubmit = async (event: FormEvent) => {
+    event.preventDefault();
+    if (!movingItem || !currentUser) return;
+
+    setMovementSaving(true);
+    try {
+      await createStockMovement(
+        { itemId: movingItem.id, type: movementType, value: movementValue, notes: movementNotes },
+        { uid: currentUser.uid, name: currentUser.displayName ?? currentUser.email }
+      );
+      showToast("Movimentação registrada.", "success");
+      setMovementValue(0);
+      setMovementNotes("");
+      loadHistory(movingItem.id);
+      refresh();
+      refreshActiveCount();
+    } catch (err) {
+      showToast(
+        err instanceof Error ? err.message : "Erro ao registrar movimentação.",
+        "error"
+      );
+    } finally {
+      setMovementSaving(false);
     }
   };
 
@@ -238,6 +327,9 @@ export default function ControleEstoque() {
                   </td>
                   <td>
                     <div className="inventory_page__table__actions">
+                      <Button variant="secondary" onClick={() => openMovement(item)}>
+                        Movimentar
+                      </Button>
                       <Button variant="secondary" onClick={() => openEditForm(item)}>
                         Editar
                       </Button>
@@ -291,15 +383,21 @@ export default function ControleEstoque() {
                 onChange={(e) => setForm({ ...form, unit: e.target.value })}
               />
             </FormField>
-            <FormField label="Quantidade*">
-              <input
-                required
-                type="number"
-                min="0"
-                value={form.quantity}
-                onChange={(e) => setForm({ ...form, quantity: Number(e.target.value) })}
-              />
-            </FormField>
+            {editingId ? (
+              <FormField label="Quantidade atual">
+                <input value={`${form.quantity} ${form.unit}`} disabled />
+              </FormField>
+            ) : (
+              <FormField label="Quantidade inicial*">
+                <input
+                  required
+                  type="number"
+                  min="0"
+                  value={form.quantity}
+                  onChange={(e) => setForm({ ...form, quantity: Number(e.target.value) })}
+                />
+              </FormField>
+            )}
             <FormField label="Quantidade mínima">
               <input
                 type="number"
@@ -329,6 +427,11 @@ export default function ControleEstoque() {
               </select>
             </FormField>
           </div>
+          {editingId && (
+            <p className="inventory_page__form__hint">
+              Para mudar a quantidade, use o botão "Movimentar" na lista.
+            </p>
+          )}
           <FormField label="Observações">
             <textarea
               value={form.notes}
@@ -344,6 +447,71 @@ export default function ControleEstoque() {
             </Button>
           </div>
         </form>
+      </Modal>
+
+      <Modal
+        isOpen={!!movingItem}
+        onClose={closeMovement}
+        title={`Movimentar — ${movingItem?.name ?? ""}`}
+      >
+        <div className="inventory_page__movement">
+          <p className="inventory_page__movement__balance">
+            Saldo atual: <strong>{movingItem?.quantity} {movingItem?.unit}</strong>
+          </p>
+
+          <form className="inventory_page__movement__form" onSubmit={handleMovementSubmit}>
+            <FormField label="Tipo">
+              <select
+                value={movementType}
+                onChange={(e) => setMovementType(e.target.value as StockMovementType)}
+              >
+                {Object.entries(MOVEMENT_TYPE_LABEL).map(([key, label]) => (
+                  <option key={key} value={key}>
+                    {label}
+                  </option>
+                ))}
+              </select>
+            </FormField>
+            <FormField label={MOVEMENT_VALUE_LABEL[movementType]}>
+              <input
+                required
+                type="number"
+                min={movementType === "ajuste" ? undefined : 0}
+                value={movementValue}
+                onChange={(e) => setMovementValue(Number(e.target.value))}
+              />
+            </FormField>
+            <FormField label="Observações">
+              <input
+                value={movementNotes}
+                onChange={(e) => setMovementNotes(e.target.value)}
+              />
+            </FormField>
+            <Button type="submit" variant="primary" disabled={movementSaving}>
+              {movementSaving ? "Registrando..." : "Registrar movimentação"}
+            </Button>
+          </form>
+
+          <div className="inventory_page__movement__history">
+            <span className="inventory_page__movement__history__label">Histórico</span>
+            {historyLoading ? (
+              <p className="inventory_page__empty">Carregando...</p>
+            ) : movementHistory.length === 0 ? (
+              <p className="inventory_page__empty">Nenhuma movimentação registrada ainda.</p>
+            ) : (
+              <ul>
+                {movementHistory.map((movement) => (
+                  <li key={movement.id}>
+                    <strong>{MOVEMENT_TYPE_LABEL[movement.type]}</strong>{" "}
+                    {movement.quantity > 0 ? "+" : ""}
+                    {movement.quantity} — saldo ficou {movement.balanceAfter}
+                    {movement.notes && <span> ({movement.notes})</span>}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
       </Modal>
 
       <ConfirmDialog

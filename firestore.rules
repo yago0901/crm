@@ -113,15 +113,10 @@ service cloud.firestore {
       allow update: if belongsToCompany(resource.data.get('companyId', null))
         && hasModule('sales')
         && request.resource.data.companyId == resource.data.get('companyId', null)
-        && (
-          isAdmin()
-          || (resource.data.ownerId == request.auth.uid
-            && request.resource.data.ownerId == resource.data.ownerId)
-        );
+        && request.resource.data.ownerId == resource.data.ownerId;
 
       allow delete: if belongsToCompany(resource.data.get('companyId', null))
-        && hasModule('sales')
-        && (isAdmin() || resource.data.ownerId == request.auth.uid);
+        && hasModule('sales');
 
       match /interactions/{interactionId} {
         function parentCompanyId() {
@@ -157,15 +152,10 @@ service cloud.firestore {
       allow update: if belongsToCompany(resource.data.get('companyId', null))
         && hasModule('sales')
         && request.resource.data.companyId == resource.data.get('companyId', null)
-        && (
-          isAdmin()
-          || (resource.data.ownerId == request.auth.uid
-            && request.resource.data.ownerId == resource.data.ownerId)
-        );
+        && request.resource.data.ownerId == resource.data.ownerId;
 
       allow delete: if belongsToCompany(resource.data.get('companyId', null))
-        && hasModule('sales')
-        && (isAdmin() || resource.data.ownerId == request.auth.uid);
+        && hasModule('sales');
     }
 
     match /employees/{employeeId} {
@@ -182,15 +172,10 @@ service cloud.firestore {
       allow update: if belongsToCompany(resource.data.get('companyId', null))
         && hasModule('human-resources')
         && request.resource.data.companyId == resource.data.get('companyId', null)
-        && (
-          isAdmin()
-          || (resource.data.ownerId == request.auth.uid
-            && request.resource.data.ownerId == resource.data.ownerId)
-        );
+        && request.resource.data.ownerId == resource.data.ownerId;
 
       allow delete: if belongsToCompany(resource.data.get('companyId', null))
-        && hasModule('human-resources')
-        && (isAdmin() || resource.data.ownerId == request.auth.uid);
+        && hasModule('human-resources');
     }
 
     match /payables/{payableId} {
@@ -207,15 +192,10 @@ service cloud.firestore {
       allow update: if belongsToCompany(resource.data.get('companyId', null))
         && hasModule('financial')
         && request.resource.data.companyId == resource.data.get('companyId', null)
-        && (
-          isAdmin()
-          || (resource.data.ownerId == request.auth.uid
-            && request.resource.data.ownerId == resource.data.ownerId)
-        );
+        && request.resource.data.ownerId == resource.data.ownerId;
 
       allow delete: if belongsToCompany(resource.data.get('companyId', null))
-        && hasModule('financial')
-        && (isAdmin() || resource.data.ownerId == request.auth.uid);
+        && hasModule('financial');
     }
 
     match /receivables/{receivableId} {
@@ -232,15 +212,10 @@ service cloud.firestore {
       allow update: if belongsToCompany(resource.data.get('companyId', null))
         && hasModule('financial')
         && request.resource.data.companyId == resource.data.get('companyId', null)
-        && (
-          isAdmin()
-          || (resource.data.ownerId == request.auth.uid
-            && request.resource.data.ownerId == resource.data.ownerId)
-        );
+        && request.resource.data.ownerId == resource.data.ownerId;
 
       allow delete: if belongsToCompany(resource.data.get('companyId', null))
-        && hasModule('financial')
-        && (isAdmin() || resource.data.ownerId == request.auth.uid);
+        && hasModule('financial');
     }
 
     match /followUps/{followUpId} {
@@ -257,15 +232,10 @@ service cloud.firestore {
       allow update: if belongsToCompany(resource.data.get('companyId', null))
         && hasModule('sales')
         && request.resource.data.companyId == resource.data.get('companyId', null)
-        && (
-          isAdmin()
-          || (resource.data.ownerId == request.auth.uid
-            && request.resource.data.ownerId == resource.data.ownerId)
-        );
+        && request.resource.data.ownerId == resource.data.ownerId;
 
       allow delete: if belongsToCompany(resource.data.get('companyId', null))
-        && hasModule('sales')
-        && (isAdmin() || resource.data.ownerId == request.auth.uid);
+        && hasModule('sales');
     }
 
     match /ledgerEntries/{entryId} {
@@ -282,15 +252,10 @@ service cloud.firestore {
       allow update: if belongsToCompany(resource.data.get('companyId', null))
         && hasModule('financial')
         && request.resource.data.companyId == resource.data.get('companyId', null)
-        && (
-          isAdmin()
-          || (resource.data.ownerId == request.auth.uid
-            && request.resource.data.ownerId == resource.data.ownerId)
-        );
+        && request.resource.data.ownerId == resource.data.ownerId;
 
       allow delete: if belongsToCompany(resource.data.get('companyId', null))
-        && hasModule('financial')
-        && (isAdmin() || resource.data.ownerId == request.auth.uid);
+        && hasModule('financial');
     }
 
     match /payrollEntries/{entryId} {
@@ -307,15 +272,10 @@ service cloud.firestore {
       allow update: if belongsToCompany(resource.data.get('companyId', null))
         && hasModule('human-resources')
         && request.resource.data.companyId == resource.data.get('companyId', null)
-        && (
-          isAdmin()
-          || (resource.data.ownerId == request.auth.uid
-            && request.resource.data.ownerId == resource.data.ownerId)
-        );
+        && request.resource.data.ownerId == resource.data.ownerId;
 
       allow delete: if belongsToCompany(resource.data.get('companyId', null))
-        && hasModule('human-resources')
-        && (isAdmin() || resource.data.ownerId == request.auth.uid);
+        && hasModule('human-resources');
     }
 
     match /candidates/{candidateId} {
@@ -332,15 +292,10 @@ service cloud.firestore {
       allow update: if belongsToCompany(resource.data.get('companyId', null))
         && hasModule('human-resources')
         && request.resource.data.companyId == resource.data.get('companyId', null)
-        && (
-          isAdmin()
-          || (resource.data.ownerId == request.auth.uid
-            && request.resource.data.ownerId == resource.data.ownerId)
-        );
+        && request.resource.data.ownerId == resource.data.ownerId;
 
       allow delete: if belongsToCompany(resource.data.get('companyId', null))
-        && hasModule('human-resources')
-        && (isAdmin() || resource.data.ownerId == request.auth.uid);
+        && hasModule('human-resources');
     }
 
     match /trainings/{trainingId} {
@@ -357,15 +312,10 @@ service cloud.firestore {
       allow update: if belongsToCompany(resource.data.get('companyId', null))
         && hasModule('human-resources')
         && request.resource.data.companyId == resource.data.get('companyId', null)
-        && (
-          isAdmin()
-          || (resource.data.ownerId == request.auth.uid
-            && request.resource.data.ownerId == resource.data.ownerId)
-        );
+        && request.resource.data.ownerId == resource.data.ownerId;
 
       allow delete: if belongsToCompany(resource.data.get('companyId', null))
-        && hasModule('human-resources')
-        && (isAdmin() || resource.data.ownerId == request.auth.uid);
+        && hasModule('human-resources');
     }
 
     match /performanceReviews/{reviewId} {
@@ -382,15 +332,10 @@ service cloud.firestore {
       allow update: if belongsToCompany(resource.data.get('companyId', null))
         && hasModule('human-resources')
         && request.resource.data.companyId == resource.data.get('companyId', null)
-        && (
-          isAdmin()
-          || (resource.data.ownerId == request.auth.uid
-            && request.resource.data.ownerId == resource.data.ownerId)
-        );
+        && request.resource.data.ownerId == resource.data.ownerId;
 
       allow delete: if belongsToCompany(resource.data.get('companyId', null))
-        && hasModule('human-resources')
-        && (isAdmin() || resource.data.ownerId == request.auth.uid);
+        && hasModule('human-resources');
     }
 
     match /suppliers/{supplierId} {
@@ -407,15 +352,10 @@ service cloud.firestore {
       allow update: if belongsToCompany(resource.data.get('companyId', null))
         && hasModule('inventory-logistics')
         && request.resource.data.companyId == resource.data.get('companyId', null)
-        && (
-          isAdmin()
-          || (resource.data.ownerId == request.auth.uid
-            && request.resource.data.ownerId == resource.data.ownerId)
-        );
+        && request.resource.data.ownerId == resource.data.ownerId;
 
       allow delete: if belongsToCompany(resource.data.get('companyId', null))
-        && hasModule('inventory-logistics')
-        && (isAdmin() || resource.data.ownerId == request.auth.uid);
+        && hasModule('inventory-logistics');
     }
 
     match /inventoryItems/{itemId} {
@@ -432,15 +372,25 @@ service cloud.firestore {
       allow update: if belongsToCompany(resource.data.get('companyId', null))
         && hasModule('inventory-logistics')
         && request.resource.data.companyId == resource.data.get('companyId', null)
-        && (
-          isAdmin()
-          || (resource.data.ownerId == request.auth.uid
-            && request.resource.data.ownerId == resource.data.ownerId)
-        );
+        && request.resource.data.ownerId == resource.data.ownerId;
 
       allow delete: if belongsToCompany(resource.data.get('companyId', null))
+        && hasModule('inventory-logistics');
+    }
+
+    match /stockMovements/{movementId} {
+      allow read: if belongsToCompany(resource.data.get('companyId', null));
+
+      allow create: if isSignedIn()
+        && belongsToCompany(request.resource.data.companyId)
         && hasModule('inventory-logistics')
-        && (isAdmin() || resource.data.ownerId == request.auth.uid);
+        && request.resource.data.ownerId == request.auth.uid
+        && request.resource.data.itemId is string
+        && request.resource.data.itemId.size() > 0
+        && request.resource.data.type in ['entrada', 'saida', 'ajuste', 'inventario', 'perda', 'devolucao']
+        && request.resource.data.quantity is number;
+
+      allow update, delete: if false;
     }
 
     match /purchaseOrders/{orderId} {
@@ -457,15 +407,10 @@ service cloud.firestore {
       allow update: if belongsToCompany(resource.data.get('companyId', null))
         && hasModule('inventory-logistics')
         && request.resource.data.companyId == resource.data.get('companyId', null)
-        && (
-          isAdmin()
-          || (resource.data.ownerId == request.auth.uid
-            && request.resource.data.ownerId == resource.data.ownerId)
-        );
+        && request.resource.data.ownerId == resource.data.ownerId;
 
       allow delete: if belongsToCompany(resource.data.get('companyId', null))
-        && hasModule('inventory-logistics')
-        && (isAdmin() || resource.data.ownerId == request.auth.uid);
+        && hasModule('inventory-logistics');
     }
 
     match /shipments/{shipmentId} {
@@ -482,15 +427,10 @@ service cloud.firestore {
       allow update: if belongsToCompany(resource.data.get('companyId', null))
         && hasModule('inventory-logistics')
         && request.resource.data.companyId == resource.data.get('companyId', null)
-        && (
-          isAdmin()
-          || (resource.data.ownerId == request.auth.uid
-            && request.resource.data.ownerId == resource.data.ownerId)
-        );
+        && request.resource.data.ownerId == resource.data.ownerId;
 
       allow delete: if belongsToCompany(resource.data.get('companyId', null))
-        && hasModule('inventory-logistics')
-        && (isAdmin() || resource.data.ownerId == request.auth.uid);
+        && hasModule('inventory-logistics');
     }
 
     match /warehouses/{warehouseId} {
@@ -507,15 +447,10 @@ service cloud.firestore {
       allow update: if belongsToCompany(resource.data.get('companyId', null))
         && hasModule('inventory-logistics')
         && request.resource.data.companyId == resource.data.get('companyId', null)
-        && (
-          isAdmin()
-          || (resource.data.ownerId == request.auth.uid
-            && request.resource.data.ownerId == resource.data.ownerId)
-        );
+        && request.resource.data.ownerId == resource.data.ownerId;
 
       allow delete: if belongsToCompany(resource.data.get('companyId', null))
-        && hasModule('inventory-logistics')
-        && (isAdmin() || resource.data.ownerId == request.auth.uid);
+        && hasModule('inventory-logistics');
     }
 
     match /productionPlans/{planId} {
@@ -532,15 +467,10 @@ service cloud.firestore {
       allow update: if belongsToCompany(resource.data.get('companyId', null))
         && hasModule('production')
         && request.resource.data.companyId == resource.data.get('companyId', null)
-        && (
-          isAdmin()
-          || (resource.data.ownerId == request.auth.uid
-            && request.resource.data.ownerId == resource.data.ownerId)
-        );
+        && request.resource.data.ownerId == resource.data.ownerId;
 
       allow delete: if belongsToCompany(resource.data.get('companyId', null))
-        && hasModule('production')
-        && (isAdmin() || resource.data.ownerId == request.auth.uid);
+        && hasModule('production');
     }
 
     match /productionOrders/{orderId} {
@@ -557,15 +487,10 @@ service cloud.firestore {
       allow update: if belongsToCompany(resource.data.get('companyId', null))
         && hasModule('production')
         && request.resource.data.companyId == resource.data.get('companyId', null)
-        && (
-          isAdmin()
-          || (resource.data.ownerId == request.auth.uid
-            && request.resource.data.ownerId == resource.data.ownerId)
-        );
+        && request.resource.data.ownerId == resource.data.ownerId;
 
       allow delete: if belongsToCompany(resource.data.get('companyId', null))
-        && hasModule('production')
-        && (isAdmin() || resource.data.ownerId == request.auth.uid);
+        && hasModule('production');
     }
 
     match /qualityChecks/{checkId} {
@@ -582,15 +507,10 @@ service cloud.firestore {
       allow update: if belongsToCompany(resource.data.get('companyId', null))
         && hasModule('production')
         && request.resource.data.companyId == resource.data.get('companyId', null)
-        && (
-          isAdmin()
-          || (resource.data.ownerId == request.auth.uid
-            && request.resource.data.ownerId == resource.data.ownerId)
-        );
+        && request.resource.data.ownerId == resource.data.ownerId;
 
       allow delete: if belongsToCompany(resource.data.get('companyId', null))
-        && hasModule('production')
-        && (isAdmin() || resource.data.ownerId == request.auth.uid);
+        && hasModule('production');
     }
 
     match /maintenanceRequests/{requestId} {
@@ -607,15 +527,10 @@ service cloud.firestore {
       allow update: if belongsToCompany(resource.data.get('companyId', null))
         && hasModule('production')
         && request.resource.data.companyId == resource.data.get('companyId', null)
-        && (
-          isAdmin()
-          || (resource.data.ownerId == request.auth.uid
-            && request.resource.data.ownerId == resource.data.ownerId)
-        );
+        && request.resource.data.ownerId == resource.data.ownerId;
 
       allow delete: if belongsToCompany(resource.data.get('companyId', null))
-        && hasModule('production')
-        && (isAdmin() || resource.data.ownerId == request.auth.uid);
+        && hasModule('production');
     }
 
     match /projects/{projectId} {
@@ -632,15 +547,10 @@ service cloud.firestore {
       allow update: if belongsToCompany(resource.data.get('companyId', null))
         && hasModule('projects')
         && request.resource.data.companyId == resource.data.get('companyId', null)
-        && (
-          isAdmin()
-          || (resource.data.ownerId == request.auth.uid
-            && request.resource.data.ownerId == resource.data.ownerId)
-        );
+        && request.resource.data.ownerId == resource.data.ownerId;
 
       allow delete: if belongsToCompany(resource.data.get('companyId', null))
-        && hasModule('projects')
-        && (isAdmin() || resource.data.ownerId == request.auth.uid);
+        && hasModule('projects');
     }
 
     match /resourceAllocations/{allocationId} {
@@ -659,15 +569,10 @@ service cloud.firestore {
       allow update: if belongsToCompany(resource.data.get('companyId', null))
         && hasModule('projects')
         && request.resource.data.companyId == resource.data.get('companyId', null)
-        && (
-          isAdmin()
-          || (resource.data.ownerId == request.auth.uid
-            && request.resource.data.ownerId == resource.data.ownerId)
-        );
+        && request.resource.data.ownerId == resource.data.ownerId;
 
       allow delete: if belongsToCompany(resource.data.get('companyId', null))
-        && hasModule('projects')
-        && (isAdmin() || resource.data.ownerId == request.auth.uid);
+        && hasModule('projects');
     }
 
     match /projectMilestones/{milestoneId} {
@@ -686,15 +591,10 @@ service cloud.firestore {
       allow update: if belongsToCompany(resource.data.get('companyId', null))
         && hasModule('projects')
         && request.resource.data.companyId == resource.data.get('companyId', null)
-        && (
-          isAdmin()
-          || (resource.data.ownerId == request.auth.uid
-            && request.resource.data.ownerId == resource.data.ownerId)
-        );
+        && request.resource.data.ownerId == resource.data.ownerId;
 
       allow delete: if belongsToCompany(resource.data.get('companyId', null))
-        && hasModule('projects')
-        && (isAdmin() || resource.data.ownerId == request.auth.uid);
+        && hasModule('projects');
     }
 
     match /projectTasks/{taskId} {
@@ -713,15 +613,10 @@ service cloud.firestore {
       allow update: if belongsToCompany(resource.data.get('companyId', null))
         && hasModule('projects')
         && request.resource.data.companyId == resource.data.get('companyId', null)
-        && (
-          isAdmin()
-          || (resource.data.ownerId == request.auth.uid
-            && request.resource.data.ownerId == resource.data.ownerId)
-        );
+        && request.resource.data.ownerId == resource.data.ownerId;
 
       allow delete: if belongsToCompany(resource.data.get('companyId', null))
-        && hasModule('projects')
-        && (isAdmin() || resource.data.ownerId == request.auth.uid);
+        && hasModule('projects');
     }
 
     match /savedReports/{reportId} {
@@ -741,15 +636,10 @@ service cloud.firestore {
       allow update: if belongsToCompany(resource.data.get('companyId', null))
         && hasModule('business-intelligence')
         && request.resource.data.companyId == resource.data.get('companyId', null)
-        && (
-          isAdmin()
-          || (resource.data.ownerId == request.auth.uid
-            && request.resource.data.ownerId == resource.data.ownerId)
-        );
+        && request.resource.data.ownerId == resource.data.ownerId;
 
       allow delete: if belongsToCompany(resource.data.get('companyId', null))
-        && hasModule('business-intelligence')
-        && (isAdmin() || resource.data.ownerId == request.auth.uid);
+        && hasModule('business-intelligence');
     }
 
     match /complianceItems/{itemId} {
@@ -766,15 +656,10 @@ service cloud.firestore {
       allow update: if belongsToCompany(resource.data.get('companyId', null))
         && hasModule('compliance')
         && request.resource.data.companyId == resource.data.get('companyId', null)
-        && (
-          isAdmin()
-          || (resource.data.ownerId == request.auth.uid
-            && request.resource.data.ownerId == resource.data.ownerId)
-        );
+        && request.resource.data.ownerId == resource.data.ownerId;
 
       allow delete: if belongsToCompany(resource.data.get('companyId', null))
-        && hasModule('compliance')
-        && (isAdmin() || resource.data.ownerId == request.auth.uid);
+        && hasModule('compliance');
     }
 
     match /internalAudits/{auditId} {
@@ -791,15 +676,10 @@ service cloud.firestore {
       allow update: if belongsToCompany(resource.data.get('companyId', null))
         && hasModule('compliance')
         && request.resource.data.companyId == resource.data.get('companyId', null)
-        && (
-          isAdmin()
-          || (resource.data.ownerId == request.auth.uid
-            && request.resource.data.ownerId == resource.data.ownerId)
-        );
+        && request.resource.data.ownerId == resource.data.ownerId;
 
       allow delete: if belongsToCompany(resource.data.get('companyId', null))
-        && hasModule('compliance')
-        && (isAdmin() || resource.data.ownerId == request.auth.uid);
+        && hasModule('compliance');
     }
 
     match /regulations/{regulationId} {
@@ -816,15 +696,10 @@ service cloud.firestore {
       allow update: if belongsToCompany(resource.data.get('companyId', null))
         && hasModule('compliance')
         && request.resource.data.companyId == resource.data.get('companyId', null)
-        && (
-          isAdmin()
-          || (resource.data.ownerId == request.auth.uid
-            && request.resource.data.ownerId == resource.data.ownerId)
-        );
+        && request.resource.data.ownerId == resource.data.ownerId;
 
       allow delete: if belongsToCompany(resource.data.get('companyId', null))
-        && hasModule('compliance')
-        && (isAdmin() || resource.data.ownerId == request.auth.uid);
+        && hasModule('compliance');
     }
 
     match /announcements/{announcementId} {
@@ -841,15 +716,10 @@ service cloud.firestore {
       allow update: if belongsToCompany(resource.data.get('companyId', null))
         && hasModule('collaboration')
         && request.resource.data.companyId == resource.data.get('companyId', null)
-        && (
-          isAdmin()
-          || (resource.data.ownerId == request.auth.uid
-            && request.resource.data.ownerId == resource.data.ownerId)
-        );
+        && request.resource.data.ownerId == resource.data.ownerId;
 
       allow delete: if belongsToCompany(resource.data.get('companyId', null))
-        && hasModule('collaboration')
-        && (isAdmin() || resource.data.ownerId == request.auth.uid);
+        && hasModule('collaboration');
     }
 
     match /departmentInitiatives/{initiativeId} {
@@ -866,15 +736,10 @@ service cloud.firestore {
       allow update: if belongsToCompany(resource.data.get('companyId', null))
         && hasModule('collaboration')
         && request.resource.data.companyId == resource.data.get('companyId', null)
-        && (
-          isAdmin()
-          || (resource.data.ownerId == request.auth.uid
-            && request.resource.data.ownerId == resource.data.ownerId)
-        );
+        && request.resource.data.ownerId == resource.data.ownerId;
 
       allow delete: if belongsToCompany(resource.data.get('companyId', null))
-        && hasModule('collaboration')
-        && (isAdmin() || resource.data.ownerId == request.auth.uid);
+        && hasModule('collaboration');
     }
 
     match /{document=**} {
