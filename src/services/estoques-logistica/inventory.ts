@@ -1,6 +1,15 @@
-import { DocumentData, QueryDocumentSnapshot, Unsubscribe } from "firebase/firestore";
+import {
+  DocumentData,
+  QueryDocumentSnapshot,
+  Unsubscribe,
+  collection,
+  doc,
+  serverTimestamp,
+  writeBatch,
+} from "firebase/firestore";
 import { createCrudService } from "../shared/crudFactory";
 import { getCurrentCompanyId } from "../shared/tenant";
+import { firestore } from "../shared/firebase";
 import { IInventoryItem, InventoryItemInput, InventoryItemStatus } from "../../types/inventoryItem";
 
 export const mapInventoryItem = (
@@ -43,7 +52,36 @@ export async function createInventoryItem(
   input: InventoryItemInput,
   owner: { uid: string; name?: string | null }
 ): Promise<string> {
-  return inventoryService.create(input, owner, { companyId: getCurrentCompanyId() });
+  const companyId = getCurrentCompanyId();
+  const itemRef = doc(collection(firestore, "inventoryItems"));
+
+  const batch = writeBatch(firestore);
+  batch.set(itemRef, {
+    ...input,
+    companyId,
+    ownerId: owner.uid,
+    ownerName: owner.name ?? "",
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  });
+
+  if (input.quantity > 0) {
+    const movementRef = doc(collection(firestore, "stockMovements"));
+    batch.set(movementRef, {
+      companyId,
+      itemId: itemRef.id,
+      type: "entrada",
+      quantity: input.quantity,
+      balanceAfter: input.quantity,
+      notes: "Quantidade inicial do cadastro",
+      ownerId: owner.uid,
+      ownerName: owner.name ?? "",
+      createdAt: serverTimestamp(),
+    });
+  }
+
+  await batch.commit();
+  return itemRef.id;
 }
 
 export async function updateInventoryItem(
