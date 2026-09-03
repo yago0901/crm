@@ -48,6 +48,7 @@ const DEFAULT_MENU: NavbarMenuItem[] = [
       { label: 'Acompanhamento de Leads', path: '/vendas-crm/acompanhamento-leads' },
       { label: 'Automação de Vendas', path: '/vendas-crm/automacao-vendas' },
       { label: 'Gestão de Contratos', path: '/vendas-crm/gestao-contratos' },
+      { label: 'Produtos', path: '/vendas-crm/produtos' },
     ],
   },
   {

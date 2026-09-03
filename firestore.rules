@@ -358,6 +358,26 @@ service cloud.firestore {
         && hasModule('inventory-logistics');
     }
 
+    match /products/{productId} {
+      allow read: if belongsToCompany(resource.data.get('companyId', null));
+
+      allow create: if isSignedIn()
+        && belongsToCompany(request.resource.data.companyId)
+        && hasModule('sales')
+        && request.resource.data.ownerId == request.auth.uid
+        && request.resource.data.name is string
+        && request.resource.data.name.size() > 0
+        && request.resource.data.status in ['ativo', 'descontinuado'];
+
+      allow update: if belongsToCompany(resource.data.get('companyId', null))
+        && hasModule('sales')
+        && request.resource.data.companyId == resource.data.get('companyId', null)
+        && request.resource.data.ownerId == resource.data.ownerId;
+
+      allow delete: if belongsToCompany(resource.data.get('companyId', null))
+        && hasModule('sales');
+    }
+
     match /inventoryItems/{itemId} {
       allow read: if belongsToCompany(resource.data.get('companyId', null));
 
@@ -365,6 +385,8 @@ service cloud.firestore {
         && belongsToCompany(request.resource.data.companyId)
         && hasModule('inventory-logistics')
         && request.resource.data.ownerId == request.auth.uid
+        && request.resource.data.productId is string
+        && request.resource.data.productId.size() > 0
         && request.resource.data.name is string
         && request.resource.data.name.size() > 0
         && request.resource.data.status in ['ativo', 'descontinuado'];

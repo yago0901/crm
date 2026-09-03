@@ -5,6 +5,7 @@ export type InventoryItemStatus = "ativo" | "descontinuado";
 export interface IInventoryItem {
   id: string;
   companyId: string;
+  productId: string;
   name: string;
   sku: string;
   category: string;
@@ -22,6 +23,7 @@ export interface IInventoryItem {
 
 export type InventoryItemInput = Pick<
   IInventoryItem,
+  | "productId"
   | "name"
   | "sku"
   | "category"
