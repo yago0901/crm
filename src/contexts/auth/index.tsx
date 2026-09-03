@@ -8,21 +8,32 @@ import {
   updatePassword,
 } from 'firebase/auth';
 import { UserLevel } from './types'
-import { doc, getDoc, onSnapshot, updateDoc } from 'firebase/firestore';
+import { Timestamp, doc, getDoc, onSnapshot, updateDoc } from 'firebase/firestore';
 import { setCurrentCompanyId } from '../../services/shared/tenant';
+import { CompanyPlan } from '../../types/company';
 import { AuthContext } from './AuthContext';
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [userLevel, setUserLevel] = useState<UserLevel | null>(null);
   const [companyId, setCompanyId] = useState<string | null>(null);
+  const [companyName, setCompanyName] = useState<string | null>(null);
+  const [companyPlan, setCompanyPlan] = useState<CompanyPlan | null>(null);
+  const [trialEndsAt, setTrialEndsAt] = useState<Timestamp | null>(null);
   const [modules, setModules] = useState<string[]>([]);
   const [mustChangePassword, setMustChangePassword] = useState(false);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
 
   const [profileReady, setProfileReady] = useState(false);
   const [superAdminReady, setSuperAdminReady] = useState(false);
-  const loading = !(profileReady && superAdminReady);
+  const [companyReady, setCompanyReady] = useState(false);
+  const loading = !(profileReady && superAdminReady && companyReady);
+
+  const trialExpired = companyPlan === 'trial' && trialEndsAt !== null && trialEndsAt.toMillis() < Date.now();
+  const trialDaysRemaining =
+    companyPlan === 'trial' && trialEndsAt !== null
+      ? Math.ceil((trialEndsAt.toMillis() - Date.now()) / (24 * 60 * 60 * 1000))
+      : null;
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(user => {
@@ -46,6 +57,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setModules([]);
       setMustChangePassword(false);
       setCurrentCompanyId(null);
+      setCompanyReady(true);
       return;
     }
 
@@ -93,6 +105,33 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     return unsubscribe;
   }, [currentUser]);
+
+  useEffect(() => {
+    if (!companyId) {
+      setCompanyName(null);
+      setCompanyPlan(null);
+      setTrialEndsAt(null);
+      setCompanyReady(true);
+      return;
+    }
+
+    const companyRef = doc(firestore, 'companies', companyId);
+    const unsubscribe = onSnapshot(
+      companyRef,
+      snap => {
+        const data = snap.data();
+        setCompanyName((data?.name as string) ?? null);
+        setCompanyPlan((data?.plan as CompanyPlan) ?? null);
+        setTrialEndsAt((data?.trialEndsAt as Timestamp) ?? null);
+        setCompanyReady(true);
+      },
+      () => {
+        setCompanyReady(true);
+      }
+    );
+
+    return unsubscribe;
+  }, [companyId]);
 
   const login = async (loginId: string, password: string) => {
     const loginDoc = await getDoc(doc(firestore, 'logins', loginId));
@@ -152,6 +191,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         currentUser,
         userLevel,
         companyId,
+        companyName,
+        companyPlan,
+        trialEndsAt,
+        trialExpired,
+        trialDaysRemaining,
         modules,
         mustChangePassword,
         isSuperAdmin,

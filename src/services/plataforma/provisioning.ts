@@ -1,4 +1,4 @@
-import { doc, serverTimestamp, setDoc } from "firebase/firestore";
+import { Timestamp, doc, serverTimestamp, setDoc } from "firebase/firestore";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { withNewAuthAccount } from "./secondaryApp";
 import { getCompany } from "./companies";
@@ -7,6 +7,7 @@ import { ALL_MODULE_KEYS } from "../shared/modules";
 import { auth } from "../shared/firebase";
 
 const TRIAL_MAX_USERS = 5;
+const TRIAL_DAYS = 30;
 const COMBINING_DIACRITICS_START = 0x0300;
 const COMBINING_DIACRITICS_END = 0x036f;
 
@@ -68,7 +69,7 @@ export async function provisionCompanyWithPrimaryAccount(
         slug,
         name: input.companyName,
         plan: "trial",
-        trialEndsAt: null,
+        trialEndsAt: Timestamp.fromMillis(Date.now() + TRIAL_DAYS * 24 * 60 * 60 * 1000),
         maxUsers: TRIAL_MAX_USERS,
         userCount: 1,
         primaryUserId: uid,

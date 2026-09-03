@@ -45,16 +45,20 @@ import RelatoriosFinanceiros from "../components/pages/RelatoriosFinanceiros";
 import RelatoriosPersonalizados from "../components/pages/RelatoriosPersonalizados";
 import Treinamento from "../components/pages/Treinamento";
 import FluxoCaixa from "../components/pages/FluxoCaixa";
+import TrialExpirado from "../components/pages/TrialExpirado";
 import { useAuth } from '../contexts/auth/AuthContext';
 import { ModuleKey } from '../services/shared/modules';
 import Layout from '../components/pages/Layout';
 
 const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
-  const { currentUser, loading, mustChangePassword } = useAuth();
+  const { currentUser, loading, mustChangePassword, trialExpired } = useAuth();
   const location = useLocation();
 
   if (loading) return null;
   if (!currentUser) return <Navigate to="/" />;
+  if (trialExpired && location.pathname !== "/trial-expirado") {
+    return <Navigate to="/trial-expirado" />;
+  }
   if (mustChangePassword && location.pathname !== "/redefinir-senha") {
     return <Navigate to="/redefinir-senha" />;
   }
@@ -96,6 +100,7 @@ function Router() {
       <Route path="/" element={<Login />} />
       <Route path="/register" element={<Register />} />
       <Route path="/redefinir-senha" element={<PrivateRoute><RedefinirSenha /></PrivateRoute>} />
+      <Route path="/trial-expirado" element={<PrivateRoute><TrialExpirado /></PrivateRoute>} />
       <Route path="/admin" element={<SuperAdminRoute><SuperAdmin /></SuperAdminRoute>} />
       <Route element={<PrivateRoute><Layout /></PrivateRoute>}>
         <Route path="/home" element={<PrivateRoute><Home /></PrivateRoute>} />

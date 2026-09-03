@@ -4,6 +4,12 @@ vi.mock("firebase/firestore", () => ({
   doc: vi.fn((_db, ...path) => ({ type: "doc", path })),
   setDoc: vi.fn(),
   serverTimestamp: vi.fn(() => "SERVER_TIMESTAMP"),
+  Timestamp: {
+    fromMillis: vi.fn((millis: number) => ({
+      toMillis: () => millis,
+      toDate: () => new Date(millis),
+    })),
+  },
 }));
 
 vi.mock("firebase/auth", () => ({
@@ -169,6 +175,25 @@ describe("provisionCompanyWithPrimaryAccount", () => {
 
     expect(result.autoSignedIn).toBe(false);
     expect(signInWithEmailAndPassword).not.toHaveBeenCalled();
+  });
+
+  it("sets trialEndsAt to 30 days from now", async () => {
+    const before = Date.now();
+    await provisionCompanyWithPrimaryAccount({
+      companyName: "Acme Ltda",
+      username: "joao",
+      email: "joao@example.com",
+    });
+    const after = Date.now();
+
+    const companyCall = vi
+      .mocked(setDoc)
+      .mock.calls.find(([ref]) => (ref as unknown as { path: string[] }).path[0] === "companies");
+    const trialEndsAt = (companyCall?.[1] as { trialEndsAt: { toMillis: () => number } }).trialEndsAt;
+
+    const thirtyDaysMs = 30 * 24 * 60 * 60 * 1000;
+    expect(trialEndsAt.toMillis()).toBeGreaterThanOrEqual(before + thirtyDaysMs);
+    expect(trialEndsAt.toMillis()).toBeLessThanOrEqual(after + thirtyDaysMs);
   });
 
   it("stamps the company with primaryEmail", async () => {
