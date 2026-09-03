@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { cert, getApps, initializeApp } from "firebase-admin/app";
 import { getAuth } from "firebase-admin/auth";
-import { getFirestore } from "firebase-admin/firestore";
+import { FieldValue, getFirestore } from "firebase-admin/firestore";
 
 function getAdminApp() {
   const existing = getApps();
@@ -68,6 +68,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     await auth.updateUser(targetUid, { disabled });
     await firestore.doc(`users/${targetUid}`).update({ disabled });
+
+    await firestore.collection("auditLogs").add({
+      companyId: callerProfile.companyId,
+      entityType: "users",
+      entityId: targetUid,
+      entitySummary: targetProfile.login ?? targetUid,
+      action: "update",
+      changedFields: [{ field: "disabled", before: targetProfile.disabled ?? false, after: disabled }],
+      ownerId: caller.uid,
+      ownerName: caller.email ?? "",
+      createdAt: FieldValue.serverTimestamp(),
+    });
 
     res.status(200).json({ uid: targetUid, disabled });
   } catch (err) {

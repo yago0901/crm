@@ -2,14 +2,15 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 
 vi.mock("./firebase", () => ({
   firestore: {},
+  auth: { currentUser: { uid: "owner1", displayName: "Yago", email: "yago@test.com" } },
 }));
 
 vi.mock("firebase/firestore", () => ({
   collection: vi.fn((_db, ...path) => ({ type: "collection", path })),
   doc: vi.fn((_db, ...path) => ({ type: "doc", path })),
   addDoc: vi.fn(),
-  deleteDoc: vi.fn(),
-  updateDoc: vi.fn(),
+  getDoc: vi.fn(),
+  writeBatch: vi.fn(),
   getAggregateFromServer: vi.fn(),
   query: vi.fn((ref, ...constraints) => ({ type: "query", ref, constraints })),
   where: vi.fn((field, op, value) => ({ type: "where", field, op, value })),
@@ -22,11 +23,11 @@ vi.mock("firebase/firestore", () => ({
 
 import {
   addDoc,
-  deleteDoc,
   getAggregateFromServer,
+  getDoc,
   onSnapshot,
-  updateDoc,
   where,
+  writeBatch,
 } from "firebase/firestore";
 import { createCrudService } from "./crudFactory";
 
@@ -37,6 +38,20 @@ interface FakeItem {
 }
 
 const mapFakeItem = () => ({}) as FakeItem;
+
+const mockBatch = () => {
+  const batchSet = vi.fn();
+  const batchUpdate = vi.fn();
+  const batchDelete = vi.fn();
+  const batchCommit = vi.fn().mockResolvedValue(undefined);
+  vi.mocked(writeBatch).mockReturnValue({
+    set: batchSet,
+    update: batchUpdate,
+    delete: batchDelete,
+    commit: batchCommit,
+  } as never);
+  return { batchSet, batchUpdate, batchDelete, batchCommit };
+};
 
 describe("createCrudService", () => {
   beforeEach(() => {
@@ -67,12 +82,16 @@ describe("createCrudService", () => {
     );
   });
 
-  it("update() merges input and extra fields, always bumping updatedAt", async () => {
+  it("update() writes input and extra fields in a batch, always bumping updatedAt", async () => {
     const service = createCrudService<FakeItem, { name: string }>("fakes", mapFakeItem);
+    vi.mocked(getDoc).mockResolvedValue({
+      data: () => ({ companyId: "acme", name: "Antigo" }),
+    } as never);
+    const { batchUpdate, batchCommit } = mockBatch();
 
     await service.update("item1", { name: "Novo nome" }, { status: "arquivado" });
 
-    expect(updateDoc).toHaveBeenCalledWith(
+    expect(batchUpdate).toHaveBeenCalledWith(
       expect.anything(),
       expect.objectContaining({
         name: "Novo nome",
@@ -80,14 +99,66 @@ describe("createCrudService", () => {
         updatedAt: "SERVER_TIMESTAMP",
       })
     );
+    expect(batchCommit).toHaveBeenCalledOnce();
   });
 
-  it("remove() deletes the document by id", async () => {
+  it("update() appends an audit log entry describing what changed", async () => {
     const service = createCrudService<FakeItem, { name: string }>("fakes", mapFakeItem);
+    vi.mocked(getDoc).mockResolvedValue({
+      data: () => ({ companyId: "acme", name: "Antigo" }),
+    } as never);
+    const { batchSet } = mockBatch();
+
+    await service.update("item1", { name: "Novo nome" });
+
+    expect(batchSet).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        companyId: "acme",
+        entityType: "fakes",
+        entityId: "item1",
+        action: "update",
+        changedFields: [{ field: "name", before: "Antigo", after: "Novo nome" }],
+        ownerId: "owner1",
+        ownerName: "Yago",
+      })
+    );
+  });
+
+  it("update() skips the audit log when nothing actually changed", async () => {
+    const service = createCrudService<FakeItem, { name: string }>("fakes", mapFakeItem);
+    vi.mocked(getDoc).mockResolvedValue({
+      data: () => ({ companyId: "acme", name: "Mesmo nome" }),
+    } as never);
+    const { batchSet } = mockBatch();
+
+    await service.update("item1", { name: "Mesmo nome" });
+
+    expect(batchSet).not.toHaveBeenCalled();
+  });
+
+  it("remove() deletes the document in a batch and logs a delete entry", async () => {
+    const service = createCrudService<FakeItem, { name: string }>("fakes", mapFakeItem);
+    vi.mocked(getDoc).mockResolvedValue({
+      data: () => ({ companyId: "acme", name: "Item" }),
+    } as never);
+    const { batchDelete, batchSet, batchCommit } = mockBatch();
 
     await service.remove("item1");
 
-    expect(deleteDoc).toHaveBeenCalledOnce();
+    expect(batchDelete).toHaveBeenCalledOnce();
+    expect(batchSet).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        companyId: "acme",
+        entityType: "fakes",
+        entityId: "item1",
+        entitySummary: "Item",
+        action: "delete",
+        ownerId: "owner1",
+      })
+    );
+    expect(batchCommit).toHaveBeenCalledOnce();
   });
 
   it("subscribe('all') queries without a status filter", () => {

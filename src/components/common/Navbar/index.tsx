@@ -9,6 +9,7 @@ import {
   FaCog,
   FaCommentDots,
   FaHandshake,
+  FaHistory,
   FaHome,
   FaIndustry,
   FaMoneyBillWave,
@@ -235,6 +236,13 @@ const Navbar: React.FC<INavbar> = ({ isMenuOpen, onToggleMenu, menu = DEFAULT_ME
               <button className="navbar__settings" onClick={() => handleNavigate('/configuracoes')}>
                 <FaCog />
                 <span>Configurações</span>
+              </button>
+            )}
+
+            {isAdmin && (
+              <button className="navbar__settings" onClick={() => handleNavigate('/historico')}>
+                <FaHistory />
+                <span>Histórico</span>
               </button>
             )}
 

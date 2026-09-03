@@ -2,6 +2,7 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 
 vi.mock("../shared/firebase", () => ({
   firestore: {},
+  auth: { currentUser: { uid: "owner1", displayName: "Yago", email: "yago@test.com" } },
 }));
 
 vi.mock("firebase/firestore", () => ({
@@ -9,13 +10,13 @@ vi.mock("firebase/firestore", () => ({
   doc: vi.fn((_db, ...path) => ({ type: "doc", path })),
   getDoc: vi.fn(),
   setDoc: vi.fn(),
-  updateDoc: vi.fn(),
+  writeBatch: vi.fn(),
   onSnapshot: vi.fn(),
   query: vi.fn((ref, ...constraints) => ({ type: "query", ref, constraints })),
   serverTimestamp: vi.fn(() => "SERVER_TIMESTAMP"),
 }));
 
-import { getDoc, onSnapshot, setDoc, updateDoc } from "firebase/firestore";
+import { getDoc, onSnapshot, setDoc, writeBatch } from "firebase/firestore";
 import { createCompany, getCompany, subscribeToCompanies, updateCompany } from "./companies";
 
 describe("createCompany", () => {
@@ -124,14 +125,51 @@ describe("updateCompany", () => {
     vi.clearAllMocks();
   });
 
-  it("updates the company doc", async () => {
-    vi.mocked(updateDoc).mockResolvedValue(undefined as never);
+  it("updates the company doc in a batch", async () => {
+    vi.mocked(getDoc).mockResolvedValue({
+      data: () => ({ name: "Acme", maxUsers: 5 }),
+    } as never);
+    const batchUpdate = vi.fn();
+    const batchSet = vi.fn();
+    const batchCommit = vi.fn().mockResolvedValue(undefined);
+    vi.mocked(writeBatch).mockReturnValue({
+      update: batchUpdate,
+      set: batchSet,
+      commit: batchCommit,
+    } as never);
 
     await updateCompany("acme", { maxUsers: 10 });
 
-    expect(updateDoc).toHaveBeenCalledWith(
+    expect(batchUpdate).toHaveBeenCalledWith(
       expect.anything(),
       expect.objectContaining({ maxUsers: 10 })
+    );
+    expect(batchCommit).toHaveBeenCalledOnce();
+  });
+
+  it("logs an audit entry describing what changed", async () => {
+    vi.mocked(getDoc).mockResolvedValue({
+      data: () => ({ name: "Acme", maxUsers: 5 }),
+    } as never);
+    const batchSet = vi.fn();
+    vi.mocked(writeBatch).mockReturnValue({
+      update: vi.fn(),
+      set: batchSet,
+      commit: vi.fn().mockResolvedValue(undefined),
+    } as never);
+
+    await updateCompany("acme", { maxUsers: 10 });
+
+    expect(batchSet).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        companyId: "acme",
+        entityType: "companies",
+        entityId: "acme",
+        entitySummary: "Acme",
+        action: "update",
+        changedFields: [{ field: "maxUsers", before: 5, after: 10 }],
+      })
     );
   });
 });
