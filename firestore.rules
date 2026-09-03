@@ -764,6 +764,28 @@ service cloud.firestore {
         && hasModule('collaboration');
     }
 
+    match /auditLogs/{logId} {
+      allow read: if belongsToCompany(resource.data.get('companyId', null)) && isAdmin();
+
+      allow create: if isSignedIn()
+        && (isSuperAdmin() || belongsToCompany(request.resource.data.companyId))
+        && request.resource.data.ownerId == request.auth.uid
+        && request.resource.data.entityId is string
+        && request.resource.data.entityId.size() > 0
+        && request.resource.data.entityType in [
+          'contacts', 'contracts', 'employees', 'payables', 'receivables', 'followUps',
+          'ledgerEntries', 'payrollEntries', 'candidates', 'trainings', 'performanceReviews',
+          'suppliers', 'products', 'inventoryItems', 'purchaseOrders', 'shipments', 'warehouses',
+          'productionPlans', 'productionOrders', 'qualityChecks', 'maintenanceRequests',
+          'projects', 'resourceAllocations', 'projectMilestones', 'projectTasks', 'savedReports',
+          'complianceItems', 'internalAudits', 'regulations', 'announcements',
+          'departmentInitiatives', 'users', 'companies'
+        ]
+        && request.resource.data.action in ['update', 'delete'];
+
+      allow update, delete: if false;
+    }
+
     match /{document=**} {
       allow read, write: if false;
     }

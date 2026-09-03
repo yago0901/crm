@@ -11,8 +11,10 @@ import {
   setDoc,
   updateDoc,
   where,
+  writeBatch,
 } from "firebase/firestore";
 import { auth, firestore } from "../shared/firebase";
+import { appendAuditLog, computeChangedFields } from "../shared/auditLog";
 import { getCurrentCompanyId } from "../shared/tenant";
 import { getCompany } from "../plataforma/companies";
 import { withNewAuthAccount } from "../plataforma/secondaryApp";
@@ -105,7 +107,29 @@ export async function createEmployeeLogin(
 }
 
 export async function updateEmployeeModules(uid: string, modules: ModuleKey[]): Promise<void> {
-  await updateDoc(doc(firestore, "users", uid), { modules });
+  const docRef = doc(firestore, "users", uid);
+  const before = await getDoc(docRef);
+  const beforeData = before.data();
+
+  const batch = writeBatch(firestore);
+  batch.update(docRef, { modules });
+
+  if (beforeData && auth.currentUser) {
+    const changedFields = computeChangedFields(beforeData, { modules });
+    if (changedFields.length > 0) {
+      appendAuditLog(batch, {
+        companyId: beforeData.companyId,
+        entityType: "users",
+        entityId: uid,
+        entitySummary: beforeData.login ?? uid,
+        action: "update",
+        changedFields,
+        owner: { uid: auth.currentUser.uid, name: auth.currentUser.displayName ?? auth.currentUser.email },
+      });
+    }
+  }
+
+  await batch.commit();
 }
 
 export async function setEmployeeAccess(targetUid: string, disabled: boolean): Promise<void> {

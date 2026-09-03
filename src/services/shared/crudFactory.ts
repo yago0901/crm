@@ -3,10 +3,10 @@ import {
   collection,
   CollectionReference,
   count,
-  deleteDoc,
   doc,
   DocumentData,
   getAggregateFromServer,
+  getDoc,
   onSnapshot,
   orderBy,
   OrderByDirection,
@@ -15,10 +15,11 @@ import {
   serverTimestamp,
   sum,
   Unsubscribe,
-  updateDoc,
   where,
+  writeBatch,
 } from "firebase/firestore";
-import { firestore } from "./firebase";
+import { auth, firestore } from "./firebase";
+import { appendAuditLog, computeChangedFields, summarizeEntity } from "./auditLog";
 
 interface CrudServiceConfig {
   orderByField?: string;
@@ -83,15 +84,54 @@ export function createCrudService<T, TInput extends object>(
     input: Partial<TInput>,
     extra: Record<string, unknown> = {}
   ): Promise<void> {
-    await updateDoc(doc(firestore, collectionName, id), {
+    const docRef = doc(firestore, collectionName, id);
+    const before = await getDoc(docRef);
+    const beforeData = before.data() ?? {};
+
+    const batch = writeBatch(firestore);
+    batch.update(docRef, {
       ...input,
       ...extra,
       updatedAt: serverTimestamp(),
     });
+
+    const changedFields = computeChangedFields(beforeData, { ...input, ...extra });
+    if (changedFields.length > 0 && auth.currentUser && beforeData.companyId) {
+      appendAuditLog(batch, {
+        companyId: beforeData.companyId,
+        entityType: collectionName,
+        entityId: id,
+        entitySummary: summarizeEntity(beforeData, id),
+        action: "update",
+        changedFields,
+        owner: { uid: auth.currentUser.uid, name: auth.currentUser.displayName ?? auth.currentUser.email },
+      });
+    }
+
+    await batch.commit();
   }
 
   async function remove(id: string): Promise<void> {
-    await deleteDoc(doc(firestore, collectionName, id));
+    const docRef = doc(firestore, collectionName, id);
+    const before = await getDoc(docRef);
+    const beforeData = before.data();
+
+    const batch = writeBatch(firestore);
+    batch.delete(docRef);
+
+    if (beforeData && auth.currentUser && beforeData.companyId) {
+      appendAuditLog(batch, {
+        companyId: beforeData.companyId,
+        entityType: collectionName,
+        entityId: id,
+        entitySummary: summarizeEntity(beforeData, id),
+        action: "delete",
+        changedFields: [],
+        owner: { uid: auth.currentUser.uid, name: auth.currentUser.displayName ?? auth.currentUser.email },
+      });
+    }
+
+    await batch.commit();
   }
 
   async function sumByStatus(
