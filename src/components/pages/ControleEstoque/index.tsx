@@ -16,11 +16,13 @@ import {
   mapInventoryItem,
   updateInventoryItem,
 } from "../../../services/estoques-logistica/inventory";
+import { fetchActiveProducts } from "../../../services/shared/products";
 import {
   createStockMovement,
   fetchMovementsForItem,
 } from "../../../services/estoques-logistica/stockMovements";
-import { IInventoryItem, InventoryItemInput, InventoryItemStatus } from "../../../types/inventoryItem";
+import { IInventoryItem, InventoryItemStatus } from "../../../types/inventoryItem";
+import { IProduct } from "../../../types/product";
 import { IStockMovement, StockMovementType } from "../../../types/stockMovement";
 import { PAGE_SIZE } from "../../../constants/pagination";
 import "./styles.scss";
@@ -35,13 +37,17 @@ const STATUS_TONE: Record<InventoryItemStatus, "success" | "neutral"> = {
   descontinuado: "neutral",
 };
 
-const EMPTY_FORM: InventoryItemInput = {
-  name: "",
-  sku: "",
-  category: "",
+interface EditableFields {
+  quantity: number;
+  minQuantity: number;
+  unitCost: number;
+  status: InventoryItemStatus;
+  notes: string;
+}
+
+const EMPTY_FORM: EditableFields = {
   quantity: 0,
   minQuantity: 0,
-  unit: "un",
   unitCost: 0,
   status: "ativo",
   notes: "",
@@ -113,64 +119,105 @@ export default function ControleEstoque() {
     refreshActiveCount();
   }, []);
 
+  const [products, setProducts] = useState<IProduct[]>([]);
+
+  const loadProducts = () => {
+    fetchActiveProducts()
+      .then(setProducts)
+      .catch((err) =>
+        showToast(err instanceof Error ? err.message : "Erro ao carregar produtos.", "error")
+      );
+  };
+
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [form, setForm] = useState<InventoryItemInput>(EMPTY_FORM);
+  const [editingItem, setEditingItem] = useState<IInventoryItem | null>(null);
+  const [form, setForm] = useState<EditableFields>(EMPTY_FORM);
+  const [selectedProductId, setSelectedProductId] = useState("");
   const [saving, setSaving] = useState(false);
 
   const [itemToDelete, setItemToDelete] = useState<IInventoryItem | null>(null);
 
   const openCreateForm = () => {
     setEditingId(null);
+    setEditingItem(null);
     setForm(EMPTY_FORM);
+    setSelectedProductId("");
+    loadProducts();
     setIsFormOpen(true);
   };
 
   const openEditForm = (item: IInventoryItem) => {
     setEditingId(item.id);
+    setEditingItem(item);
     setForm({
-      name: item.name,
-      sku: item.sku,
-      category: item.category,
       quantity: item.quantity,
       minQuantity: item.minQuantity,
-      unit: item.unit,
       unitCost: item.unitCost,
       status: item.status,
-      notes: item.notes,
+      notes: item.notes ?? "",
     });
+    setSelectedProductId(item.productId);
+    loadProducts();
     setIsFormOpen(true);
   };
 
   const closeForm = () => {
     setIsFormOpen(false);
     setEditingId(null);
+    setEditingItem(null);
     setForm(EMPTY_FORM);
+    setSelectedProductId("");
   };
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
     if (!currentUser) return;
+    if (!selectedProductId) {
+      showToast("Selecione ou cadastre um produto.", "error");
+      return;
+    }
 
     setSaving(true);
     try {
+      const owner = { uid: currentUser.uid, name: currentUser.displayName ?? currentUser.email };
+
+      const productData = products.find((p) => p.id === selectedProductId);
+      if (!productData) {
+        showToast("Produto não encontrado.", "error");
+        setSaving(false);
+        return;
+      }
+
+      const denormalized = {
+        productId: productData.id,
+        name: productData.name,
+        sku: productData.sku,
+        category: productData.category,
+        unit: productData.unit,
+      };
+
       if (editingId) {
         await updateInventoryItem(editingId, {
-          name: form.name,
-          sku: form.sku,
-          category: form.category,
+          ...denormalized,
           minQuantity: form.minQuantity,
-          unit: form.unit,
           unitCost: form.unitCost,
           status: form.status,
           notes: form.notes,
         });
         showToast("Item atualizado com sucesso.", "success");
       } else {
-        await createInventoryItem(form, {
-          uid: currentUser.uid,
-          name: currentUser.displayName ?? currentUser.email,
-        });
+        await createInventoryItem(
+          {
+            ...denormalized,
+            quantity: form.quantity,
+            minQuantity: form.minQuantity,
+            unitCost: form.unitCost,
+            status: form.status,
+            notes: form.notes,
+          },
+          owner
+        );
         showToast("Item cadastrado com sucesso.", "success");
       }
       refresh();
@@ -358,34 +405,26 @@ export default function ControleEstoque() {
       >
         <form className="inventory_page__form" onSubmit={handleSubmit}>
           <div className="inventory_page__form__grid">
-            <FormField label="Nome*">
-              <input
+            <FormField label="Produto*">
+              <select
                 required
-                value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
-              />
-            </FormField>
-            <FormField label="SKU">
-              <input
-                value={form.sku}
-                onChange={(e) => setForm({ ...form, sku: e.target.value })}
-              />
-            </FormField>
-            <FormField label="Categoria">
-              <input
-                value={form.category}
-                onChange={(e) => setForm({ ...form, category: e.target.value })}
-              />
-            </FormField>
-            <FormField label="Unidade">
-              <input
-                value={form.unit}
-                onChange={(e) => setForm({ ...form, unit: e.target.value })}
-              />
+                value={selectedProductId}
+                onChange={(e) => setSelectedProductId(e.target.value)}
+              >
+                <option value="" disabled>
+                  Selecione um produto
+                </option>
+                {products.map((product) => (
+                  <option key={product.id} value={product.id}>
+                    {product.name}
+                    {product.sku ? ` (${product.sku})` : ""}
+                  </option>
+                ))}
+              </select>
             </FormField>
             {editingId ? (
               <FormField label="Quantidade atual">
-                <input value={`${form.quantity} ${form.unit}`} disabled />
+                <input value={`${editingItem?.quantity ?? 0} ${editingItem?.unit ?? ""}`} disabled />
               </FormField>
             ) : (
               <FormField label="Quantidade inicial*">
@@ -427,6 +466,13 @@ export default function ControleEstoque() {
               </select>
             </FormField>
           </div>
+
+          {products.length === 0 && (
+            <p className="inventory_page__form__hint">
+              Nenhum produto cadastrado ainda. Cadastre em Vendas / CRM → Produtos primeiro.
+            </p>
+          )}
+
           {editingId && (
             <p className="inventory_page__form__hint">
               Para mudar a quantidade, use o botão "Movimentar" na lista.

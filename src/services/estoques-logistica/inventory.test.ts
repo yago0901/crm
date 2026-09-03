@@ -66,7 +66,7 @@ describe("createInventoryItem", () => {
 
   it("creates the item with owner info", async () => {
     const id = await createInventoryItem(
-      { name: "Parafuso M4", sku: "PRF-M4", category: "Fixadores", quantity: 100, minQuantity: 20, unit: "un", unitCost: 0.5, status: "ativo", notes: "" },
+      { productId: "prod-1", name: "Parafuso M4", sku: "PRF-M4", category: "Fixadores", quantity: 100, minQuantity: 20, unit: "un", unitCost: 0.5, status: "ativo", notes: "" },
       { uid: "owner1", name: "Yago" }
     );
 
@@ -81,7 +81,7 @@ describe("createInventoryItem", () => {
     setCurrentCompanyId("acme");
 
     await createInventoryItem(
-      { name: "Parafuso M4", sku: "PRF-M4", category: "Fixadores", quantity: 100, minQuantity: 20, unit: "un", unitCost: 0.5, status: "ativo", notes: "" },
+      { productId: "prod-1", name: "Parafuso M4", sku: "PRF-M4", category: "Fixadores", quantity: 100, minQuantity: 20, unit: "un", unitCost: 0.5, status: "ativo", notes: "" },
       { uid: "owner1", name: "Yago" }
     );
 
@@ -93,7 +93,7 @@ describe("createInventoryItem", () => {
 
   it("also records an initial entrada movement when quantity is greater than zero", async () => {
     await createInventoryItem(
-      { name: "Parafuso M4", sku: "PRF-M4", category: "Fixadores", quantity: 100, minQuantity: 20, unit: "un", unitCost: 0.5, status: "ativo", notes: "" },
+      { productId: "prod-1", name: "Parafuso M4", sku: "PRF-M4", category: "Fixadores", quantity: 100, minQuantity: 20, unit: "un", unitCost: 0.5, status: "ativo", notes: "" },
       { uid: "owner1", name: "Yago" }
     );
 
@@ -111,7 +111,7 @@ describe("createInventoryItem", () => {
 
   it("does not record a movement when the initial quantity is zero", async () => {
     await createInventoryItem(
-      { name: "Parafuso M4", sku: "PRF-M4", category: "Fixadores", quantity: 0, minQuantity: 20, unit: "un", unitCost: 0.5, status: "ativo", notes: "" },
+      { productId: "prod-1", name: "Parafuso M4", sku: "PRF-M4", category: "Fixadores", quantity: 0, minQuantity: 20, unit: "un", unitCost: 0.5, status: "ativo", notes: "" },
       { uid: "owner1", name: "Yago" }
     );
 

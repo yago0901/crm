@@ -1,4 +1,4 @@
-.inventory_page {
+.products_page {
   width: 100%;
   height: 100%;
   overflow-y: auto;
@@ -14,26 +14,6 @@
     h1 {
       font-size: var(--font-size-lg);
       color: var(--color-text);
-    }
-  }
-
-  &__summary {
-    display: flex;
-    align-items: baseline;
-    gap: var(--space-2);
-    background-color: var(--color-primary-soft);
-    border-radius: var(--radius-md);
-    padding: 0.6rem 0.9rem;
-    width: fit-content;
-
-    span {
-      color: var(--color-text-muted);
-      font-size: var(--font-size-sm);
-    }
-
-    strong {
-      color: var(--color-primary-soft-text);
-      font-size: var(--font-size-md);
     }
   }
 
@@ -83,62 +63,6 @@
       gap: var(--space-2);
       margin-top: var(--space-2);
     }
-
-    &__hint {
-      color: var(--color-text-muted);
-      font-size: var(--font-size-sm);
-    }
-
-  }
-
-  &__movement {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-4);
-
-    &__balance {
-      color: var(--color-text-muted);
-
-      strong {
-        color: var(--color-text);
-      }
-    }
-
-    &__form {
-      display: flex;
-      flex-direction: column;
-      gap: var(--space-3);
-    }
-
-    &__history {
-      display: flex;
-      flex-direction: column;
-      gap: var(--space-2);
-      border-top: 1px solid var(--color-border-soft);
-      padding-top: var(--space-3);
-
-      &__label {
-        color: var(--color-text-muted);
-        font-size: var(--font-size-sm);
-        font-weight: 600;
-      }
-
-      ul {
-        list-style: none;
-        padding: 0;
-        margin: 0;
-        display: flex;
-        flex-direction: column;
-        gap: var(--space-1);
-        max-height: 220px;
-        overflow-y: auto;
-      }
-
-      li {
-        font-size: var(--font-size-sm);
-        color: var(--color-text);
-      }
-    }
   }
 
   &__table_wrap {
@@ -147,7 +71,7 @@
 
   &__table {
     width: 100%;
-    min-width: 780px;
+    min-width: 720px;
     border-collapse: collapse;
 
     th,
@@ -161,12 +85,6 @@
     th {
       color: var(--color-text-muted);
       font-weight: 600;
-    }
-
-    td:nth-child(4) {
-      display: flex;
-      align-items: center;
-      gap: var(--space-2);
     }
 
     &__actions {

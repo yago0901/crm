@@ -35,6 +35,7 @@ import PaineisControle from "../components/pages/PaineisControle";
 import PlanejamentoProducao from "../components/pages/PlanejamentoProducao";
 import PlanejamentoProjetos from "../components/pages/PlanejamentoProjetos";
 import PrevisaoTendencias from "../components/pages/PrevisaoTendencias";
+import Produtos from "../components/pages/Produtos";
 import Recrutamento from "../components/pages/Recrutamento";
 import RedefinirSenha from "../components/pages/RedefinirSenha";
 import Register from '../components/pages/Register';
@@ -135,6 +136,7 @@ function Router() {
         <Route path="/vendas-crm/acompanhamento-leads" element={<PrivateRoute><ModuleRoute requiredModule="sales"><AcompanhamentoLeads /></ModuleRoute></PrivateRoute>} />
         <Route path="/vendas-crm/acompanhamento-leads/:contactId" element={<PrivateRoute><ModuleRoute requiredModule="sales"><AcompanhamentoLeads /></ModuleRoute></PrivateRoute>} />
         <Route path="/vendas-crm/gestao-contratos" element={<PrivateRoute><ModuleRoute requiredModule="sales"><GestaoContratos /></ModuleRoute></PrivateRoute>} />
+        <Route path="/vendas-crm/produtos" element={<PrivateRoute><ModuleRoute requiredModule="sales"><Produtos /></ModuleRoute></PrivateRoute>} />
 
         <Route path="/projetos/planejamento-projetos" element={<PrivateRoute><ModuleRoute requiredModule="projects"><PlanejamentoProjetos /></ModuleRoute></PrivateRoute>} />
         <Route path="/projetos/alocacao-recursos" element={<PrivateRoute><ModuleRoute requiredModule="projects"><AlocacaoRecursos /></ModuleRoute></PrivateRoute>} />

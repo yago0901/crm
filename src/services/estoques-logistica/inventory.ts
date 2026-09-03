@@ -19,6 +19,7 @@ export const mapInventoryItem = (
   return {
     id: snap.id,
     companyId: data.companyId,
+    productId: data.productId,
     name: data.name,
     sku: data.sku ?? "",
     category: data.category ?? "",
