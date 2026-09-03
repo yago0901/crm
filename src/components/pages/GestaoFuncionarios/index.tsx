@@ -14,7 +14,7 @@ import {
   deleteEmployee,
   getActivePayrollTotal,
   mapEmployee,
-  updateEmployee,
+  updateEmployeeAndSyncAccess,
 } from "../../../services/rh/employees";
 import { EmployeeInput, EmployeeStatus, IEmployee } from "../../../types/employee";
 import { PAGE_SIZE } from "../../../constants/pagination";
@@ -110,6 +110,7 @@ export default function GestaoFuncionarios() {
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingEmployee, setEditingEmployee] = useState<IEmployee | null>(null);
   const [form, setForm] = useState<EmployeeInput>(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
 
@@ -117,12 +118,14 @@ export default function GestaoFuncionarios() {
 
   const openCreateForm = () => {
     setEditingId(null);
+    setEditingEmployee(null);
     setForm(EMPTY_FORM);
     setIsFormOpen(true);
   };
 
   const openEditForm = (employee: IEmployee) => {
     setEditingId(employee.id);
+    setEditingEmployee(employee);
     setForm({
       name: employee.name,
       email: employee.email,
@@ -140,6 +143,7 @@ export default function GestaoFuncionarios() {
   const closeForm = () => {
     setIsFormOpen(false);
     setEditingId(null);
+    setEditingEmployee(null);
     setForm(EMPTY_FORM);
   };
 
@@ -150,8 +154,20 @@ export default function GestaoFuncionarios() {
     setSaving(true);
     try {
       if (editingId) {
-        await updateEmployee(editingId, form);
-        showToast("Funcionário atualizado com sucesso.", "success");
+        const result = await updateEmployeeAndSyncAccess(
+          editingId,
+          form,
+          editingEmployee?.status ?? form.status,
+          editingEmployee?.userId ?? null
+        );
+        if (result.accessSyncError) {
+          showToast(
+            `Funcionário atualizado, mas não foi possível desativar o acesso automaticamente (${result.accessSyncError}). Peça a um Admin/Gerente para desativar em Acessos.`,
+            "error"
+          );
+        } else {
+          showToast("Funcionário atualizado com sucesso.", "success");
+        }
       } else {
         await createEmployee(form, {
           uid: currentUser.uid,

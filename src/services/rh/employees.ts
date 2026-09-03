@@ -1,14 +1,21 @@
 import {
   DocumentData,
+  collection,
+  doc,
   getDocs,
   orderBy,
   query,
   QueryDocumentSnapshot,
+  serverTimestamp,
   Unsubscribe,
   where,
+  writeBatch,
 } from "firebase/firestore";
 import { createCrudService } from "../shared/crudFactory";
 import { getCurrentCompanyId } from "../shared/tenant";
+import { firestore } from "../shared/firebase";
+import { appendAuditLog } from "../shared/auditLog";
+import { setEmployeeAccess } from "./employeeAccess";
 import { EmployeeInput, EmployeeStatus, IEmployee } from "../../types/employee";
 
 export const mapEmployee = (
@@ -80,4 +87,69 @@ export async function fetchActiveEmployees(): Promise<IEmployee[]> {
   const q = query(employeesService.ref, ...constraints);
   const snapshot = await getDocs(q);
   return snapshot.docs.map(mapEmployee);
+}
+
+export interface IUpdateEmployeeResult {
+  accessSyncError?: string;
+}
+
+export async function updateEmployeeAndSyncAccess(
+  employeeId: string,
+  input: Partial<EmployeeInput>,
+  previousStatus: EmployeeStatus,
+  employeeUserId: string | null
+): Promise<IUpdateEmployeeResult> {
+  await employeesService.update(employeeId, input);
+
+  const isBeingDismissed = previousStatus !== "desligado" && input.status === "desligado";
+  if (isBeingDismissed && employeeUserId) {
+    try {
+      await setEmployeeAccess(employeeUserId, true);
+    } catch (err) {
+      return {
+        accessSyncError: err instanceof Error ? err.message : "Erro ao desativar o acesso.",
+      };
+    }
+  }
+
+  return {};
+}
+
+export async function convertCandidateToEmployee(
+  candidateId: string,
+  input: EmployeeInput,
+  owner: { uid: string; name?: string | null }
+): Promise<string> {
+  const companyId = getCurrentCompanyId();
+  const employeeRef = doc(collection(firestore, "employees"));
+  const candidateRef = doc(firestore, "candidates", candidateId);
+
+  const batch = writeBatch(firestore);
+  batch.set(employeeRef, {
+    ...input,
+    companyId,
+    userId: null,
+    ownerId: owner.uid,
+    ownerName: owner.name ?? "",
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  });
+
+  batch.update(candidateRef, {
+    convertedToEmployeeId: employeeRef.id,
+    updatedAt: serverTimestamp(),
+  });
+
+  appendAuditLog(batch, {
+    companyId: companyId ?? "",
+    entityType: "candidates",
+    entityId: candidateId,
+    entitySummary: input.name,
+    action: "update",
+    changedFields: [{ field: "convertedToEmployeeId", before: null, after: employeeRef.id }],
+    owner,
+  });
+
+  await batch.commit();
+  return employeeRef.id;
 }

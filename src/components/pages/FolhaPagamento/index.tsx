@@ -165,7 +165,7 @@ export default function FolhaPagamento() {
           uid: currentUser.uid,
           name: currentUser.displayName ?? currentUser.email,
         });
-        showToast("Lançamento de folha criado.", "success");
+        showToast("Lançamento de folha criado e conta a pagar gerada.", "success");
       }
       refresh();
       refreshTotal();

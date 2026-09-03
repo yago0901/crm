@@ -11,6 +11,7 @@ export interface ICandidate {
   position: string;
   status: CandidateStatus;
   notes?: string;
+  convertedToEmployeeId?: string;
   ownerId: string;
   ownerName?: string;
   createdAt: Timestamp | null;

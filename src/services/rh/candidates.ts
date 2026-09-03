@@ -16,6 +16,7 @@ export const mapCandidate = (
     position: data.position,
     status: data.status,
     notes: data.notes ?? "",
+    convertedToEmployeeId: data.convertedToEmployeeId ?? "",
     ownerId: data.ownerId,
     ownerName: data.ownerName ?? "",
     createdAt: data.createdAt ?? null,
