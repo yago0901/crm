@@ -13,6 +13,8 @@ export interface IContract {
   startDate: Timestamp | null;
   endDate: Timestamp | null;
   notes?: string;
+  dealId?: string;
+  dealTitle?: string;
   ownerId: string;
   ownerName?: string;
   createdAt: Timestamp | null;

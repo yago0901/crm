@@ -11,14 +11,17 @@ import Pagination from "../../common/Pagination";
 import { usePaginatedCollection } from "../../../hooks/usePaginatedCollection";
 import {
   createContract,
+  createContractFromDeal,
   deleteContract,
   getActiveContractsTotal,
   mapContract,
   updateContract,
 } from "../../../services/vendas-crm/contracts";
 import { fetchClientContacts } from "../../../services/vendas-crm/contacts";
+import { fetchWonUnconvertedDeals } from "../../../services/vendas-crm/deals";
 import { ContractInput, ContractStatus, IContract } from "../../../types/contract";
 import { IContact } from "../../../types/contact";
+import { IDeal } from "../../../types/deal";
 import { PAGE_SIZE } from "../../../constants/pagination";
 import "./styles.scss";
 
@@ -63,6 +66,8 @@ export default function GestaoContratos() {
   const { showToast } = useToast();
 
   const [clients, setClients] = useState<IContact[]>([]);
+  const [wonDeals, setWonDeals] = useState<IDeal[]>([]);
+  const [selectedDealId, setSelectedDealId] = useState("");
   const [totalAtivo, setTotalAtivo] = useState(0);
   const [loadError, setLoadError] = useState<string | null>(null);
 
@@ -115,9 +120,16 @@ export default function GestaoContratos() {
       .catch((err) => setLoadError(err.message));
   }, []);
 
+  useEffect(() => {
+    fetchWonUnconvertedDeals()
+      .then(setWonDeals)
+      .catch((err) => setLoadError(err.message));
+  }, []);
+
   const openCreateForm = () => {
     setEditingId(null);
     setForm(EMPTY_FORM);
+    setSelectedDealId("");
     setIsFormOpen(true);
   };
 
@@ -133,6 +145,7 @@ export default function GestaoContratos() {
       endDate: contract.endDate,
       notes: contract.notes,
     });
+    setSelectedDealId("");
     setIsFormOpen(true);
   };
 
@@ -140,6 +153,7 @@ export default function GestaoContratos() {
     setIsFormOpen(false);
     setEditingId(null);
     setForm(EMPTY_FORM);
+    setSelectedDealId("");
   };
 
   const handleContactChange = (contactId: string) => {
@@ -151,20 +165,36 @@ export default function GestaoContratos() {
     });
   };
 
+  const handleDealChange = (dealId: string) => {
+    setSelectedDealId(dealId);
+    const deal = wonDeals.find((d) => d.id === dealId);
+    if (deal) {
+      setForm({
+        ...form,
+        title: deal.title,
+        contactId: deal.contactId,
+        contactName: deal.contactName,
+        value: deal.estimatedValue,
+      });
+    }
+  };
+
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
     if (!currentUser || !form.contactId) return;
 
     setSaving(true);
     try {
+      const owner = { uid: currentUser.uid, name: currentUser.displayName ?? currentUser.email };
+
       if (editingId) {
         await updateContract(editingId, form);
         showToast("Contrato atualizado com sucesso.", "success");
+      } else if (selectedDealId) {
+        await createContractFromDeal(form, selectedDealId, owner);
+        showToast("Contrato criado e conta a receber gerada a partir do negócio.", "success");
       } else {
-        await createContract(form, {
-          uid: currentUser.uid,
-          name: currentUser.displayName ?? currentUser.email,
-        });
+        await createContract(form, owner);
         showToast("Contrato criado com sucesso.", "success");
       }
       refresh();
@@ -294,6 +324,26 @@ export default function GestaoContratos() {
         title={editingId ? "Editar contrato" : "Novo contrato"}
       >
         <form className="contracts_page__form" onSubmit={handleSubmit}>
+          {!editingId && (
+            <FormField label="Negócio vinculado (opcional)">
+              <select
+                value={selectedDealId}
+                onChange={(e) => handleDealChange(e.target.value)}
+              >
+                <option value="">Nenhum (contrato avulso)</option>
+                {wonDeals.map((deal) => (
+                  <option key={deal.id} value={deal.id}>
+                    {deal.title} — {deal.contactName}
+                  </option>
+                ))}
+              </select>
+            </FormField>
+          )}
+          {selectedDealId && (
+            <p className="contracts_page__form__hint">
+              Ao salvar, a conta a receber correspondente é gerada automaticamente.
+            </p>
+          )}
           <div className="contracts_page__form__grid">
             <FormField label="Título*">
               <input
