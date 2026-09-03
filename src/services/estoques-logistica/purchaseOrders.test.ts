@@ -2,6 +2,7 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 
 vi.mock("../shared/firebase", () => ({
   firestore: {},
+  auth: { currentUser: { uid: "owner1", displayName: "Yago", email: "yago@test.com" } },
 }));
 
 vi.mock("firebase/firestore", () => ({
@@ -10,6 +11,7 @@ vi.mock("firebase/firestore", () => ({
   addDoc: vi.fn(),
   deleteDoc: vi.fn(),
   updateDoc: vi.fn(),
+  runTransaction: vi.fn(),
   getAggregateFromServer: vi.fn(),
   query: vi.fn((ref, ...constraints) => ({ type: "query", ref, constraints })),
   where: vi.fn((field, op, value) => ({ type: "where", field, op, value })),
@@ -19,9 +21,26 @@ vi.mock("firebase/firestore", () => ({
   onSnapshot: vi.fn(),
 }));
 
-import { addDoc, getAggregateFromServer } from "firebase/firestore";
-import { createPurchaseOrder, getPendingPurchaseOrdersTotal } from "./purchaseOrders";
+import { addDoc, getAggregateFromServer, runTransaction } from "firebase/firestore";
+import {
+  createPurchaseOrder,
+  getPendingPurchaseOrdersTotal,
+  receivePurchaseOrder,
+} from "./purchaseOrders";
 import { setCurrentCompanyId } from "../shared/tenant";
+
+const mockTransaction = (orderData: Record<string, unknown>, itemData?: Record<string, unknown>) => {
+  const get = vi.fn().mockResolvedValueOnce({ exists: () => true, data: () => orderData });
+  if (itemData !== undefined) {
+    get.mockResolvedValueOnce({ exists: () => true, data: () => itemData });
+  }
+  const set = vi.fn();
+  const update = vi.fn();
+  vi.mocked(runTransaction).mockImplementation(async (_db, callback) =>
+    callback({ get, set, update } as never)
+  );
+  return { get, set, update };
+};
 
 describe("createPurchaseOrder", () => {
   beforeEach(() => {
@@ -79,6 +98,98 @@ describe("createPurchaseOrder", () => {
       expect.anything(),
       expect.objectContaining({ companyId: "acme" })
     );
+  });
+});
+
+describe("receivePurchaseOrder", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    setCurrentCompanyId("acme");
+  });
+
+  it("marks the order received and creates a payable when there is no linked stock item", async () => {
+    const { set, update } = mockTransaction({
+      description: "Compra de material de escritório",
+      supplierName: "Fornecedor X",
+      value: 500,
+      status: "pendente",
+      expectedDate: null,
+      receivedProcessedAt: null,
+    });
+
+    await receivePurchaseOrder("order1", { uid: "owner1", name: "Yago" });
+
+    expect(update).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ status: "recebido" })
+    );
+    expect(set).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        companyId: "acme",
+        value: 500,
+        status: "pendente",
+        category: "Compras",
+      })
+    );
+  });
+
+  it("also creates a stock movement and updates the item's quantity when linked to an inventory item", async () => {
+    const { set, update } = mockTransaction(
+      {
+        description: "Reposição de insumos",
+        supplierName: "Fornecedor X",
+        value: 800,
+        status: "aprovado",
+        expectedDate: null,
+        receivedProcessedAt: null,
+        inventoryItemId: "item1",
+        quantity: 10,
+      },
+      { quantity: 5 }
+    );
+
+    await receivePurchaseOrder("order1", { uid: "owner1", name: "Yago" });
+
+    expect(update).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ quantity: 15 })
+    );
+    expect(set).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        itemId: "item1",
+        type: "entrada",
+        quantity: 10,
+        balanceAfter: 15,
+      })
+    );
+  });
+
+  it("throws when the order was already received", async () => {
+    mockTransaction({
+      description: "X",
+      status: "recebido",
+      receivedProcessedAt: "SOME_TIMESTAMP",
+      value: 100,
+    });
+
+    await expect(
+      receivePurchaseOrder("order1", { uid: "owner1", name: "Yago" })
+    ).rejects.toThrow("já foi recebido");
+  });
+
+  it("throws when the order is cancelled", async () => {
+    mockTransaction({
+      description: "X",
+      status: "cancelado",
+      receivedProcessedAt: null,
+      value: 100,
+    });
+
+    await expect(
+      receivePurchaseOrder("order1", { uid: "owner1", name: "Yago" })
+    ).rejects.toThrow("cancelado");
   });
 });
 

@@ -14,13 +14,22 @@ import {
   deletePurchaseOrder,
   getPendingPurchaseOrdersTotal,
   mapPurchaseOrder,
+  receivePurchaseOrder,
   updatePurchaseOrder,
 } from "../../../services/estoques-logistica/purchaseOrders";
 import { fetchActiveSuppliers } from "../../../services/estoques-logistica/suppliers";
+import { fetchActiveInventoryItems } from "../../../services/estoques-logistica/inventory";
 import { IPurchaseOrder, PurchaseOrderInput, PurchaseOrderStatus } from "../../../types/purchaseOrder";
 import { ISupplier } from "../../../types/supplier";
+import { IInventoryItem } from "../../../types/inventoryItem";
 import { PAGE_SIZE } from "../../../constants/pagination";
 import "./styles.scss";
+
+const EDITABLE_STATUSES: { value: PurchaseOrderStatus; label: string }[] = [
+  { value: "pendente", label: "Pendente" },
+  { value: "aprovado", label: "Aprovado" },
+  { value: "cancelado", label: "Cancelado" },
+];
 
 const STATUS_LABEL: Record<PurchaseOrderStatus, string> = {
   pendente: "Pendente",
@@ -45,6 +54,9 @@ const EMPTY_FORM: PurchaseOrderInput = {
   orderDate: null,
   expectedDate: null,
   notes: "",
+  inventoryItemId: "",
+  inventoryItemName: "",
+  quantity: 0,
 };
 
 const currency = new Intl.NumberFormat("pt-BR", {
@@ -63,6 +75,7 @@ export default function Compras() {
   const { showToast } = useToast();
 
   const [suppliers, setSuppliers] = useState<ISupplier[]>([]);
+  const [inventoryItems, setInventoryItems] = useState<IInventoryItem[]>([]);
   const [totalPendente, setTotalPendente] = useState(0);
   const [loadError, setLoadError] = useState<string | null>(null);
 
@@ -108,21 +121,32 @@ export default function Compras() {
       .catch((err) => setLoadError(err.message));
   }, []);
 
+  useEffect(() => {
+    fetchActiveInventoryItems()
+      .then(setInventoryItems)
+      .catch((err) => setLoadError(err.message));
+  }, []);
+
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingStatus, setEditingStatus] = useState<PurchaseOrderStatus | null>(null);
   const [form, setForm] = useState<PurchaseOrderInput>(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
 
   const [orderToDelete, setOrderToDelete] = useState<IPurchaseOrder | null>(null);
+  const [orderToReceive, setOrderToReceive] = useState<IPurchaseOrder | null>(null);
+  const [receiving, setReceiving] = useState(false);
 
   const openCreateForm = () => {
     setEditingId(null);
+    setEditingStatus(null);
     setForm(EMPTY_FORM);
     setIsFormOpen(true);
   };
 
   const openEditForm = (order: IPurchaseOrder) => {
     setEditingId(order.id);
+    setEditingStatus(order.status);
     setForm({
       supplierId: order.supplierId,
       supplierName: order.supplierName,
@@ -132,6 +156,9 @@ export default function Compras() {
       orderDate: order.orderDate,
       expectedDate: order.expectedDate,
       notes: order.notes,
+      inventoryItemId: order.inventoryItemId ?? "",
+      inventoryItemName: order.inventoryItemName ?? "",
+      quantity: order.quantity ?? 0,
     });
     setIsFormOpen(true);
   };
@@ -139,6 +166,7 @@ export default function Compras() {
   const closeForm = () => {
     setIsFormOpen(false);
     setEditingId(null);
+    setEditingStatus(null);
     setForm(EMPTY_FORM);
   };
 
@@ -148,6 +176,15 @@ export default function Compras() {
       ...form,
       supplierId,
       supplierName: supplier?.name ?? "",
+    });
+  };
+
+  const handleInventoryItemChange = (inventoryItemId: string) => {
+    const item = inventoryItems.find((i) => i.id === inventoryItemId);
+    setForm({
+      ...form,
+      inventoryItemId,
+      inventoryItemName: item?.name ?? "",
     });
   };
 
@@ -177,6 +214,33 @@ export default function Compras() {
       );
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleReceive = async () => {
+    if (!orderToReceive || !currentUser) return;
+    setReceiving(true);
+    try {
+      await receivePurchaseOrder(orderToReceive.id, {
+        uid: currentUser.uid,
+        name: currentUser.displayName ?? currentUser.email,
+      });
+      showToast(
+        orderToReceive.inventoryItemId
+          ? "Pedido recebido: estoque atualizado e conta a pagar gerada."
+          : "Pedido recebido: conta a pagar gerada.",
+        "success"
+      );
+      refresh();
+      refreshTotal();
+    } catch (err) {
+      showToast(
+        err instanceof Error ? err.message : "Erro ao receber pedido",
+        "error"
+      );
+    } finally {
+      setReceiving(false);
+      setOrderToReceive(null);
     }
   };
 
@@ -262,6 +326,11 @@ export default function Compras() {
                   </td>
                   <td>
                     <div className="purchases_page__table__actions">
+                      {order.status !== "recebido" && order.status !== "cancelado" && (
+                        <Button variant="primary" onClick={() => setOrderToReceive(order)}>
+                          Receber
+                        </Button>
+                      )}
                       <Button variant="secondary" onClick={() => openEditForm(order)}>
                         Editar
                       </Button>
@@ -322,18 +391,49 @@ export default function Compras() {
               />
             </FormField>
             <FormField label="Status">
+              {editingStatus === "recebido" ? (
+                <input value="Recebido" disabled />
+              ) : (
+                <select
+                  value={form.status}
+                  onChange={(e) =>
+                    setForm({ ...form, status: e.target.value as PurchaseOrderStatus })
+                  }
+                >
+                  {EDITABLE_STATUSES.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              )}
+            </FormField>
+            <FormField label="Item de estoque (opcional)">
               <select
-                value={form.status}
-                onChange={(e) =>
-                  setForm({ ...form, status: e.target.value as PurchaseOrderStatus })
-                }
+                value={form.inventoryItemId}
+                disabled={editingStatus === "recebido"}
+                onChange={(e) => handleInventoryItemChange(e.target.value)}
               >
-                <option value="pendente">Pendente</option>
-                <option value="aprovado">Aprovado</option>
-                <option value="recebido">Recebido</option>
-                <option value="cancelado">Cancelado</option>
+                <option value="">Nenhum (compra sem controle de estoque)</option>
+                {inventoryItems.map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {item.name}
+                  </option>
+                ))}
               </select>
             </FormField>
+            {form.inventoryItemId && (
+              <FormField label="Quantidade recebida">
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  disabled={editingStatus === "recebido"}
+                  value={form.quantity}
+                  onChange={(e) => setForm({ ...form, quantity: Number(e.target.value) })}
+                />
+              </FormField>
+            )}
             <FormField label="Data do pedido">
               <input
                 type="date"
@@ -369,6 +469,19 @@ export default function Compras() {
           </div>
         </form>
       </Modal>
+
+      <ConfirmDialog
+        isOpen={!!orderToReceive}
+        title="Receber pedido de compra"
+        message={
+          orderToReceive?.inventoryItemId
+            ? `Confirmar recebimento de "${orderToReceive.description}"? Isso vai gerar uma entrada de ${orderToReceive.quantity} un. em "${orderToReceive.inventoryItemName}" e uma conta a pagar de ${currency.format(orderToReceive.value)}.`
+            : `Confirmar recebimento de "${orderToReceive?.description}"? Isso vai gerar uma conta a pagar de ${currency.format(orderToReceive?.value ?? 0)}.`
+        }
+        confirmLabel={receiving ? "Recebendo..." : "Confirmar recebimento"}
+        onConfirm={handleReceive}
+        onCancel={() => setOrderToReceive(null)}
+      />
 
       <ConfirmDialog
         isOpen={!!orderToDelete}
