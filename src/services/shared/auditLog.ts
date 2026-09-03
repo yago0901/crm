@@ -1,7 +1,7 @@
 import {
   DocumentData,
+  DocumentReference,
   QueryDocumentSnapshot,
-  WriteBatch,
   collection,
   doc,
   serverTimestamp,
@@ -50,7 +50,11 @@ export interface AppendAuditLogParams {
   owner: { uid: string; name?: string | null };
 }
 
-export function appendAuditLog(batch: WriteBatch, params: AppendAuditLogParams): void {
+export interface AuditLogWriter {
+  set(ref: DocumentReference<DocumentData>, data: DocumentData): unknown;
+}
+
+export function appendAuditLog(batch: AuditLogWriter, params: AppendAuditLogParams): void {
   const ref = doc(collection(firestore, "auditLogs"));
   batch.set(ref, {
     companyId: params.companyId,

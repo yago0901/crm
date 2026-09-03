@@ -25,6 +25,7 @@ vi.mock("firebase/firestore", () => ({
   updateDoc: vi.fn(),
   writeBatch: vi.fn(() => ({ set: batchSet, commit: batchCommit })),
   getAggregateFromServer: vi.fn(),
+  getDocs: vi.fn(),
   query: vi.fn((ref, ...constraints) => ({ type: "query", ref, constraints })),
   where: vi.fn((field, op, value) => ({ type: "where", field, op, value })),
   orderBy: vi.fn((field, direction) => ({ type: "orderBy", field, direction })),
@@ -33,8 +34,13 @@ vi.mock("firebase/firestore", () => ({
   onSnapshot: vi.fn(),
 }));
 
-import { getAggregateFromServer } from "firebase/firestore";
-import { createInventoryItem, getActiveInventoryTotal, mapInventoryItem } from "./inventory";
+import { getAggregateFromServer, getDocs } from "firebase/firestore";
+import {
+  createInventoryItem,
+  fetchActiveInventoryItems,
+  getActiveInventoryTotal,
+  mapInventoryItem,
+} from "./inventory";
 import { setCurrentCompanyId } from "../shared/tenant";
 
 describe("mapInventoryItem", () => {
@@ -116,6 +122,30 @@ describe("createInventoryItem", () => {
     );
 
     expect(batchSet).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("fetchActiveInventoryItems", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("returns an empty array when there is no current company", async () => {
+    setCurrentCompanyId(null);
+    expect(await fetchActiveInventoryItems()).toEqual([]);
+  });
+
+  it("maps the returned documents", async () => {
+    setCurrentCompanyId("acme");
+    vi.mocked(getDocs).mockResolvedValue({
+      docs: [
+        { id: "i1", data: () => ({ name: "Parafuso M4", status: "ativo", ownerId: "owner1" }) },
+      ],
+    } as never);
+
+    const items = await fetchActiveInventoryItems();
+    expect(items).toHaveLength(1);
+    expect(items[0].name).toBe("Parafuso M4");
   });
 });
 

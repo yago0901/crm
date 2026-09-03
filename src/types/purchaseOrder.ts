@@ -13,6 +13,10 @@ export interface IPurchaseOrder {
   orderDate: Timestamp | null;
   expectedDate: Timestamp | null;
   notes?: string;
+  inventoryItemId?: string;
+  inventoryItemName?: string;
+  quantity?: number;
+  receivedProcessedAt: Timestamp | null;
   ownerId: string;
   ownerName?: string;
   createdAt: Timestamp | null;
@@ -29,4 +33,7 @@ export type PurchaseOrderInput = Pick<
   | "orderDate"
   | "expectedDate"
   | "notes"
+  | "inventoryItemId"
+  | "inventoryItemName"
+  | "quantity"
 >;
