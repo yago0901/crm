@@ -5,32 +5,50 @@ import { useToast } from "../../common/Toast/ToastContext";
 import Modal from "../../common/Modal";
 import ConfirmDialog from "../../common/ConfirmDialog";
 import Button from "../../common/Button";
-import Badge from "../../common/Badge";
+import Badge, { BadgeTone } from "../../common/Badge";
 import FormField from "../../common/FormField";
 import Pagination from "../../common/Pagination";
 import { usePaginatedCollection } from "../../../hooks/usePaginatedCollection";
 import {
   createPayable,
+  createPayableInstallments,
   deletePayable,
   getPayablesOpenTotal,
   mapPayable,
   markPayablePaid,
   updatePayable,
 } from "../../../services/financeiro/finance";
-import { FinanceStatus, IPayable, PayableInput } from "../../../types/finance";
+import { FinanceStatus, IPayable, PaymentMethod, PayableInput } from "../../../types/finance";
 import { PAGE_SIZE } from "../../../constants/pagination";
 import "./styles.scss";
 
 const STATUS_LABEL: Record<FinanceStatus, string> = {
   pendente: "Pendente",
+  parcialmente_pago: "Parcialmente pago",
   pago: "Pago",
   atrasado: "Atrasado",
+  cancelado: "Cancelado",
+  renegociado: "Renegociado",
+  estornado: "Estornado",
 };
 
-const STATUS_TONE: Record<FinanceStatus, "warning" | "success" | "danger"> = {
+const STATUS_TONE: Record<FinanceStatus, BadgeTone> = {
   pendente: "warning",
+  parcialmente_pago: "info",
   pago: "success",
   atrasado: "danger",
+  cancelado: "neutral",
+  renegociado: "primary",
+  estornado: "neutral",
+};
+
+const PAYMENT_METHOD_LABEL: Record<PaymentMethod, string> = {
+  boleto: "Boleto",
+  pix: "Pix",
+  cartao: "Cartão",
+  transferencia: "Transferência",
+  dinheiro: "Dinheiro",
+  outro: "Outro",
 };
 
 const EMPTY_FORM: PayableInput = {
@@ -38,8 +56,13 @@ const EMPTY_FORM: PayableInput = {
   supplier: "",
   category: "",
   value: 0,
+  paidValue: 0,
   dueDate: null,
+  competenceDate: null,
+  paidAt: null,
   status: "pendente",
+  paymentMethod: "",
+  bankAccount: "",
   notes: "",
 };
 
@@ -101,11 +124,18 @@ export default function ContasPagar() {
   const [form, setForm] = useState<PayableInput>(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
 
+  const [installmentsEnabled, setInstallmentsEnabled] = useState(false);
+  const [installmentCount, setInstallmentCount] = useState(2);
+  const [installmentInterval, setInstallmentInterval] = useState(30);
+
   const [payableToDelete, setPayableToDelete] = useState<IPayable | null>(null);
 
   const openCreateForm = () => {
     setEditingId(null);
     setForm(EMPTY_FORM);
+    setInstallmentsEnabled(false);
+    setInstallmentCount(2);
+    setInstallmentInterval(30);
     setIsFormOpen(true);
   };
 
@@ -116,8 +146,13 @@ export default function ContasPagar() {
       supplier: payable.supplier,
       category: payable.category,
       value: payable.value,
+      paidValue: payable.paidValue ?? 0,
       dueDate: payable.dueDate,
+      competenceDate: payable.competenceDate,
+      paidAt: payable.paidAt,
       status: payable.status,
+      paymentMethod: payable.paymentMethod,
+      bankAccount: payable.bankAccount,
       notes: payable.notes,
     });
     setIsFormOpen(true);
@@ -139,11 +174,17 @@ export default function ContasPagar() {
         await updatePayable(editingId, form);
         showToast("Conta atualizada com sucesso.", "success");
       } else {
-        await createPayable(form, {
-          uid: currentUser.uid,
-          name: currentUser.displayName ?? currentUser.email,
-        });
-        showToast("Conta cadastrada com sucesso.", "success");
+        const owner = { uid: currentUser.uid, name: currentUser.displayName ?? currentUser.email };
+        if (installmentsEnabled && installmentCount > 1) {
+          await createPayableInstallments(form, owner, {
+            count: installmentCount,
+            intervalDays: installmentInterval,
+          });
+          showToast(`${installmentCount} parcelas cadastradas com sucesso.`, "success");
+        } else {
+          await createPayable(form, owner);
+          showToast("Conta cadastrada com sucesso.", "success");
+        }
       }
       refresh();
       refreshTotal();
@@ -209,9 +250,11 @@ export default function ContasPagar() {
           onChange={(e) => setStatusFilter(e.target.value as FinanceStatus | "all")}
         >
           <option value="all">Todos os status</option>
-          <option value="pendente">Pendente</option>
-          <option value="atrasado">Atrasado</option>
-          <option value="pago">Pago</option>
+          {(Object.keys(STATUS_LABEL) as FinanceStatus[]).map((status) => (
+            <option key={status} value={status}>
+              {STATUS_LABEL[status]}
+            </option>
+          ))}
         </select>
       </div>
 
@@ -233,6 +276,7 @@ export default function ContasPagar() {
                 <th>Categoria</th>
                 <th>Valor</th>
                 <th>Vencimento</th>
+                <th>Forma de pagamento</th>
                 <th>Status</th>
                 <th />
               </tr>
@@ -240,11 +284,20 @@ export default function ContasPagar() {
             <tbody>
               {payables.map((payable) => (
                 <tr key={payable.id}>
-                  <td>{payable.description}</td>
+                  <td>
+                    {payable.description}
+                    {payable.installmentTotal ? (
+                      <span className="payables_page__installment_tag">
+                        {" "}
+                        {payable.installmentNumber}/{payable.installmentTotal}
+                      </span>
+                    ) : null}
+                  </td>
                   <td>{payable.supplier || "—"}</td>
                   <td>{payable.category || "—"}</td>
                   <td>{currency.format(payable.value)}</td>
                   <td>{toDateInput(payable.dueDate) || "—"}</td>
+                  <td>{payable.paymentMethod ? PAYMENT_METHOD_LABEL[payable.paymentMethod] : "—"}</td>
                   <td>
                     <Badge tone={STATUS_TONE[payable.status]}>
                       {STATUS_LABEL[payable.status]}
@@ -323,6 +376,40 @@ export default function ContasPagar() {
                 }
               />
             </FormField>
+            <FormField label="Competência">
+              <input
+                type="date"
+                value={toDateInput(form.competenceDate)}
+                onChange={(e) =>
+                  setForm({ ...form, competenceDate: fromDateInput(e.target.value) })
+                }
+              />
+            </FormField>
+            <FormField label="Forma de pagamento">
+              <select
+                value={form.paymentMethod}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    paymentMethod: e.target.value as PaymentMethod | "",
+                  })
+                }
+              >
+                <option value="">Não informado</option>
+                {(Object.keys(PAYMENT_METHOD_LABEL) as PaymentMethod[]).map((method) => (
+                  <option key={method} value={method}>
+                    {PAYMENT_METHOD_LABEL[method]}
+                  </option>
+                ))}
+              </select>
+            </FormField>
+            <FormField label="Conta bancária">
+              <input
+                placeholder="Ex.: Banco X, conta corrente 1234-5"
+                value={form.bankAccount}
+                onChange={(e) => setForm({ ...form, bankAccount: e.target.value })}
+              />
+            </FormField>
             <FormField label="Status">
               <select
                 value={form.status}
@@ -330,12 +417,75 @@ export default function ContasPagar() {
                   setForm({ ...form, status: e.target.value as FinanceStatus })
                 }
               >
-                <option value="pendente">Pendente</option>
-                <option value="atrasado">Atrasado</option>
-                <option value="pago">Pago</option>
+                {(Object.keys(STATUS_LABEL) as FinanceStatus[]).map((status) => (
+                  <option key={status} value={status}>
+                    {STATUS_LABEL[status]}
+                  </option>
+                ))}
               </select>
             </FormField>
+            {form.status === "parcialmente_pago" && (
+              <FormField label="Valor já pago (R$)">
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={form.paidValue}
+                  onChange={(e) => setForm({ ...form, paidValue: Number(e.target.value) })}
+                />
+              </FormField>
+            )}
+            {(form.status === "pago" || form.status === "estornado") && (
+              <FormField label="Data de pagamento efetivo">
+                <input
+                  type="date"
+                  value={toDateInput(form.paidAt)}
+                  onChange={(e) =>
+                    setForm({ ...form, paidAt: fromDateInput(e.target.value) })
+                  }
+                />
+              </FormField>
+            )}
           </div>
+
+          {!editingId && (
+            <div className="payables_page__installments">
+              <label className="payables_page__installments__toggle">
+                <input
+                  type="checkbox"
+                  checked={installmentsEnabled}
+                  onChange={(e) => setInstallmentsEnabled(e.target.checked)}
+                />
+                Parcelar esta conta
+              </label>
+              {installmentsEnabled && (
+                <div className="payables_page__installments__fields">
+                  <FormField label="Nº de parcelas">
+                    <input
+                      type="number"
+                      min="2"
+                      value={installmentCount}
+                      onChange={(e) => setInstallmentCount(Number(e.target.value))}
+                    />
+                  </FormField>
+                  <FormField label="Intervalo entre parcelas (dias)">
+                    <input
+                      type="number"
+                      min="1"
+                      value={installmentInterval}
+                      onChange={(e) => setInstallmentInterval(Number(e.target.value))}
+                    />
+                  </FormField>
+                  <p className="payables_page__installments__hint">
+                    O valor informado acima será dividido em {installmentCount}x, com
+                    vencimentos a cada {installmentInterval} dias a partir do vencimento
+                    informado.
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+
           <FormField label="Observações">
             <textarea
               value={form.notes}

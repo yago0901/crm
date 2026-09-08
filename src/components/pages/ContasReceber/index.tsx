@@ -5,12 +5,13 @@ import { useToast } from "../../common/Toast/ToastContext";
 import Modal from "../../common/Modal";
 import ConfirmDialog from "../../common/ConfirmDialog";
 import Button from "../../common/Button";
-import Badge from "../../common/Badge";
+import Badge, { BadgeTone } from "../../common/Badge";
 import FormField from "../../common/FormField";
 import Pagination from "../../common/Pagination";
 import { usePaginatedCollection } from "../../../hooks/usePaginatedCollection";
 import {
   createReceivable,
+  createReceivableInstallments,
   deleteReceivable,
   getReceivablesOpenTotal,
   mapReceivable,
@@ -18,21 +19,38 @@ import {
   updateReceivable,
 } from "../../../services/financeiro/finance";
 import { fetchClientContacts } from "../../../services/vendas-crm/contacts";
-import { FinanceStatus, IReceivable, ReceivableInput } from "../../../types/finance";
+import { FinanceStatus, IReceivable, PaymentMethod, ReceivableInput } from "../../../types/finance";
 import { IContact } from "../../../types/contact";
 import { PAGE_SIZE } from "../../../constants/pagination";
 import "./styles.scss";
 
 const STATUS_LABEL: Record<FinanceStatus, string> = {
   pendente: "Pendente",
+  parcialmente_pago: "Parcialmente recebido",
   pago: "Recebido",
   atrasado: "Atrasado",
+  cancelado: "Cancelado",
+  renegociado: "Renegociado",
+  estornado: "Estornado",
 };
 
-const STATUS_TONE: Record<FinanceStatus, "warning" | "success" | "danger"> = {
+const STATUS_TONE: Record<FinanceStatus, BadgeTone> = {
   pendente: "warning",
+  parcialmente_pago: "info",
   pago: "success",
   atrasado: "danger",
+  cancelado: "neutral",
+  renegociado: "primary",
+  estornado: "neutral",
+};
+
+const PAYMENT_METHOD_LABEL: Record<PaymentMethod, string> = {
+  boleto: "Boleto",
+  pix: "Pix",
+  cartao: "Cartão",
+  transferencia: "Transferência",
+  dinheiro: "Dinheiro",
+  outro: "Outro",
 };
 
 const EMPTY_FORM: ReceivableInput = {
@@ -41,8 +59,13 @@ const EMPTY_FORM: ReceivableInput = {
   contactName: "",
   category: "",
   value: 0,
+  paidValue: 0,
   dueDate: null,
+  competenceDate: null,
+  receivedAt: null,
   status: "pendente",
+  paymentMethod: "",
+  bankAccount: "",
   notes: "",
 };
 
@@ -111,11 +134,18 @@ export default function ContasReceber() {
   const [form, setForm] = useState<ReceivableInput>(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
 
+  const [installmentsEnabled, setInstallmentsEnabled] = useState(false);
+  const [installmentCount, setInstallmentCount] = useState(2);
+  const [installmentInterval, setInstallmentInterval] = useState(30);
+
   const [receivableToDelete, setReceivableToDelete] = useState<IReceivable | null>(null);
 
   const openCreateForm = () => {
     setEditingId(null);
     setForm(EMPTY_FORM);
+    setInstallmentsEnabled(false);
+    setInstallmentCount(2);
+    setInstallmentInterval(30);
     setIsFormOpen(true);
   };
 
@@ -127,8 +157,13 @@ export default function ContasReceber() {
       contactName: receivable.contactName,
       category: receivable.category,
       value: receivable.value,
+      paidValue: receivable.paidValue ?? 0,
       dueDate: receivable.dueDate,
+      competenceDate: receivable.competenceDate,
+      receivedAt: receivable.receivedAt,
       status: receivable.status,
+      paymentMethod: receivable.paymentMethod,
+      bankAccount: receivable.bankAccount,
       notes: receivable.notes,
     });
     setIsFormOpen(true);
@@ -155,11 +190,17 @@ export default function ContasReceber() {
         await updateReceivable(editingId, form);
         showToast("Conta atualizada com sucesso.", "success");
       } else {
-        await createReceivable(form, {
-          uid: currentUser.uid,
-          name: currentUser.displayName ?? currentUser.email,
-        });
-        showToast("Conta cadastrada com sucesso.", "success");
+        const owner = { uid: currentUser.uid, name: currentUser.displayName ?? currentUser.email };
+        if (installmentsEnabled && installmentCount > 1) {
+          await createReceivableInstallments(form, owner, {
+            count: installmentCount,
+            intervalDays: installmentInterval,
+          });
+          showToast(`${installmentCount} parcelas cadastradas com sucesso.`, "success");
+        } else {
+          await createReceivable(form, owner);
+          showToast("Conta cadastrada com sucesso.", "success");
+        }
       }
       refresh();
       refreshTotal();
@@ -225,9 +266,11 @@ export default function ContasReceber() {
           onChange={(e) => setStatusFilter(e.target.value as FinanceStatus | "all")}
         >
           <option value="all">Todos os status</option>
-          <option value="pendente">Pendente</option>
-          <option value="atrasado">Atrasado</option>
-          <option value="pago">Recebido</option>
+          {(Object.keys(STATUS_LABEL) as FinanceStatus[]).map((status) => (
+            <option key={status} value={status}>
+              {STATUS_LABEL[status]}
+            </option>
+          ))}
         </select>
       </div>
 
@@ -252,6 +295,7 @@ export default function ContasReceber() {
                 <th>Categoria</th>
                 <th>Valor</th>
                 <th>Vencimento</th>
+                <th>Forma de pagamento</th>
                 <th>Status</th>
                 <th />
               </tr>
@@ -259,11 +303,22 @@ export default function ContasReceber() {
             <tbody>
               {receivables.map((receivable) => (
                 <tr key={receivable.id}>
-                  <td>{receivable.description}</td>
+                  <td>
+                    {receivable.description}
+                    {receivable.installmentTotal ? (
+                      <span className="receivables_page__installment_tag">
+                        {" "}
+                        {receivable.installmentNumber}/{receivable.installmentTotal}
+                      </span>
+                    ) : null}
+                  </td>
                   <td>{receivable.contactName}</td>
                   <td>{receivable.category || "—"}</td>
                   <td>{currency.format(receivable.value)}</td>
                   <td>{toDateInput(receivable.dueDate) || "—"}</td>
+                  <td>
+                    {receivable.paymentMethod ? PAYMENT_METHOD_LABEL[receivable.paymentMethod] : "—"}
+                  </td>
                   <td>
                     <Badge tone={STATUS_TONE[receivable.status]}>
                       {STATUS_LABEL[receivable.status]}
@@ -353,6 +408,40 @@ export default function ContasReceber() {
                 }
               />
             </FormField>
+            <FormField label="Competência">
+              <input
+                type="date"
+                value={toDateInput(form.competenceDate)}
+                onChange={(e) =>
+                  setForm({ ...form, competenceDate: fromDateInput(e.target.value) })
+                }
+              />
+            </FormField>
+            <FormField label="Forma de pagamento">
+              <select
+                value={form.paymentMethod}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    paymentMethod: e.target.value as PaymentMethod | "",
+                  })
+                }
+              >
+                <option value="">Não informado</option>
+                {(Object.keys(PAYMENT_METHOD_LABEL) as PaymentMethod[]).map((method) => (
+                  <option key={method} value={method}>
+                    {PAYMENT_METHOD_LABEL[method]}
+                  </option>
+                ))}
+              </select>
+            </FormField>
+            <FormField label="Conta bancária">
+              <input
+                placeholder="Ex.: Banco X, conta corrente 1234-5"
+                value={form.bankAccount}
+                onChange={(e) => setForm({ ...form, bankAccount: e.target.value })}
+              />
+            </FormField>
             <FormField label="Status">
               <select
                 value={form.status}
@@ -360,12 +449,75 @@ export default function ContasReceber() {
                   setForm({ ...form, status: e.target.value as FinanceStatus })
                 }
               >
-                <option value="pendente">Pendente</option>
-                <option value="atrasado">Atrasado</option>
-                <option value="pago">Recebido</option>
+                {(Object.keys(STATUS_LABEL) as FinanceStatus[]).map((status) => (
+                  <option key={status} value={status}>
+                    {STATUS_LABEL[status]}
+                  </option>
+                ))}
               </select>
             </FormField>
+            {form.status === "parcialmente_pago" && (
+              <FormField label="Valor já recebido (R$)">
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={form.paidValue}
+                  onChange={(e) => setForm({ ...form, paidValue: Number(e.target.value) })}
+                />
+              </FormField>
+            )}
+            {(form.status === "pago" || form.status === "estornado") && (
+              <FormField label="Data de recebimento efetivo">
+                <input
+                  type="date"
+                  value={toDateInput(form.receivedAt)}
+                  onChange={(e) =>
+                    setForm({ ...form, receivedAt: fromDateInput(e.target.value) })
+                  }
+                />
+              </FormField>
+            )}
           </div>
+
+          {!editingId && (
+            <div className="receivables_page__installments">
+              <label className="receivables_page__installments__toggle">
+                <input
+                  type="checkbox"
+                  checked={installmentsEnabled}
+                  onChange={(e) => setInstallmentsEnabled(e.target.checked)}
+                />
+                Parcelar esta conta
+              </label>
+              {installmentsEnabled && (
+                <div className="receivables_page__installments__fields">
+                  <FormField label="Nº de parcelas">
+                    <input
+                      type="number"
+                      min="2"
+                      value={installmentCount}
+                      onChange={(e) => setInstallmentCount(Number(e.target.value))}
+                    />
+                  </FormField>
+                  <FormField label="Intervalo entre parcelas (dias)">
+                    <input
+                      type="number"
+                      min="1"
+                      value={installmentInterval}
+                      onChange={(e) => setInstallmentInterval(Number(e.target.value))}
+                    />
+                  </FormField>
+                  <p className="receivables_page__installments__hint">
+                    O valor informado acima será dividido em {installmentCount}x, com
+                    vencimentos a cada {installmentInterval} dias a partir do vencimento
+                    informado.
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+
           <FormField label="Observações">
             <textarea
               value={form.notes}

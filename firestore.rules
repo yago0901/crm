@@ -271,7 +271,8 @@ service cloud.firestore {
         && request.resource.data.ownerId == request.auth.uid
         && request.resource.data.description is string
         && request.resource.data.description.size() > 0
-        && request.resource.data.status in ['pendente', 'pago', 'atrasado'];
+        && request.resource.data.status in
+          ['pendente', 'parcialmente_pago', 'pago', 'atrasado', 'cancelado', 'renegociado', 'estornado'];
 
       allow update: if belongsToCompany(resource.data.get('companyId', null))
         && hasModule('financial')
@@ -291,7 +292,8 @@ service cloud.firestore {
         && request.resource.data.ownerId == request.auth.uid
         && request.resource.data.description is string
         && request.resource.data.description.size() > 0
-        && request.resource.data.status in ['pendente', 'pago', 'atrasado'];
+        && request.resource.data.status in
+          ['pendente', 'parcialmente_pago', 'pago', 'atrasado', 'cancelado', 'renegociado', 'estornado'];
 
       allow update: if belongsToCompany(resource.data.get('companyId', null))
         && hasModule('financial')

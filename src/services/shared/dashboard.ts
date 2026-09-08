@@ -118,7 +118,15 @@ export async function getEmployeeStatusBreakdown(): Promise<IStatusCount[]> {
 }
 
 export async function getFinanceStatusBreakdown(): Promise<IStatusCount[]> {
-  const statuses: FinanceStatus[] = ["pendente", "atrasado", "pago"];
+  const statuses: FinanceStatus[] = [
+    "pendente",
+    "parcialmente_pago",
+    "atrasado",
+    "pago",
+    "renegociado",
+    "cancelado",
+    "estornado",
+  ];
   const payablesRef = collection(firestore, "payables");
   const receivablesRef = collection(firestore, "receivables");
 

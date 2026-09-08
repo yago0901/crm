@@ -14,14 +14,22 @@ import { IStatusCount } from "../../../services/shared/dashboard";
 
 const STATUS_LABEL: Record<string, string> = {
   pendente: "Pendente",
+  parcialmente_pago: "Parcial",
   atrasado: "Atrasado",
   pago: "Pago/Recebido",
+  renegociado: "Renegociado",
+  cancelado: "Cancelado",
+  estornado: "Estornado",
 };
 
 const STATUS_COLOR: Record<string, string> = {
   pendente: "var(--chart-orange)",
+  parcialmente_pago: "var(--chart-blue, var(--color-primary))",
   atrasado: "var(--color-danger)",
   pago: "var(--chart-green)",
+  renegociado: "var(--color-primary)",
+  cancelado: "var(--color-text-muted)",
+  estornado: "var(--color-text-muted)",
 };
 
 interface FinanceStatusChartProps {
