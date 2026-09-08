@@ -17,8 +17,8 @@ vi.mock("firebase/firestore", () => ({
   onSnapshot: vi.fn(),
 }));
 
-import { addDoc, getDocs } from "firebase/firestore";
-import { createDeal, fetchWonUnconvertedDeals } from "./deals";
+import { addDoc, getDocs, where } from "firebase/firestore";
+import { createDeal, fetchOpenOrWonDeals, fetchWonUnconvertedDeals } from "./deals";
 import { setCurrentCompanyId } from "../shared/tenant";
 
 describe("createDeal", () => {
@@ -40,6 +40,26 @@ describe("createDeal", () => {
       expect.anything(),
       expect.objectContaining({ companyId: "acme", convertedToContractId: null })
     );
+  });
+});
+
+describe("fetchOpenOrWonDeals", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("returns an empty array when there is no current company", async () => {
+    setCurrentCompanyId(null);
+    expect(await fetchOpenOrWonDeals()).toEqual([]);
+  });
+
+  it("filters by aberto/ganho status", async () => {
+    setCurrentCompanyId("acme");
+    vi.mocked(getDocs).mockResolvedValue({ docs: [] } as never);
+
+    await fetchOpenOrWonDeals();
+
+    expect(where).toHaveBeenCalledWith("status", "in", ["aberto", "ganho"]);
   });
 });
 

@@ -39,6 +39,7 @@ import PlanejamentoProducao from "../components/pages/PlanejamentoProducao";
 import PlanejamentoProjetos from "../components/pages/PlanejamentoProjetos";
 import PrevisaoTendencias from "../components/pages/PrevisaoTendencias";
 import Produtos from "../components/pages/Produtos";
+import Propostas from "../components/pages/Propostas";
 import Recrutamento from "../components/pages/Recrutamento";
 import RedefinirSenha from "../components/pages/RedefinirSenha";
 import Register from '../components/pages/Register';
@@ -141,6 +142,7 @@ function Router() {
         <Route path="/vendas-crm/acompanhamento-leads" element={<PrivateRoute><ModuleRoute requiredModule="sales"><AcompanhamentoLeads /></ModuleRoute></PrivateRoute>} />
         <Route path="/vendas-crm/acompanhamento-leads/:contactId" element={<PrivateRoute><ModuleRoute requiredModule="sales"><AcompanhamentoLeads /></ModuleRoute></PrivateRoute>} />
         <Route path="/vendas-crm/negocios" element={<PrivateRoute><ModuleRoute requiredModule="sales"><Negocios /></ModuleRoute></PrivateRoute>} />
+        <Route path="/vendas-crm/propostas" element={<PrivateRoute><ModuleRoute requiredModule="sales"><Propostas /></ModuleRoute></PrivateRoute>} />
         <Route path="/vendas-crm/gestao-contratos" element={<PrivateRoute><ModuleRoute requiredModule="sales"><GestaoContratos /></ModuleRoute></PrivateRoute>} />
         <Route path="/vendas-crm/produtos" element={<PrivateRoute><ModuleRoute requiredModule="sales"><Produtos /></ModuleRoute></PrivateRoute>} />
 

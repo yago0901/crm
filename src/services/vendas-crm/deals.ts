@@ -60,6 +60,20 @@ export async function deleteDeal(dealId: string): Promise<void> {
   return dealsService.remove(dealId);
 }
 
+export async function fetchOpenOrWonDeals(): Promise<IDeal[]> {
+  const companyId = getCurrentCompanyId();
+  if (!companyId) return [];
+
+  const q = query(
+    collection(firestore, "deals"),
+    where("companyId", "==", companyId),
+    where("status", "in", ["aberto", "ganho"]),
+    orderBy("createdAt", "desc")
+  );
+  const snap = await getDocs(q);
+  return snap.docs.map(mapDeal);
+}
+
 export async function fetchWonUnconvertedDeals(): Promise<IDeal[]> {
   const companyId = getCurrentCompanyId();
   if (!companyId) return [];
