@@ -1,6 +1,16 @@
-import { DocumentData, QueryDocumentSnapshot, Unsubscribe } from "firebase/firestore";
+import {
+  DocumentData,
+  QueryDocumentSnapshot,
+  Unsubscribe,
+  collection,
+  getDocs,
+  orderBy,
+  query,
+  where,
+} from "firebase/firestore";
 import { createCrudService } from "../shared/crudFactory";
 import { getCurrentCompanyId } from "../shared/tenant";
+import { firestore } from "../shared/firebase";
 import { IProposal, ProposalInput, ProposalStatus } from "../../types/proposal";
 
 export const mapProposal = (snap: QueryDocumentSnapshot<DocumentData>): IProposal => {
@@ -50,4 +60,18 @@ export async function updateProposal(
 
 export async function deleteProposal(proposalId: string): Promise<void> {
   return proposalsService.remove(proposalId);
+}
+
+export async function fetchAcceptedProposals(): Promise<IProposal[]> {
+  const companyId = getCurrentCompanyId();
+  if (!companyId) return [];
+
+  const q = query(
+    collection(firestore, "proposals"),
+    where("companyId", "==", companyId),
+    where("status", "==", "aceita"),
+    orderBy("createdAt", "desc")
+  );
+  const snap = await getDocs(q);
+  return snap.docs.map(mapProposal);
 }
