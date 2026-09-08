@@ -29,8 +29,8 @@ vi.mock("firebase/firestore", () => ({
   onSnapshot: vi.fn(),
 }));
 
-import { getDoc, getDocs, runTransaction } from "firebase/firestore";
-import { approveSalesOrder } from "./salesOrders";
+import { getDoc, getDocs, runTransaction, where } from "firebase/firestore";
+import { approveSalesOrder, fetchApprovedSalesOrders } from "./salesOrders";
 import { setCurrentCompanyId } from "../shared/tenant";
 
 const baseOrder = {
@@ -201,5 +201,25 @@ describe("approveSalesOrder", () => {
     await expect(
       approveSalesOrder("order1", { uid: "owner1", name: "Yago" })
     ).rejects.toThrow("Estoque insuficiente");
+  });
+});
+
+describe("fetchApprovedSalesOrders", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("returns an empty array when there is no current company", async () => {
+    setCurrentCompanyId(null);
+    expect(await fetchApprovedSalesOrders()).toEqual([]);
+  });
+
+  it("filters by aprovado status", async () => {
+    setCurrentCompanyId("acme");
+    vi.mocked(getDocs).mockResolvedValue({ docs: [] } as never);
+
+    await fetchApprovedSalesOrders();
+
+    expect(where).toHaveBeenCalledWith("status", "==", "aprovado");
   });
 });

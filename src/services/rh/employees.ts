@@ -33,6 +33,7 @@ export const mapEmployee = (
     status: data.status,
     salary: data.salary ?? 0,
     hireDate: data.hireDate ?? null,
+    commissionRate: data.commissionRate ?? 0,
     notes: data.notes ?? "",
     userId: data.userId ?? null,
     ownerId: data.ownerId,

@@ -13,6 +13,7 @@ export interface IEmployee {
   status: EmployeeStatus;
   salary: number;
   hireDate: Timestamp | null;
+  commissionRate?: number;
   notes?: string;
   userId: string | null;
   ownerId: string;
@@ -31,5 +32,6 @@ export type EmployeeInput = Pick<
   | "status"
   | "salary"
   | "hireDate"
+  | "commissionRate"
   | "notes"
 >;

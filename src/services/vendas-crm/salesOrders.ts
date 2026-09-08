@@ -7,6 +7,7 @@ import {
   doc,
   getDoc,
   getDocs,
+  orderBy,
   query,
   runTransaction,
   serverTimestamp,
@@ -73,6 +74,20 @@ export async function updateSalesOrder(
 
 export async function deleteSalesOrder(orderId: string): Promise<void> {
   return salesOrdersService.remove(orderId);
+}
+
+export async function fetchApprovedSalesOrders(): Promise<ISalesOrder[]> {
+  const companyId = getCurrentCompanyId();
+  if (!companyId) return [];
+
+  const q = query(
+    collection(firestore, "salesOrders"),
+    where("companyId", "==", companyId),
+    where("status", "==", "aprovado"),
+    orderBy("createdAt", "desc")
+  );
+  const snap = await getDocs(q);
+  return snap.docs.map(mapSalesOrder);
 }
 
 export async function approveSalesOrder(

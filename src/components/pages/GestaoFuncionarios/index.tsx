@@ -41,6 +41,7 @@ const EMPTY_FORM: EmployeeInput = {
   status: "ativo",
   salary: 0,
   hireDate: null,
+  commissionRate: 0,
   notes: "",
 };
 
@@ -135,6 +136,7 @@ export default function GestaoFuncionarios() {
       status: employee.status,
       salary: employee.salary,
       hireDate: employee.hireDate,
+      commissionRate: employee.commissionRate ?? 0,
       notes: employee.notes,
     });
     setIsFormOpen(true);
@@ -369,6 +371,18 @@ export default function GestaoFuncionarios() {
                 value={toDateInput(form.hireDate)}
                 onChange={(e) =>
                   setForm({ ...form, hireDate: fromDateInput(e.target.value) })
+                }
+              />
+            </FormField>
+            <FormField label="% de comissão padrão (opcional)">
+              <input
+                type="number"
+                min="0"
+                max="100"
+                step="0.1"
+                value={form.commissionRate}
+                onChange={(e) =>
+                  setForm({ ...form, commissionRate: Number(e.target.value) })
                 }
               />
             </FormField>
