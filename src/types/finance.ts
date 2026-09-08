@@ -1,6 +1,21 @@
 import { Timestamp } from "firebase/firestore";
 
-export type FinanceStatus = "pendente" | "pago" | "atrasado";
+export type FinanceStatus =
+  | "pendente"
+  | "parcialmente_pago"
+  | "pago"
+  | "atrasado"
+  | "cancelado"
+  | "renegociado"
+  | "estornado";
+
+export type PaymentMethod =
+  | "boleto"
+  | "pix"
+  | "cartao"
+  | "transferencia"
+  | "dinheiro"
+  | "outro";
 
 export interface IPayable {
   id: string;
@@ -9,9 +24,16 @@ export interface IPayable {
   supplier: string;
   category: string;
   value: number;
+  paidValue?: number;
   dueDate: Timestamp | null;
+  competenceDate: Timestamp | null;
   paidAt: Timestamp | null;
   status: FinanceStatus;
+  paymentMethod: PaymentMethod | "";
+  bankAccount?: string;
+  installmentGroupId?: string;
+  installmentNumber?: number;
+  installmentTotal?: number;
   notes?: string;
   ownerId: string;
   ownerName?: string;
@@ -21,7 +43,18 @@ export interface IPayable {
 
 export type PayableInput = Pick<
   IPayable,
-  "description" | "supplier" | "category" | "value" | "dueDate" | "status" | "notes"
+  | "description"
+  | "supplier"
+  | "category"
+  | "value"
+  | "paidValue"
+  | "dueDate"
+  | "competenceDate"
+  | "paidAt"
+  | "status"
+  | "paymentMethod"
+  | "bankAccount"
+  | "notes"
 >;
 
 export interface IReceivable {
@@ -32,9 +65,16 @@ export interface IReceivable {
   contactName: string;
   category: string;
   value: number;
+  paidValue?: number;
   dueDate: Timestamp | null;
+  competenceDate: Timestamp | null;
   receivedAt: Timestamp | null;
   status: FinanceStatus;
+  paymentMethod: PaymentMethod | "";
+  bankAccount?: string;
+  installmentGroupId?: string;
+  installmentNumber?: number;
+  installmentTotal?: number;
   notes?: string;
   ownerId: string;
   ownerName?: string;
@@ -49,7 +89,17 @@ export type ReceivableInput = Pick<
   | "contactName"
   | "category"
   | "value"
+  | "paidValue"
   | "dueDate"
+  | "competenceDate"
+  | "receivedAt"
   | "status"
+  | "paymentMethod"
+  | "bankAccount"
   | "notes"
 >;
+
+export interface IInstallmentPlan {
+  count: number;
+  intervalDays: number;
+}
