@@ -13,6 +13,8 @@ export interface IInventoryItem {
   minQuantity: number;
   unit: string;
   unitCost: number;
+  purchaseUnit?: string;
+  unitsPerPurchase?: number;
   status: InventoryItemStatus;
   notes?: string;
   ownerId: string;
@@ -31,6 +33,8 @@ export type InventoryItemInput = Pick<
   | "minQuantity"
   | "unit"
   | "unitCost"
+  | "purchaseUnit"
+  | "unitsPerPurchase"
   | "status"
   | "notes"
 >;

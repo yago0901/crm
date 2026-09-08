@@ -113,14 +113,21 @@ export async function receivePurchaseOrder(
 
     let newQuantity = 0;
     let itemName = "";
+    let creditedQuantity = 0;
     if (itemRef) {
       const itemSnap = await transaction.get(itemRef);
       if (!itemSnap.exists()) {
         throw new Error("Item de estoque vinculado não foi encontrado.");
       }
-      const currentQuantity = (itemSnap.data().quantity as number) ?? 0;
-      itemName = itemSnap.data().name ?? "";
-      newQuantity = currentQuantity + Math.abs(order.quantity);
+      const itemData = itemSnap.data();
+      const currentQuantity = (itemData.quantity as number) ?? 0;
+      const unitsPerPurchase = (itemData.unitsPerPurchase as number) ?? 0;
+      itemName = itemData.name ?? "";
+      creditedQuantity =
+        unitsPerPurchase > 0
+          ? Math.abs(order.quantity) * unitsPerPurchase
+          : Math.abs(order.quantity);
+      newQuantity = currentQuantity + creditedQuantity;
     }
 
     const warehouseStockSnap = warehouseStockRef
@@ -160,7 +167,7 @@ export async function receivePurchaseOrder(
         itemId: order.inventoryItemId,
         warehouseId: order.warehouseId ?? null,
         type: "entrada",
-        quantity: Math.abs(order.quantity),
+        quantity: creditedQuantity,
         balanceAfter: newQuantity,
         notes: `Recebimento do pedido de compra "${order.description}"`,
         ownerId: owner.uid,
@@ -178,7 +185,7 @@ export async function receivePurchaseOrder(
           itemId: order.inventoryItemId,
           itemName,
           warehouseId: order.warehouseId,
-          quantity: currentWarehouseQuantity + Math.abs(order.quantity),
+          quantity: currentWarehouseQuantity + creditedQuantity,
           updatedAt: serverTimestamp(),
         });
       }

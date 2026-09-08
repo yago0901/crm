@@ -1,4 +1,4 @@
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import { orderBy, where } from "firebase/firestore";
 import { useAuth } from "../../../contexts/auth/AuthContext";
 import { useToast } from "../../common/Toast/ToastContext";
@@ -12,10 +12,11 @@ import { usePaginatedCollection } from "../../../hooks/usePaginatedCollection";
 import {
   createProduct,
   deleteProduct,
+  fetchActiveProducts,
   mapProduct,
   updateProduct,
 } from "../../../services/shared/products";
-import { IProduct, ProductInput, ProductStatus } from "../../../types/product";
+import { IProduct, IRecipeItem, ProductInput, ProductStatus } from "../../../types/product";
 import { PAGE_SIZE } from "../../../constants/pagination";
 import "./styles.scss";
 
@@ -35,9 +36,12 @@ const EMPTY_FORM: ProductInput = {
   category: "",
   unit: "un",
   salePrice: 0,
+  recipe: [],
   status: "ativo",
   notes: "",
 };
+
+const EMPTY_INGREDIENT_DRAFT = { ingredientProductId: "", quantityPerUnit: 1 };
 
 const currency = new Intl.NumberFormat("pt-BR", {
   style: "currency",
@@ -74,9 +78,18 @@ export default function Produtos() {
     resetKey: statusFilter,
   });
 
+  const [allProducts, setAllProducts] = useState<IProduct[]>([]);
+
+  useEffect(() => {
+    fetchActiveProducts()
+      .then(setAllProducts)
+      .catch(() => undefined);
+  }, []);
+
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<ProductInput>(EMPTY_FORM);
+  const [ingredientDraft, setIngredientDraft] = useState(EMPTY_INGREDIENT_DRAFT);
   const [saving, setSaving] = useState(false);
 
   const [productToDelete, setProductToDelete] = useState<IProduct | null>(null);
@@ -84,6 +97,7 @@ export default function Produtos() {
   const openCreateForm = () => {
     setEditingId(null);
     setForm(EMPTY_FORM);
+    setIngredientDraft(EMPTY_INGREDIENT_DRAFT);
     setIsFormOpen(true);
   };
 
@@ -95,9 +109,11 @@ export default function Produtos() {
       category: product.category,
       unit: product.unit,
       salePrice: product.salePrice,
+      recipe: product.recipe ?? [],
       status: product.status,
       notes: product.notes,
     });
+    setIngredientDraft(EMPTY_INGREDIENT_DRAFT);
     setIsFormOpen(true);
   };
 
@@ -105,6 +121,24 @@ export default function Produtos() {
     setIsFormOpen(false);
     setEditingId(null);
     setForm(EMPTY_FORM);
+    setIngredientDraft(EMPTY_INGREDIENT_DRAFT);
+  };
+
+  const handleAddIngredient = () => {
+    const ingredient = allProducts.find((p) => p.id === ingredientDraft.ingredientProductId);
+    if (!ingredient || ingredientDraft.quantityPerUnit <= 0) return;
+
+    const newIngredient: IRecipeItem = {
+      ingredientProductId: ingredient.id,
+      ingredientProductName: ingredient.name,
+      quantityPerUnit: ingredientDraft.quantityPerUnit,
+    };
+    setForm({ ...form, recipe: [...(form.recipe ?? []), newIngredient] });
+    setIngredientDraft(EMPTY_INGREDIENT_DRAFT);
+  };
+
+  const handleRemoveIngredient = (index: number) => {
+    setForm({ ...form, recipe: (form.recipe ?? []).filter((_, i) => i !== index) });
   };
 
   const handleSubmit = async (event: FormEvent) => {
@@ -278,6 +312,79 @@ export default function Produtos() {
               </select>
             </FormField>
           </div>
+          <div className="products_page__recipe">
+            <span className="products_page__recipe__label">
+              Ficha técnica (opcional) — insumos consumidos ao vender este produto
+            </span>
+
+            {(form.recipe ?? []).length > 0 && (
+              <table className="products_page__recipe__table">
+                <thead>
+                  <tr>
+                    <th>Ingrediente</th>
+                    <th>Quantidade por unidade vendida</th>
+                    <th />
+                  </tr>
+                </thead>
+                <tbody>
+                  {(form.recipe ?? []).map((ingredient, index) => (
+                    <tr key={`${ingredient.ingredientProductId}-${index}`}>
+                      <td>{ingredient.ingredientProductName}</td>
+                      <td>{ingredient.quantityPerUnit}</td>
+                      <td>
+                        <Button
+                          type="button"
+                          variant="danger"
+                          onClick={() => handleRemoveIngredient(index)}
+                        >
+                          Remover
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+
+            <div className="products_page__recipe__add">
+              <select
+                value={ingredientDraft.ingredientProductId}
+                onChange={(e) =>
+                  setIngredientDraft({ ...ingredientDraft, ingredientProductId: e.target.value })
+                }
+              >
+                <option value="">Selecione um ingrediente</option>
+                {allProducts
+                  .filter((p) => p.id !== editingId)
+                  .map((product) => (
+                    <option key={product.id} value={product.id}>
+                      {product.name}
+                    </option>
+                  ))}
+              </select>
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                value={ingredientDraft.quantityPerUnit}
+                onChange={(e) =>
+                  setIngredientDraft({
+                    ...ingredientDraft,
+                    quantityPerUnit: Number(e.target.value),
+                  })
+                }
+              />
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={handleAddIngredient}
+                disabled={!ingredientDraft.ingredientProductId}
+              >
+                + Adicionar ingrediente
+              </Button>
+            </div>
+          </div>
+
           <FormField label="Observações">
             <textarea
               value={form.notes}
