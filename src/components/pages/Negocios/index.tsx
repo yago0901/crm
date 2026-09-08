@@ -1,5 +1,5 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
-import { orderBy, where } from "firebase/firestore";
+import { Timestamp, orderBy, where } from "firebase/firestore";
 import { useAuth } from "../../../contexts/auth/AuthContext";
 import { useToast } from "../../common/Toast/ToastContext";
 import Modal from "../../common/Modal";
@@ -13,10 +13,17 @@ import {
   createDeal,
   deleteDeal,
   mapDeal,
+  subscribeToDeals,
   updateDeal,
 } from "../../../services/vendas-crm/deals";
 import { fetchOpenContacts } from "../../../services/vendas-crm/contacts";
-import { DealInput, DealStatus, IDeal } from "../../../types/deal";
+import {
+  DealInput,
+  DealStage,
+  DealStatus,
+  DEAL_STAGE_ORDER,
+  IDeal,
+} from "../../../types/deal";
 import { IContact } from "../../../types/contact";
 import { PAGE_SIZE } from "../../../constants/pagination";
 import "./styles.scss";
@@ -33,12 +40,25 @@ const STATUS_TONE: Record<DealStatus, "info" | "success" | "danger"> = {
   perdido: "danger",
 };
 
+const STAGE_LABEL: Record<DealStage, string> = {
+  prospeccao: "Prospecção",
+  qualificacao: "Qualificação",
+  proposta: "Proposta Enviada",
+  negociacao: "Negociação",
+  fechamento: "Fechamento",
+};
+
 const EMPTY_FORM: DealInput = {
   contactId: "",
   contactName: "",
   title: "",
   estimatedValue: 0,
   status: "aberto",
+  stage: "prospeccao",
+  winProbability: 0,
+  expectedCloseDate: null,
+  lostReason: "",
+  competitor: "",
   notes: "",
 };
 
@@ -47,9 +67,17 @@ const currency = new Intl.NumberFormat("pt-BR", {
   currency: "BRL",
 });
 
+const toDateInput = (value: Timestamp | null) =>
+  value ? value.toDate().toISOString().slice(0, 10) : "";
+
+const fromDateInput = (value: string): Timestamp | null =>
+  value ? Timestamp.fromDate(new Date(`${value}T00:00:00`)) : null;
+
 export default function Negocios() {
   const { currentUser } = useAuth();
   const { showToast } = useToast();
+
+  const [view, setView] = useState<"funil" | "lista">("funil");
 
   const [contacts, setContacts] = useState<IContact[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -80,6 +108,25 @@ export default function Negocios() {
     resetKey: statusFilter,
   });
 
+  const [openDeals, setOpenDeals] = useState<IDeal[]>([]);
+  const [boardLoading, setBoardLoading] = useState(true);
+
+  useEffect(() => {
+    setBoardLoading(true);
+    const unsubscribe = subscribeToDeals(
+      "aberto",
+      (items) => {
+        setOpenDeals(items);
+        setBoardLoading(false);
+      },
+      (err) => {
+        setLoadError(err.message);
+        setBoardLoading(false);
+      }
+    );
+    return unsubscribe;
+  }, []);
+
   useEffect(() => {
     fetchOpenContacts()
       .then(setContacts)
@@ -107,6 +154,11 @@ export default function Negocios() {
       title: deal.title,
       estimatedValue: deal.estimatedValue,
       status: deal.status,
+      stage: deal.stage,
+      winProbability: deal.winProbability,
+      expectedCloseDate: deal.expectedCloseDate,
+      lostReason: deal.lostReason,
+      competitor: deal.competitor,
       notes: deal.notes,
     });
     setIsFormOpen(true);
@@ -171,6 +223,23 @@ export default function Negocios() {
     }
   };
 
+  const handleAdvanceStage = async (deal: IDeal) => {
+    const currentIndex = DEAL_STAGE_ORDER.indexOf(deal.stage);
+    const nextStage = DEAL_STAGE_ORDER[currentIndex + 1];
+    if (!nextStage) return;
+
+    try {
+      await updateDeal(deal.id, { stage: nextStage });
+      showToast(`Negócio avançado para "${STAGE_LABEL[nextStage]}".`, "success");
+      refresh();
+    } catch (err) {
+      showToast(
+        err instanceof Error ? err.message : "Erro ao avançar etapa",
+        "error"
+      );
+    }
+  };
+
   return (
     <div className="deals_page">
       <div className="deals_page__header">
@@ -180,77 +249,146 @@ export default function Negocios() {
         </Button>
       </div>
 
-      <div className="deals_page__filters">
-        <select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value as DealStatus | "all")}
+      <div className="deals_page__view_toggle">
+        <Button
+          variant={view === "funil" ? "primary" : "secondary"}
+          onClick={() => setView("funil")}
         >
-          <option value="all">Todos os status</option>
-          <option value="aberto">Aberto</option>
-          <option value="ganho">Ganho</option>
-          <option value="perdido">Perdido</option>
-        </select>
+          Funil
+        </Button>
+        <Button
+          variant={view === "lista" ? "primary" : "secondary"}
+          onClick={() => setView("lista")}
+        >
+          Lista
+        </Button>
       </div>
 
-      {(loadError || pageError) && (
-        <p className="deals_page__error">{loadError ?? pageError}</p>
-      )}
+      {loadError && <p className="deals_page__error">{loadError}</p>}
 
-      {loading ? (
-        <p className="deals_page__empty">Carregando negócios...</p>
-      ) : deals.length === 0 ? (
-        <p className="deals_page__empty">
-          Nenhum negócio encontrado. Cadastre contatos em Gestão de Contatos
-          antes de criar um negócio.
-        </p>
+      {view === "funil" ? (
+        boardLoading ? (
+          <p className="deals_page__empty">Carregando funil...</p>
+        ) : openDeals.length === 0 ? (
+          <p className="deals_page__empty">
+            Nenhum negócio em aberto. Cadastre contatos em Gestão de Contatos antes de criar
+            um negócio.
+          </p>
+        ) : (
+          <div className="deals_page__board">
+            {DEAL_STAGE_ORDER.map((stage) => {
+              const stageDeals = openDeals.filter((deal) => deal.stage === stage);
+              const stageTotal = stageDeals.reduce((sum, deal) => sum + deal.estimatedValue, 0);
+              const nextStage = DEAL_STAGE_ORDER[DEAL_STAGE_ORDER.indexOf(stage) + 1];
+
+              return (
+                <div key={stage} className="deals_page__board__column">
+                  <div className="deals_page__board__column__header">
+                    <span>{STAGE_LABEL[stage]}</span>
+                    <span className="deals_page__board__column__header__count">
+                      {stageDeals.length}
+                    </span>
+                  </div>
+                  <div className="deals_page__board__column__total">
+                    {currency.format(stageTotal)}
+                  </div>
+                  <div className="deals_page__board__column__cards">
+                    {stageDeals.map((deal) => (
+                      <div key={deal.id} className="deals_page__card">
+                        <strong>{deal.title}</strong>
+                        <span>{deal.contactName}</span>
+                        <span>{currency.format(deal.estimatedValue)}</span>
+                        <span>{deal.winProbability}% de chance</span>
+                        <div className="deals_page__card__actions">
+                          <Button variant="secondary" onClick={() => openEditForm(deal)}>
+                            Editar
+                          </Button>
+                          {nextStage && (
+                            <Button variant="primary" onClick={() => handleAdvanceStage(deal)}>
+                              Avançar
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )
       ) : (
-        <div className="deals_page__table_wrap">
-          <table className="deals_page__table">
-            <thead>
-              <tr>
-                <th>Título</th>
-                <th>Contato</th>
-                <th>Valor estimado</th>
-                <th>Status</th>
-                <th />
-              </tr>
-            </thead>
-            <tbody>
-              {deals.map((deal) => (
-                <tr key={deal.id}>
-                  <td>{deal.title}</td>
-                  <td>{deal.contactName}</td>
-                  <td>{currency.format(deal.estimatedValue)}</td>
-                  <td>
-                    <Badge tone={STATUS_TONE[deal.status]}>
-                      {STATUS_LABEL[deal.status]}
-                    </Badge>
-                    {deal.convertedToContractId && (
-                      <Badge tone="neutral">Convertido em contrato</Badge>
-                    )}
-                  </td>
-                  <td>
-                    <div className="deals_page__table__actions">
-                      <Button variant="secondary" onClick={() => openEditForm(deal)}>
-                        Editar
-                      </Button>
-                      <Button variant="danger" onClick={() => setDealToDelete(deal)}>
-                        Excluir
-                      </Button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+        <>
+          <div className="deals_page__filters">
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value as DealStatus | "all")}
+            >
+              <option value="all">Todos os status</option>
+              <option value="aberto">Aberto</option>
+              <option value="ganho">Ganho</option>
+              <option value="perdido">Perdido</option>
+            </select>
+          </div>
 
-      <Pagination
-        currentPage={currentPage}
-        totalPages={totalPages}
-        onPageChange={setCurrentPage}
-      />
+          {pageError && <p className="deals_page__error">{pageError}</p>}
+
+          {loading ? (
+            <p className="deals_page__empty">Carregando negócios...</p>
+          ) : deals.length === 0 ? (
+            <p className="deals_page__empty">Nenhum negócio encontrado.</p>
+          ) : (
+            <div className="deals_page__table_wrap">
+              <table className="deals_page__table">
+                <thead>
+                  <tr>
+                    <th>Título</th>
+                    <th>Contato</th>
+                    <th>Etapa</th>
+                    <th>Valor estimado</th>
+                    <th>Status</th>
+                    <th />
+                  </tr>
+                </thead>
+                <tbody>
+                  {deals.map((deal) => (
+                    <tr key={deal.id}>
+                      <td>{deal.title}</td>
+                      <td>{deal.contactName}</td>
+                      <td>{STAGE_LABEL[deal.stage]}</td>
+                      <td>{currency.format(deal.estimatedValue)}</td>
+                      <td>
+                        <Badge tone={STATUS_TONE[deal.status]}>
+                          {STATUS_LABEL[deal.status]}
+                        </Badge>
+                        {deal.convertedToContractId && (
+                          <Badge tone="neutral">Convertido em contrato</Badge>
+                        )}
+                      </td>
+                      <td>
+                        <div className="deals_page__table__actions">
+                          <Button variant="secondary" onClick={() => openEditForm(deal)}>
+                            Editar
+                          </Button>
+                          <Button variant="danger" onClick={() => setDealToDelete(deal)}>
+                            Excluir
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+          />
+        </>
+      )}
 
       <Modal
         isOpen={isFormOpen}
@@ -289,6 +427,43 @@ export default function Negocios() {
                 onChange={(e) => setForm({ ...form, estimatedValue: Number(e.target.value) })}
               />
             </FormField>
+            <FormField label="Etapa do funil">
+              <select
+                value={form.stage}
+                onChange={(e) => setForm({ ...form, stage: e.target.value as DealStage })}
+              >
+                {DEAL_STAGE_ORDER.map((stage) => (
+                  <option key={stage} value={stage}>
+                    {STAGE_LABEL[stage]}
+                  </option>
+                ))}
+              </select>
+            </FormField>
+            <FormField label="Probabilidade de fechamento (%)">
+              <input
+                type="number"
+                min="0"
+                max="100"
+                step="1"
+                value={form.winProbability}
+                onChange={(e) => setForm({ ...form, winProbability: Number(e.target.value) })}
+              />
+            </FormField>
+            <FormField label="Previsão de fechamento">
+              <input
+                type="date"
+                value={toDateInput(form.expectedCloseDate)}
+                onChange={(e) =>
+                  setForm({ ...form, expectedCloseDate: fromDateInput(e.target.value) })
+                }
+              />
+            </FormField>
+            <FormField label="Concorrente (opcional)">
+              <input
+                value={form.competitor}
+                onChange={(e) => setForm({ ...form, competitor: e.target.value })}
+              />
+            </FormField>
             <FormField label="Status">
               <select
                 value={form.status}
@@ -299,6 +474,14 @@ export default function Negocios() {
                 <option value="perdido">Perdido</option>
               </select>
             </FormField>
+            {form.status === "perdido" && (
+              <FormField label="Motivo da perda">
+                <input
+                  value={form.lostReason}
+                  onChange={(e) => setForm({ ...form, lostReason: e.target.value })}
+                />
+              </FormField>
+            )}
           </div>
           <FormField label="Observações">
             <textarea

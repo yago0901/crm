@@ -32,7 +32,17 @@ describe("createDeal", () => {
     setCurrentCompanyId("acme");
 
     await createDeal(
-      { contactId: "c1", contactName: "Maria", title: "Consultoria", estimatedValue: 5000, status: "aberto", notes: "" },
+      {
+        contactId: "c1",
+        contactName: "Maria",
+        title: "Consultoria",
+        estimatedValue: 5000,
+        status: "aberto",
+        stage: "prospeccao",
+        winProbability: 0,
+        expectedCloseDate: null,
+        notes: "",
+      },
       { uid: "owner1", name: "Yago" }
     );
 
