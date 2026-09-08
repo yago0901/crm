@@ -159,6 +159,26 @@ service cloud.firestore {
         && hasModule('sales');
     }
 
+    match /commissions/{commissionId} {
+      allow read: if belongsToCompany(resource.data.get('companyId', null));
+
+      allow create: if isSignedIn()
+        && belongsToCompany(request.resource.data.companyId)
+        && hasModule('sales')
+        && request.resource.data.ownerId == request.auth.uid
+        && request.resource.data.employeeId is string
+        && request.resource.data.employeeId.size() > 0
+        && request.resource.data.status in ['pendente', 'pago'];
+
+      allow update: if belongsToCompany(resource.data.get('companyId', null))
+        && hasModule('sales')
+        && request.resource.data.companyId == resource.data.get('companyId', null)
+        && request.resource.data.ownerId == resource.data.ownerId;
+
+      allow delete: if belongsToCompany(resource.data.get('companyId', null))
+        && hasModule('sales');
+    }
+
     match /salesOrders/{orderId} {
       allow read: if belongsToCompany(resource.data.get('companyId', null));
 
@@ -852,7 +872,7 @@ service cloud.firestore {
         && request.resource.data.entityId is string
         && request.resource.data.entityId.size() > 0
         && request.resource.data.entityType in [
-          'contacts', 'contracts', 'deals', 'proposals', 'salesOrders', 'employees', 'payables', 'receivables', 'followUps',
+          'contacts', 'contracts', 'deals', 'proposals', 'salesOrders', 'commissions', 'employees', 'payables', 'receivables', 'followUps',
           'ledgerEntries', 'payrollEntries', 'candidates', 'trainings', 'performanceReviews',
           'suppliers', 'products', 'inventoryItems', 'purchaseOrders', 'shipments', 'warehouses',
           'productionPlans', 'productionOrders', 'qualityChecks', 'maintenanceRequests',

@@ -50,6 +50,7 @@ const DEFAULT_MENU: NavbarMenuItem[] = [
       { label: 'Negócios', path: '/vendas-crm/negocios' },
       { label: 'Propostas', path: '/vendas-crm/propostas' },
       { label: 'Pedidos de Venda', path: '/vendas-crm/pedidos-de-venda' },
+      { label: 'Comissões', path: '/vendas-crm/comissoes' },
       { label: 'Automação de Vendas', path: '/vendas-crm/automacao-vendas' },
       { label: 'Gestão de Contratos', path: '/vendas-crm/gestao-contratos' },
       { label: 'Produtos', path: '/vendas-crm/produtos' },
