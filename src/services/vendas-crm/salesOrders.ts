@@ -105,16 +105,51 @@ export async function approveSalesOrder(
     quantityByProduct.set(item.productId, (quantityByProduct.get(item.productId) ?? 0) + item.quantity);
   }
 
-  const inventoryRefByProduct = new Map<string, DocumentReference<DocumentData>>();
-  for (const productId of quantityByProduct.keys()) {
+  const findInventoryRef = async (
+    productId: string
+  ): Promise<DocumentReference<DocumentData> | null> => {
     const q = query(
       collection(firestore, "inventoryItems"),
       where("companyId", "==", companyId),
       where("productId", "==", productId)
     );
     const snap = await getDocs(q);
-    if (!snap.empty) {
-      inventoryRefByProduct.set(productId, snap.docs[0].ref);
+    return snap.empty ? null : snap.docs[0].ref;
+  };
+
+  // Resolves how much stock each inventoryItem needs to be deducted by: either
+  // directly (the sold product itself is tracked in stock) or through a recipe
+  // (the sold product has no stock of its own, but consumes fractional amounts
+  // of other products that are).
+  const inventoryRefById = new Map<string, DocumentReference<DocumentData>>();
+  const quantityByInventoryItem = new Map<string, number>();
+
+  for (const [productId, quantity] of quantityByProduct) {
+    const directRef = await findInventoryRef(productId);
+    if (directRef) {
+      inventoryRefById.set(directRef.id, directRef);
+      quantityByInventoryItem.set(
+        directRef.id,
+        (quantityByInventoryItem.get(directRef.id) ?? 0) + quantity
+      );
+      continue;
+    }
+
+    const productSnap = await getDoc(doc(firestore, "products", productId));
+    const recipe: { ingredientProductId: string; quantityPerUnit: number }[] = productSnap.exists()
+      ? (productSnap.data().recipe ?? [])
+      : [];
+
+    for (const ingredient of recipe) {
+      const ingredientRef = await findInventoryRef(ingredient.ingredientProductId);
+      if (!ingredientRef) continue;
+
+      const consumed = quantity * ingredient.quantityPerUnit;
+      inventoryRefById.set(ingredientRef.id, ingredientRef);
+      quantityByInventoryItem.set(
+        ingredientRef.id,
+        (quantityByInventoryItem.get(ingredientRef.id) ?? 0) + consumed
+      );
     }
   }
 
@@ -134,11 +169,11 @@ export async function approveSalesOrder(
       string,
       { ref: DocumentReference<DocumentData>; quantity: number; name: string }
     >();
-    for (const [productId, ref] of inventoryRefByProduct) {
+    for (const [itemId, ref] of inventoryRefById) {
       const snap = await transaction.get(ref);
       if (snap.exists()) {
         const data = snap.data();
-        inventoryData.set(productId, {
+        inventoryData.set(itemId, {
           ref,
           quantity: (data.quantity as number) ?? 0,
           name: data.name ?? "",
@@ -151,18 +186,18 @@ export async function approveSalesOrder(
       { ref: DocumentReference<DocumentData>; quantity: number }
     >();
     if (order.warehouseId) {
-      for (const [productId, inv] of inventoryData) {
+      for (const [itemId, inv] of inventoryData) {
         const wsRef = doc(firestore, "warehouseStock", `${inv.ref.id}_${order.warehouseId}`);
         const wsSnap = await transaction.get(wsRef);
-        warehouseStockData.set(productId, {
+        warehouseStockData.set(itemId, {
           ref: wsRef,
           quantity: wsSnap.exists() ? ((wsSnap.data().quantity as number) ?? 0) : 0,
         });
       }
     }
 
-    for (const [productId, quantity] of quantityByProduct) {
-      const inv = inventoryData.get(productId);
+    for (const [itemId, quantity] of quantityByInventoryItem) {
+      const inv = inventoryData.get(itemId);
       if (!inv) continue;
 
       const newQuantity = inv.quantity - quantity;
@@ -187,7 +222,7 @@ export async function approveSalesOrder(
       });
 
       if (order.warehouseId) {
-        const ws = warehouseStockData.get(productId)!;
+        const ws = warehouseStockData.get(itemId)!;
         transaction.set(ws.ref, {
           companyId,
           itemId: inv.ref.id,

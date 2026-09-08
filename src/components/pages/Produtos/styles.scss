@@ -65,6 +65,50 @@
     }
   }
 
+  &__recipe {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    border-top: 1px solid var(--color-border-soft);
+    border-bottom: 1px solid var(--color-border-soft);
+    padding: var(--space-3) 0;
+
+    &__label {
+      color: var(--color-text-muted);
+      font-size: var(--font-size-sm);
+      font-weight: 600;
+    }
+
+    &__table {
+      width: 100%;
+      border-collapse: collapse;
+
+      th,
+      td {
+        text-align: left;
+        padding: 0.4rem 0.5rem;
+        font-size: var(--font-size-sm);
+        border-bottom: 1px solid var(--color-border-soft);
+      }
+
+      th {
+        color: var(--color-text-muted);
+        font-weight: 600;
+      }
+    }
+
+    &__add {
+      display: grid;
+      grid-template-columns: 2fr 1fr auto;
+      gap: var(--space-2);
+      align-items: center;
+
+      @media (max-width: 480px) {
+        grid-template-columns: 1fr;
+      }
+    }
+  }
+
   &__table_wrap {
     overflow-x: auto;
   }

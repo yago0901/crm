@@ -23,6 +23,7 @@ export const mapProduct = (snap: QueryDocumentSnapshot<DocumentData>): IProduct 
     category: data.category ?? "",
     unit: data.unit ?? "un",
     salePrice: data.salePrice ?? 0,
+    recipe: data.recipe ?? [],
     status: data.status,
     notes: data.notes ?? "",
     ownerId: data.ownerId,

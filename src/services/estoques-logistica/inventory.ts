@@ -31,6 +31,8 @@ export const mapInventoryItem = (
     minQuantity: data.minQuantity ?? 0,
     unit: data.unit ?? "un",
     unitCost: data.unitCost ?? 0,
+    purchaseUnit: data.purchaseUnit ?? "",
+    unitsPerPurchase: data.unitsPerPurchase ?? 0,
     status: data.status,
     notes: data.notes ?? "",
     ownerId: data.ownerId,

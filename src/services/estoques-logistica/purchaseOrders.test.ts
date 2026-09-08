@@ -177,6 +177,33 @@ describe("receivePurchaseOrder", () => {
     );
   });
 
+  it("converts the received quantity from purchase units when the item has unitsPerPurchase", async () => {
+    const { set, update } = mockTransaction(
+      {
+        description: "Reposição de bebidas",
+        supplierName: "Distribuidora X",
+        value: 200,
+        status: "aprovado",
+        expectedDate: null,
+        receivedProcessedAt: null,
+        inventoryItemId: "item1",
+        quantity: 2,
+      },
+      { quantity: 5, name: "Vodka", unitsPerPurchase: 20 }
+    );
+
+    await receivePurchaseOrder("order1", { uid: "owner1", name: "Yago" });
+
+    expect(update).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ quantity: 45 })
+    );
+    expect(set).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ itemId: "item1", type: "entrada", quantity: 40, balanceAfter: 45 })
+    );
+  });
+
   it("also updates the warehouse balance when the order links to a warehouse", async () => {
     const { set } = mockTransaction(
       {

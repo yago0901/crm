@@ -148,6 +148,11 @@ export default function Compras() {
   const [orderToReceive, setOrderToReceive] = useState<IPurchaseOrder | null>(null);
   const [receiving, setReceiving] = useState(false);
 
+  const selectedInventoryItem = useMemo(
+    () => inventoryItems.find((i) => i.id === form.inventoryItemId) ?? null,
+    [inventoryItems, form.inventoryItemId]
+  );
+
   const openCreateForm = () => {
     setEditingId(null);
     setEditingStatus(null);
@@ -445,7 +450,13 @@ export default function Compras() {
               </select>
             </FormField>
             {form.inventoryItemId && (
-              <FormField label="Quantidade recebida">
+              <FormField
+                label={
+                  selectedInventoryItem?.unitsPerPurchase
+                    ? `Quantidade recebida (em ${selectedInventoryItem.purchaseUnit || "unidades de compra"})`
+                    : "Quantidade recebida"
+                }
+              >
                 <input
                   type="number"
                   min="0"
@@ -456,6 +467,11 @@ export default function Compras() {
                 />
               </FormField>
             )}
+            {selectedInventoryItem?.unitsPerPurchase ? (
+              <p className="purchases_page__form__hint">
+                1 {selectedInventoryItem.purchaseUnit || "unidade de compra"} = {selectedInventoryItem.unitsPerPurchase} {selectedInventoryItem.unit} no estoque — a conversão é feita sozinha ao receber.
+              </p>
+            ) : null}
             {form.inventoryItemId && (
               <FormField label="Armazém (opcional)">
                 <select

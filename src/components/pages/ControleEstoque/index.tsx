@@ -43,6 +43,8 @@ interface EditableFields {
   quantity: number;
   minQuantity: number;
   unitCost: number;
+  purchaseUnit: string;
+  unitsPerPurchase: number;
   status: InventoryItemStatus;
   notes: string;
 }
@@ -51,6 +53,8 @@ const EMPTY_FORM: EditableFields = {
   quantity: 0,
   minQuantity: 0,
   unitCost: 0,
+  purchaseUnit: "",
+  unitsPerPurchase: 0,
   status: "ativo",
   notes: "",
 };
@@ -163,6 +167,8 @@ export default function ControleEstoque() {
       quantity: item.quantity,
       minQuantity: item.minQuantity,
       unitCost: item.unitCost,
+      purchaseUnit: item.purchaseUnit ?? "",
+      unitsPerPurchase: item.unitsPerPurchase ?? 0,
       status: item.status,
       notes: item.notes ?? "",
     });
@@ -211,6 +217,8 @@ export default function ControleEstoque() {
           ...denormalized,
           minQuantity: form.minQuantity,
           unitCost: form.unitCost,
+          purchaseUnit: form.purchaseUnit,
+          unitsPerPurchase: form.unitsPerPurchase,
           status: form.status,
           notes: form.notes,
         });
@@ -222,6 +230,8 @@ export default function ControleEstoque() {
             quantity: form.quantity,
             minQuantity: form.minQuantity,
             unitCost: form.unitCost,
+            purchaseUnit: form.purchaseUnit,
+            unitsPerPurchase: form.unitsPerPurchase,
             status: form.status,
             notes: form.notes,
           },
@@ -266,6 +276,7 @@ export default function ControleEstoque() {
   const [movementValue, setMovementValue] = useState(0);
   const [movementNotes, setMovementNotes] = useState("");
   const [movementWarehouseId, setMovementWarehouseId] = useState("");
+  const [purchaseQuantity, setPurchaseQuantity] = useState(0);
   const [movementSaving, setMovementSaving] = useState(false);
 
   const loadHistory = (itemId: string) => {
@@ -284,7 +295,13 @@ export default function ControleEstoque() {
     setMovementValue(0);
     setMovementNotes("");
     setMovementWarehouseId("");
+    setPurchaseQuantity(0);
     loadHistory(item.id);
+  };
+
+  const handlePurchaseQuantityChange = (value: number) => {
+    setPurchaseQuantity(value);
+    setMovementValue(value * (movingItem?.unitsPerPurchase ?? 0));
   };
 
   const closeMovement = () => {
@@ -311,6 +328,7 @@ export default function ControleEstoque() {
       showToast("Movimentação registrada.", "success");
       setMovementValue(0);
       setMovementNotes("");
+      setPurchaseQuantity(0);
       loadHistory(movingItem.id);
       refresh();
       refreshActiveCount();
@@ -471,6 +489,23 @@ export default function ControleEstoque() {
                 onChange={(e) => setForm({ ...form, unitCost: Number(e.target.value) })}
               />
             </FormField>
+            <FormField label="Unidade de compra (opcional)">
+              <input
+                placeholder="ex.: garrafa, caixa"
+                value={form.purchaseUnit}
+                onChange={(e) => setForm({ ...form, purchaseUnit: e.target.value })}
+              />
+            </FormField>
+            <FormField label="Rendimento por unidade de compra">
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                placeholder="ex.: 20 doses por garrafa"
+                value={form.unitsPerPurchase}
+                onChange={(e) => setForm({ ...form, unitsPerPurchase: Number(e.target.value) })}
+              />
+            </FormField>
             <FormField label="Status">
               <select
                 value={form.status}
@@ -535,6 +570,19 @@ export default function ControleEstoque() {
                 ))}
               </select>
             </FormField>
+            {movementType === "entrada" && (movingItem?.unitsPerPurchase ?? 0) > 0 && (
+              <FormField
+                label={`Quantidade em ${movingItem?.purchaseUnit || "unidades de compra"} (opcional)`}
+              >
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={purchaseQuantity}
+                  onChange={(e) => handlePurchaseQuantityChange(Number(e.target.value))}
+                />
+              </FormField>
+            )}
             <FormField label={MOVEMENT_VALUE_LABEL[movementType]}>
               <input
                 required

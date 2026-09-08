@@ -133,6 +133,66 @@ describe("approveSalesOrder", () => {
     );
   });
 
+  it("consumes recipe ingredients when the sold product has no stock item of its own", async () => {
+    const order = {
+      contactId: "c1",
+      contactName: "Maria",
+      status: "rascunho",
+      approvedProcessedAt: null,
+      total: 50,
+      items: [
+        { productId: "sanduiche", productName: "Sanduíche", quantity: 4, unitPrice: 12.5, discountPercent: 0 },
+      ],
+    };
+
+    vi.mocked(getDoc)
+      .mockResolvedValueOnce({ exists: () => true, data: () => order } as never)
+      .mockResolvedValueOnce({
+        exists: () => true,
+        data: () => ({
+          recipe: [
+            { ingredientProductId: "pao", quantityPerUnit: 1 },
+            { ingredientProductId: "tomate", quantityPerUnit: 0.25 },
+          ],
+        }),
+      } as never);
+
+    vi.mocked(getDocs)
+      .mockResolvedValueOnce({ empty: true, docs: [] } as never)
+      .mockResolvedValueOnce({ empty: false, docs: [{ ref: { id: "item-pao" } }] } as never)
+      .mockResolvedValueOnce({ empty: false, docs: [{ ref: { id: "item-tomate" } }] } as never);
+
+    const get = vi
+      .fn()
+      .mockResolvedValueOnce({ exists: () => true, data: () => order })
+      .mockResolvedValueOnce({ exists: () => true, data: () => ({ quantity: 100, name: "Pão" }) })
+      .mockResolvedValueOnce({ exists: () => true, data: () => ({ quantity: 10, name: "Tomate" }) });
+    const set = vi.fn();
+    const update = vi.fn();
+    vi.mocked(runTransaction).mockImplementation(async (_db, callback) =>
+      callback({ get, set, update } as never)
+    );
+
+    await approveSalesOrder("order1", { uid: "owner1", name: "Yago" });
+
+    expect(update).toHaveBeenCalledWith(
+      expect.objectContaining({ id: "item-pao" }),
+      expect.objectContaining({ quantity: 96 })
+    );
+    expect(update).toHaveBeenCalledWith(
+      expect.objectContaining({ id: "item-tomate" }),
+      expect.objectContaining({ quantity: 9 })
+    );
+    expect(set).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ itemId: "item-pao", quantity: -4 })
+    );
+    expect(set).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ itemId: "item-tomate", quantity: -1 })
+    );
+  });
+
   it("throws when there isn't enough stock to fulfill the order", async () => {
     vi.mocked(getDoc).mockResolvedValue({ exists: () => true, data: () => baseOrder } as never);
     mockInventoryLookup([{ ref: { id: "item1" }, data: {} }]);
