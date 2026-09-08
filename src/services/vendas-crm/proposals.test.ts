@@ -10,6 +10,7 @@ vi.mock("firebase/firestore", () => ({
   addDoc: vi.fn(),
   deleteDoc: vi.fn(),
   updateDoc: vi.fn(),
+  getDocs: vi.fn(),
   getAggregateFromServer: vi.fn(),
   query: vi.fn((ref, ...constraints) => ({ type: "query", ref, constraints })),
   where: vi.fn((field, op, value) => ({ type: "where", field, op, value })),
@@ -18,8 +19,8 @@ vi.mock("firebase/firestore", () => ({
   onSnapshot: vi.fn(),
 }));
 
-import { addDoc } from "firebase/firestore";
-import { createProposal } from "./proposals";
+import { addDoc, getDocs, where } from "firebase/firestore";
+import { createProposal, fetchAcceptedProposals } from "./proposals";
 import { setCurrentCompanyId } from "../shared/tenant";
 
 describe("createProposal", () => {
@@ -68,5 +69,25 @@ describe("createProposal", () => {
       expect.anything(),
       expect.objectContaining({ companyId: "acme" })
     );
+  });
+});
+
+describe("fetchAcceptedProposals", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("returns an empty array when there is no current company", async () => {
+    setCurrentCompanyId(null);
+    expect(await fetchAcceptedProposals()).toEqual([]);
+  });
+
+  it("filters by aceita status", async () => {
+    setCurrentCompanyId("acme");
+    vi.mocked(getDocs).mockResolvedValue({ docs: [] } as never);
+
+    await fetchAcceptedProposals();
+
+    expect(where).toHaveBeenCalledWith("status", "==", "aceita");
   });
 });
