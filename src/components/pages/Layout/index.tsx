@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { Outlet } from 'react-router-dom';
+import { Outlet, useLocation } from 'react-router-dom';
 import Navbar from '../../common/Navbar';
+import ErrorBoundary from '../../common/ErrorBoundary';
 import { useAuth } from '../../../contexts/auth/AuthContext';
 import './styles.scss';
 
@@ -9,6 +10,7 @@ const TRIAL_WARNING_DAYS = 5;
 
 const Layout = () => {
   const { trialDaysRemaining } = useAuth();
+  const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(() => {
     return localStorage.getItem(MENU_STATE_KEY) === 'true';
   });
@@ -36,7 +38,9 @@ const Layout = () => {
                   : `Seu período de teste termina em ${trialDaysRemaining} dia${trialDaysRemaining === 1 ? '' : 's'}.`}
               </div>
             )}
-            <Outlet />
+            <ErrorBoundary key={location.pathname}>
+              <Outlet />
+            </ErrorBoundary>
         </div>
       </div>
     </div>

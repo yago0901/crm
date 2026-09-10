@@ -36,6 +36,7 @@ import { setEmployeeAccess } from "./employeeAccess";
 import {
   convertCandidateToEmployee,
   fetchEmployeesByIds,
+  mapEmployee,
   updateEmployeeAndSyncAccess,
 } from "./employees";
 import { setCurrentCompanyId } from "../shared/tenant";
@@ -143,6 +144,47 @@ describe("convertCandidateToEmployee", () => {
       expect.objectContaining({ entityType: "candidates", action: "update" })
     );
     expect(batchCommit).toHaveBeenCalledOnce();
+  });
+});
+
+describe("mapEmployee", () => {
+  it("defaults the RH-depth fields when absent from the document", () => {
+    const employee = mapEmployee({
+      id: "e1",
+      data: () => ({ name: "Fábio", email: "f@x.com", role: "Dev", department: "TI", status: "ativo", ownerId: "o1" }),
+    } as never);
+
+    expect(employee.managerId).toBe("");
+    expect(employee.managerName).toBe("");
+    expect(employee.contractType).toBe("");
+    expect(employee.costCenter).toBe("");
+    expect(employee.weeklyHours).toBe(0);
+    expect(employee.jobHistory).toEqual([]);
+  });
+
+  it("passes through job history entries and contract type", () => {
+    const employee = mapEmployee({
+      id: "e2",
+      data: () => ({
+        name: "Ana",
+        email: "a@x.com",
+        role: "Gerente",
+        department: "Vendas",
+        status: "ativo",
+        ownerId: "o1",
+        contractType: "clt",
+        weeklyHours: 44,
+        managerId: "e1",
+        managerName: "Fábio",
+        jobHistory: [{ effectiveDate: null, role: "Analista", salary: 3000, reason: "Admissão" }],
+      }),
+    } as never);
+
+    expect(employee.contractType).toBe("clt");
+    expect(employee.weeklyHours).toBe(44);
+    expect(employee.managerName).toBe("Fábio");
+    expect(employee.jobHistory).toHaveLength(1);
+    expect(employee.jobHistory?.[0].role).toBe("Analista");
   });
 });
 
