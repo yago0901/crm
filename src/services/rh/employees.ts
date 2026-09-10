@@ -2,6 +2,7 @@ import {
   DocumentData,
   collection,
   doc,
+  documentId,
   getDocs,
   orderBy,
   query,
@@ -34,6 +35,7 @@ export const mapEmployee = (
     salary: data.salary ?? 0,
     hireDate: data.hireDate ?? null,
     commissionRate: data.commissionRate ?? 0,
+    costPerHour: data.costPerHour ?? 0,
     notes: data.notes ?? "",
     userId: data.userId ?? null,
     ownerId: data.ownerId,
@@ -88,6 +90,24 @@ export async function fetchActiveEmployees(): Promise<IEmployee[]> {
   const q = query(employeesService.ref, ...constraints);
   const snapshot = await getDocs(q);
   return snapshot.docs.map(mapEmployee);
+}
+
+export async function fetchEmployeesByIds(employeeIds: string[]): Promise<IEmployee[]> {
+  if (employeeIds.length === 0) return [];
+  const companyId = getCurrentCompanyId();
+
+  const results: IEmployee[] = [];
+  for (let i = 0; i < employeeIds.length; i += 30) {
+    const batchIds = employeeIds.slice(i, i + 30);
+    const constraints = [
+      ...(companyId ? [where("companyId", "==", companyId)] : []),
+      where(documentId(), "in", batchIds),
+    ];
+    const q = query(employeesService.ref, ...constraints);
+    const snapshot = await getDocs(q);
+    results.push(...snapshot.docs.map(mapEmployee));
+  }
+  return results;
 }
 
 export interface IUpdateEmployeeResult {

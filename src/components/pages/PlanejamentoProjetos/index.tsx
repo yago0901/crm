@@ -16,6 +16,10 @@ import {
   mapProject,
   updateProject,
 } from "../../../services/projetos/projects";
+import {
+  fetchProjectCostBreakdown,
+  IProjectCostBreakdown,
+} from "../../../services/projetos/projectCosts";
 import { IProject, ProjectInput, ProjectStatus } from "../../../types/project";
 import { PAGE_SIZE } from "../../../constants/pagination";
 import "./styles.scss";
@@ -105,6 +109,11 @@ export default function PlanejamentoProjetos() {
 
   const [projectToDelete, setProjectToDelete] = useState<IProject | null>(null);
 
+  const [costPanelProject, setCostPanelProject] = useState<IProject | null>(null);
+  const [costBreakdown, setCostBreakdown] = useState<IProjectCostBreakdown | null>(null);
+  const [loadingCosts, setLoadingCosts] = useState(false);
+  const [costsError, setCostsError] = useState<string | null>(null);
+
   const openCreateForm = () => {
     setEditingId(null);
     setForm(EMPTY_FORM);
@@ -158,6 +167,27 @@ export default function PlanejamentoProjetos() {
     } finally {
       setSaving(false);
     }
+  };
+
+  const openCostsPanel = async (project: IProject) => {
+    setCostPanelProject(project);
+    setCostBreakdown(null);
+    setCostsError(null);
+    setLoadingCosts(true);
+    try {
+      const breakdown = await fetchProjectCostBreakdown(project);
+      setCostBreakdown(breakdown);
+    } catch (err) {
+      setCostsError(err instanceof Error ? err.message : "Erro ao calcular custos");
+    } finally {
+      setLoadingCosts(false);
+    }
+  };
+
+  const closeCostsPanel = () => {
+    setCostPanelProject(null);
+    setCostBreakdown(null);
+    setCostsError(null);
   };
 
   const handleDelete = async () => {
@@ -239,6 +269,9 @@ export default function PlanejamentoProjetos() {
                   </td>
                   <td>
                     <div className="projects_page__table__actions">
+                      <Button variant="secondary" onClick={() => openCostsPanel(project)}>
+                        Custos
+                      </Button>
                       <Button variant="secondary" onClick={() => openEditForm(project)}>
                         Editar
                       </Button>
@@ -336,6 +369,52 @@ export default function PlanejamentoProjetos() {
             </Button>
           </div>
         </form>
+      </Modal>
+
+      <Modal
+        isOpen={!!costPanelProject}
+        onClose={closeCostsPanel}
+        title={`Custos: ${costPanelProject?.name ?? ""}`}
+      >
+        {loadingCosts ? (
+          <p className="projects_page__costs__empty">Calculando custos...</p>
+        ) : costsError ? (
+          <p className="projects_page__error">{costsError}</p>
+        ) : costBreakdown ? (
+          <div className="projects_page__costs">
+            <div className="projects_page__costs__row">
+              <span>Orçamento</span>
+              <strong>{currency.format(costBreakdown.budget)}</strong>
+            </div>
+            <div className="projects_page__costs__row">
+              <span>Mão de obra (estimada)</span>
+              <strong>{currency.format(costBreakdown.laborCost)}</strong>
+            </div>
+            <div className="projects_page__costs__row">
+              <span>Marcos do projeto</span>
+              <strong>{currency.format(costBreakdown.milestonesCost)}</strong>
+            </div>
+            <div className="projects_page__costs__row">
+              <span>Compras vinculadas</span>
+              <strong>{currency.format(costBreakdown.purchasesCost)}</strong>
+            </div>
+            <div className="projects_page__costs__row projects_page__costs__row--total">
+              <span>Custo real total</span>
+              <strong>{currency.format(costBreakdown.totalCost)}</strong>
+            </div>
+            <div className="projects_page__costs__result">
+              <Badge tone={costBreakdown.difference >= 0 ? "success" : "danger"}>
+                {costBreakdown.difference >= 0
+                  ? `Dentro do orçamento (sobram ${currency.format(costBreakdown.difference)})`
+                  : `Estourou o orçamento em ${currency.format(Math.abs(costBreakdown.difference))}`}
+              </Badge>
+            </div>
+            <p className="projects_page__costs__hint">
+              Mão de obra é uma estimativa (dedicação × dias úteis × custo/hora do
+              funcionário), não um apontamento real de horas trabalhadas.
+            </p>
+          </div>
+        ) : null}
       </Modal>
 
       <ConfirmDialog

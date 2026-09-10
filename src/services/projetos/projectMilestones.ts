@@ -1,4 +1,11 @@
-import { DocumentData, QueryDocumentSnapshot, Unsubscribe } from "firebase/firestore";
+import {
+  DocumentData,
+  QueryDocumentSnapshot,
+  Unsubscribe,
+  getDocs,
+  query,
+  where,
+} from "firebase/firestore";
 import { createCrudService } from "../shared/crudFactory";
 import { getCurrentCompanyId } from "../shared/tenant";
 import {
@@ -72,4 +79,19 @@ export async function deleteProjectMilestone(milestoneId: string): Promise<void>
 
 export async function getDelayedMilestonesCount(): Promise<number> {
   return projectMilestonesService.countByStatus("atrasado", getCurrentCompanyId() ?? undefined);
+}
+
+export async function fetchMilestonesByProject(
+  projectId: string
+): Promise<IProjectMilestone[]> {
+  const companyId = getCurrentCompanyId();
+  if (!companyId) return [];
+
+  const q = query(
+    projectMilestonesService.ref,
+    where("companyId", "==", companyId),
+    where("projectId", "==", projectId)
+  );
+  const snap = await getDocs(q);
+  return snap.docs.map(mapProjectMilestone);
 }

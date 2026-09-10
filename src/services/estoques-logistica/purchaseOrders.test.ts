@@ -12,6 +12,7 @@ vi.mock("firebase/firestore", () => ({
   deleteDoc: vi.fn(),
   updateDoc: vi.fn(),
   runTransaction: vi.fn(),
+  getDocs: vi.fn(),
   getAggregateFromServer: vi.fn(),
   query: vi.fn((ref, ...constraints) => ({ type: "query", ref, constraints })),
   where: vi.fn((field, op, value) => ({ type: "where", field, op, value })),
@@ -21,9 +22,10 @@ vi.mock("firebase/firestore", () => ({
   onSnapshot: vi.fn(),
 }));
 
-import { addDoc, getAggregateFromServer, runTransaction } from "firebase/firestore";
+import { addDoc, getAggregateFromServer, getDocs, runTransaction, where } from "firebase/firestore";
 import {
   createPurchaseOrder,
+  fetchPurchaseOrdersByProject,
   getPendingPurchaseOrdersTotal,
   receivePurchaseOrder,
 } from "./purchaseOrders";
@@ -272,5 +274,30 @@ describe("getPendingPurchaseOrdersTotal", () => {
     } as never);
 
     expect(await getPendingPurchaseOrdersTotal()).toBe(4200);
+  });
+});
+
+describe("fetchPurchaseOrdersByProject", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("returns an empty array when there is no current company", async () => {
+    setCurrentCompanyId(null);
+    expect(await fetchPurchaseOrdersByProject("p1")).toEqual([]);
+  });
+
+  it("filters by companyId and projectId", async () => {
+    setCurrentCompanyId("acme");
+    const docs = [
+      { id: "po1", data: () => ({ projectId: "p1", supplierId: "s1", description: "X", value: 100, status: "aprovado", ownerId: "o1" }) },
+    ];
+    vi.mocked(getDocs).mockResolvedValue({ docs } as never);
+
+    const orders = await fetchPurchaseOrdersByProject("p1");
+
+    expect(orders).toHaveLength(1);
+    expect(where).toHaveBeenCalledWith("companyId", "==", "acme");
+    expect(where).toHaveBeenCalledWith("projectId", "==", "p1");
   });
 });
