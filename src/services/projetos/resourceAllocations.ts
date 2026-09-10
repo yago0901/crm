@@ -1,4 +1,11 @@
-import { DocumentData, QueryDocumentSnapshot, Unsubscribe } from "firebase/firestore";
+import {
+  DocumentData,
+  QueryDocumentSnapshot,
+  Unsubscribe,
+  getDocs,
+  query,
+  where,
+} from "firebase/firestore";
 import { createCrudService } from "../shared/crudFactory";
 import { getCurrentCompanyId } from "../shared/tenant";
 import {
@@ -74,4 +81,19 @@ export async function deleteResourceAllocation(allocationId: string): Promise<vo
 
 export async function getActiveAllocationsCount(): Promise<number> {
   return resourceAllocationsService.countByStatus("ativa", getCurrentCompanyId() ?? undefined);
+}
+
+export async function fetchAllocationsByProject(
+  projectId: string
+): Promise<IResourceAllocation[]> {
+  const companyId = getCurrentCompanyId();
+  if (!companyId) return [];
+
+  const q = query(
+    resourceAllocationsService.ref,
+    where("companyId", "==", companyId),
+    where("projectId", "==", projectId)
+  );
+  const snap = await getDocs(q);
+  return snap.docs.map(mapResourceAllocation);
 }

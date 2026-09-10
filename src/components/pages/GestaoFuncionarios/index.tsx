@@ -42,6 +42,7 @@ const EMPTY_FORM: EmployeeInput = {
   salary: 0,
   hireDate: null,
   commissionRate: 0,
+  costPerHour: 0,
   notes: "",
 };
 
@@ -137,6 +138,7 @@ export default function GestaoFuncionarios() {
       salary: employee.salary,
       hireDate: employee.hireDate,
       commissionRate: employee.commissionRate ?? 0,
+      costPerHour: employee.costPerHour ?? 0,
       notes: employee.notes,
     });
     setIsFormOpen(true);
@@ -383,6 +385,17 @@ export default function GestaoFuncionarios() {
                 value={form.commissionRate}
                 onChange={(e) =>
                   setForm({ ...form, commissionRate: Number(e.target.value) })
+                }
+              />
+            </FormField>
+            <FormField label="Custo por hora (R$, opcional)">
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                value={form.costPerHour}
+                onChange={(e) =>
+                  setForm({ ...form, costPerHour: Number(e.target.value) })
                 }
               />
             </FormField>

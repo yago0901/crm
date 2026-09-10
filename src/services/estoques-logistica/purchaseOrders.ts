@@ -4,8 +4,11 @@ import {
   Unsubscribe,
   collection,
   doc,
+  getDocs,
+  query,
   runTransaction,
   serverTimestamp,
+  where,
 } from "firebase/firestore";
 import { firestore } from "../shared/firebase";
 import { createCrudService } from "../shared/crudFactory";
@@ -33,6 +36,8 @@ export const mapPurchaseOrder = (
     quantity: data.quantity ?? 0,
     warehouseId: data.warehouseId ?? "",
     warehouseName: data.warehouseName ?? "",
+    projectId: data.projectId ?? "",
+    projectName: data.projectName ?? "",
     receivedProcessedAt: data.receivedProcessedAt ?? null,
     ownerId: data.ownerId,
     ownerName: data.ownerName ?? "",
@@ -75,6 +80,19 @@ export async function deletePurchaseOrder(orderId: string): Promise<void> {
 
 export async function getPendingPurchaseOrdersTotal(): Promise<number> {
   return purchaseOrdersService.sumByStatus("value", "pendente", getCurrentCompanyId() ?? undefined);
+}
+
+export async function fetchPurchaseOrdersByProject(projectId: string): Promise<IPurchaseOrder[]> {
+  const companyId = getCurrentCompanyId();
+  if (!companyId) return [];
+
+  const q = query(
+    purchaseOrdersService.ref,
+    where("companyId", "==", companyId),
+    where("projectId", "==", projectId)
+  );
+  const snap = await getDocs(q);
+  return snap.docs.map(mapPurchaseOrder);
 }
 
 export async function receivePurchaseOrder(

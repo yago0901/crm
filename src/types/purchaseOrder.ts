@@ -18,6 +18,8 @@ export interface IPurchaseOrder {
   quantity?: number;
   warehouseId?: string;
   warehouseName?: string;
+  projectId?: string;
+  projectName?: string;
   receivedProcessedAt: Timestamp | null;
   ownerId: string;
   ownerName?: string;
@@ -40,4 +42,6 @@ export type PurchaseOrderInput = Pick<
   | "quantity"
   | "warehouseId"
   | "warehouseName"
+  | "projectId"
+  | "projectName"
 >;

@@ -26,13 +26,18 @@ vi.mock("firebase/firestore", () => ({
   query: vi.fn((ref, ...constraints) => ({ type: "query", ref, constraints })),
   where: vi.fn((field, op, value) => ({ type: "where", field, op, value })),
   orderBy: vi.fn((field, direction) => ({ type: "orderBy", field, direction })),
+  documentId: vi.fn(() => "__name__"),
   serverTimestamp: vi.fn(() => "SERVER_TIMESTAMP"),
   onSnapshot: vi.fn(),
 }));
 
-import { getDoc, writeBatch } from "firebase/firestore";
+import { getDoc, getDocs, writeBatch } from "firebase/firestore";
 import { setEmployeeAccess } from "./employeeAccess";
-import { convertCandidateToEmployee, updateEmployeeAndSyncAccess } from "./employees";
+import {
+  convertCandidateToEmployee,
+  fetchEmployeesByIds,
+  updateEmployeeAndSyncAccess,
+} from "./employees";
 import { setCurrentCompanyId } from "../shared/tenant";
 
 describe("updateEmployeeAndSyncAccess", () => {
@@ -138,5 +143,36 @@ describe("convertCandidateToEmployee", () => {
       expect.objectContaining({ entityType: "candidates", action: "update" })
     );
     expect(batchCommit).toHaveBeenCalledOnce();
+  });
+});
+
+describe("fetchEmployeesByIds", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    setCurrentCompanyId("acme");
+  });
+
+  it("returns an empty array without querying when given no ids", async () => {
+    expect(await fetchEmployeesByIds([])).toEqual([]);
+    expect(getDocs).not.toHaveBeenCalled();
+  });
+
+  it("returns employees mapped from the snapshot", async () => {
+    const docs = [{ id: "e1", data: () => ({ name: "Fábio", costPerHour: 10, ownerId: "o1" }) }];
+    vi.mocked(getDocs).mockResolvedValue({ docs } as never);
+
+    const employees = await fetchEmployeesByIds(["e1"]);
+
+    expect(employees).toHaveLength(1);
+    expect(employees[0].costPerHour).toBe(10);
+  });
+
+  it("batches lookups in groups of 30 ids", async () => {
+    vi.mocked(getDocs).mockResolvedValue({ docs: [] } as never);
+    const ids = Array.from({ length: 35 }, (_, i) => `e${i}`);
+
+    await fetchEmployeesByIds(ids);
+
+    expect(getDocs).toHaveBeenCalledTimes(2);
   });
 });

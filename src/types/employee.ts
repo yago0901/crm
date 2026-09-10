@@ -14,6 +14,7 @@ export interface IEmployee {
   salary: number;
   hireDate: Timestamp | null;
   commissionRate?: number;
+  costPerHour?: number;
   notes?: string;
   userId: string | null;
   ownerId: string;
@@ -33,5 +34,6 @@ export type EmployeeInput = Pick<
   | "salary"
   | "hireDate"
   | "commissionRate"
+  | "costPerHour"
   | "notes"
 >;

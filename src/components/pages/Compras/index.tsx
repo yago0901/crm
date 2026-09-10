@@ -20,10 +20,12 @@ import {
 import { fetchActiveSuppliers } from "../../../services/estoques-logistica/suppliers";
 import { fetchActiveInventoryItems } from "../../../services/estoques-logistica/inventory";
 import { fetchActiveWarehouses } from "../../../services/estoques-logistica/warehouses";
+import { fetchActiveProjects } from "../../../services/projetos/projects";
 import { IPurchaseOrder, PurchaseOrderInput, PurchaseOrderStatus } from "../../../types/purchaseOrder";
 import { ISupplier } from "../../../types/supplier";
 import { IInventoryItem } from "../../../types/inventoryItem";
 import { IWarehouse } from "../../../types/warehouse";
+import { IProject } from "../../../types/project";
 import { PAGE_SIZE } from "../../../constants/pagination";
 import "./styles.scss";
 
@@ -61,6 +63,8 @@ const EMPTY_FORM: PurchaseOrderInput = {
   quantity: 0,
   warehouseId: "",
   warehouseName: "",
+  projectId: "",
+  projectName: "",
 };
 
 const currency = new Intl.NumberFormat("pt-BR", {
@@ -81,6 +85,7 @@ export default function Compras() {
   const [suppliers, setSuppliers] = useState<ISupplier[]>([]);
   const [inventoryItems, setInventoryItems] = useState<IInventoryItem[]>([]);
   const [warehouses, setWarehouses] = useState<IWarehouse[]>([]);
+  const [projects, setProjects] = useState<IProject[]>([]);
   const [totalPendente, setTotalPendente] = useState(0);
   const [loadError, setLoadError] = useState<string | null>(null);
 
@@ -138,6 +143,12 @@ export default function Compras() {
       .catch((err) => setLoadError(err.message));
   }, []);
 
+  useEffect(() => {
+    fetchActiveProjects()
+      .then(setProjects)
+      .catch((err) => setLoadError(err.message));
+  }, []);
+
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingStatus, setEditingStatus] = useState<PurchaseOrderStatus | null>(null);
@@ -177,6 +188,8 @@ export default function Compras() {
       quantity: order.quantity ?? 0,
       warehouseId: order.warehouseId ?? "",
       warehouseName: order.warehouseName ?? "",
+      projectId: order.projectId ?? "",
+      projectName: order.projectName ?? "",
     });
     setIsFormOpen(true);
   };
@@ -212,6 +225,15 @@ export default function Compras() {
       ...form,
       warehouseId,
       warehouseName: warehouse?.name ?? "",
+    });
+  };
+
+  const handleProjectChange = (projectId: string) => {
+    const project = projects.find((p) => p.id === projectId);
+    setForm({
+      ...form,
+      projectId,
+      projectName: project?.name ?? "",
     });
   };
 
@@ -505,6 +527,19 @@ export default function Compras() {
                   setForm({ ...form, expectedDate: fromDateInput(e.target.value) })
                 }
               />
+            </FormField>
+            <FormField label="Projeto vinculado (opcional)">
+              <select
+                value={form.projectId}
+                onChange={(e) => handleProjectChange(e.target.value)}
+              >
+                <option value="">Nenhum</option>
+                {projects.map((project) => (
+                  <option key={project.id} value={project.id}>
+                    {project.name}
+                  </option>
+                ))}
+              </select>
             </FormField>
           </div>
           <FormField label="Observações">

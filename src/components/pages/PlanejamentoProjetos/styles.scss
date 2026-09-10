@@ -112,4 +112,40 @@
       gap: var(--space-2);
     }
   }
+
+  &__costs {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+
+    &__row {
+      display: flex;
+      justify-content: space-between;
+      padding: 0.4rem 0;
+      border-bottom: 1px solid var(--color-border-soft);
+      font-size: var(--font-size-base);
+
+      &--total {
+        font-weight: 600;
+        border-bottom: none;
+        padding-top: var(--space-2);
+      }
+    }
+
+    &__result {
+      padding-top: var(--space-2);
+    }
+
+    &__hint {
+      color: var(--color-text-muted);
+      font-size: var(--font-size-sm);
+      margin: 0;
+    }
+
+    &__empty {
+      color: var(--color-text-muted);
+      padding: 1rem 0;
+      text-align: center;
+    }
+  }
 }

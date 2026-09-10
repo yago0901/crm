@@ -10,6 +10,7 @@ vi.mock("firebase/firestore", () => ({
   addDoc: vi.fn(),
   deleteDoc: vi.fn(),
   updateDoc: vi.fn(),
+  getDocs: vi.fn(),
   getAggregateFromServer: vi.fn(),
   query: vi.fn((ref, ...constraints) => ({ type: "query", ref, constraints })),
   where: vi.fn((field, op, value) => ({ type: "where", field, op, value })),
@@ -19,8 +20,12 @@ vi.mock("firebase/firestore", () => ({
   onSnapshot: vi.fn(),
 }));
 
-import { addDoc, getAggregateFromServer } from "firebase/firestore";
-import { createProjectMilestone, getDelayedMilestonesCount } from "./projectMilestones";
+import { addDoc, getAggregateFromServer, getDocs, where } from "firebase/firestore";
+import {
+  createProjectMilestone,
+  fetchMilestonesByProject,
+  getDelayedMilestonesCount,
+} from "./projectMilestones";
 import { setCurrentCompanyId } from "../shared/tenant";
 
 describe("createProjectMilestone", () => {
@@ -89,5 +94,30 @@ describe("getDelayedMilestonesCount", () => {
     } as never);
 
     expect(await getDelayedMilestonesCount()).toBe(2);
+  });
+});
+
+describe("fetchMilestonesByProject", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("returns an empty array when there is no current company", async () => {
+    setCurrentCompanyId(null);
+    expect(await fetchMilestonesByProject("p1")).toEqual([]);
+  });
+
+  it("filters by companyId and projectId", async () => {
+    setCurrentCompanyId("acme");
+    const docs = [
+      { id: "m1", data: () => ({ projectId: "p1", title: "Entrega 1", actualCost: 500, status: "pendente", ownerId: "o1" }) },
+    ];
+    vi.mocked(getDocs).mockResolvedValue({ docs } as never);
+
+    const milestones = await fetchMilestonesByProject("p1");
+
+    expect(milestones).toHaveLength(1);
+    expect(where).toHaveBeenCalledWith("companyId", "==", "acme");
+    expect(where).toHaveBeenCalledWith("projectId", "==", "p1");
   });
 });
