@@ -20,8 +20,45 @@ vi.mock("firebase/firestore", () => ({
 }));
 
 import { addDoc, getAggregateFromServer } from "firebase/firestore";
-import { createTraining, getScheduledTrainingsCount } from "./trainings";
+import { createTraining, getScheduledTrainingsCount, mapTraining } from "./trainings";
 import { setCurrentCompanyId } from "../shared/tenant";
+
+describe("mapTraining", () => {
+  it("defaults participants and rating when absent", () => {
+    const training = mapTraining({
+      id: "t1",
+      data: () => ({ title: "Onboarding", category: "RH", status: "planejado", ownerId: "o1" }),
+    } as never);
+
+    expect(training.participants).toEqual([]);
+    expect(training.rating).toBe(0);
+  });
+
+  it("passes participant rows through with attendance, score and certificate flags", () => {
+    const training = mapTraining({
+      id: "t2",
+      data: () => ({
+        title: "Segurança",
+        category: "SST",
+        status: "concluido",
+        ownerId: "o1",
+        rating: 4.5,
+        participants: [
+          { employeeId: "e1", employeeName: "Ana", attended: true, score: 90, certificateIssued: true },
+        ],
+      }),
+    } as never);
+
+    expect(training.rating).toBe(4.5);
+    expect(training.participants).toHaveLength(1);
+    expect(training.participants?.[0]).toMatchObject({
+      employeeName: "Ana",
+      attended: true,
+      score: 90,
+      certificateIssued: true,
+    });
+  });
+});
 
 describe("createTraining", () => {
   beforeEach(() => {

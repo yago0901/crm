@@ -15,6 +15,8 @@ export const mapTraining = (
     category: data.category ?? "",
     date: data.date ?? null,
     status: data.status,
+    participants: data.participants ?? [],
+    rating: data.rating ?? 0,
     notes: data.notes ?? "",
     ownerId: data.ownerId,
     ownerName: data.ownerName ?? "",

@@ -22,7 +22,14 @@ import {
   mapTraining,
   updateTraining,
 } from "../../../services/rh/trainings";
-import { ITraining, TrainingInput, TrainingStatus } from "../../../types/training";
+import { fetchActiveEmployees } from "../../../services/rh/employees";
+import {
+  ITraining,
+  ITrainingParticipant,
+  TrainingInput,
+  TrainingStatus,
+} from "../../../types/training";
+import { IEmployee } from "../../../types/employee";
 import { PAGE_SIZE } from "../../../constants/pagination";
 import "./styles.scss";
 
@@ -46,6 +53,8 @@ const EMPTY_FORM: TrainingInput = {
   category: "",
   date: null,
   status: "planejado",
+  participants: [],
+  rating: 0,
   notes: "",
 };
 
@@ -55,6 +64,7 @@ export default function Treinamento() {
 
   const [scheduledCount, setScheduledCount] = useState(0);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [employees, setEmployees] = useState<IEmployee[]>([]);
 
   const [statusFilter, setStatusFilter] = useState<TrainingStatus | "all">("all");
 
@@ -92,16 +102,37 @@ export default function Treinamento() {
     refreshScheduledCount();
   }, []);
 
+  useEffect(() => {
+    fetchActiveEmployees()
+      .then(setEmployees)
+      .catch((err) => setLoadError(err.message));
+  }, []);
+
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<TrainingInput>(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
+  const [participantDraftId, setParticipantDraftId] = useState("");
 
   const [trainingToDelete, setTrainingToDelete] = useState<ITraining | null>(null);
+
+  const participants = useMemo(() => form.participants ?? [], [form.participants]);
+
+  const attendanceSummary = useMemo(() => {
+    const present = participants.filter((p) => p.attended).length;
+    const certificates = participants.filter((p) => p.certificateIssued).length;
+    return { present, certificates, total: participants.length };
+  }, [participants]);
+
+  const availableEmployees = useMemo(
+    () => employees.filter((e) => !participants.some((p) => p.employeeId === e.id)),
+    [employees, participants]
+  );
 
   const openCreateForm = () => {
     setEditingId(null);
     setForm(EMPTY_FORM);
+    setParticipantDraftId("");
     setIsFormOpen(true);
   };
 
@@ -113,8 +144,11 @@ export default function Treinamento() {
       category: training.category,
       date: training.date,
       status: training.status,
+      participants: training.participants ?? [],
+      rating: training.rating ?? 0,
       notes: training.notes,
     });
+    setParticipantDraftId("");
     setIsFormOpen(true);
   };
 
@@ -122,6 +156,32 @@ export default function Treinamento() {
     setIsFormOpen(false);
     setEditingId(null);
     setForm(EMPTY_FORM);
+    setParticipantDraftId("");
+  };
+
+  const addParticipant = () => {
+    const employee = employees.find((e) => e.id === participantDraftId);
+    if (!employee) return;
+    const entry: ITrainingParticipant = {
+      employeeId: employee.id,
+      employeeName: employee.name,
+      attended: false,
+      score: 0,
+      certificateIssued: false,
+    };
+    setForm({ ...form, participants: [...participants, entry] });
+    setParticipantDraftId("");
+  };
+
+  const updateParticipant = (index: number, patch: Partial<ITrainingParticipant>) => {
+    setForm({
+      ...form,
+      participants: participants.map((p, i) => (i === index ? { ...p, ...patch } : p)),
+    });
+  };
+
+  const removeParticipant = (index: number) => {
+    setForm({ ...form, participants: participants.filter((_, i) => i !== index) });
   };
 
   const handleSubmit = async (event: FormEvent) => {
@@ -213,33 +273,39 @@ export default function Treinamento() {
                 <th>Título</th>
                 <th>Categoria</th>
                 <th>Data</th>
+                <th>Participantes</th>
                 <th>Status</th>
                 <th />
               </tr>
             </thead>
             <tbody>
-              {trainings.map((training) => (
-                <tr key={training.id}>
-                  <td>{training.title}</td>
-                  <td>{training.category || "—"}</td>
-                  <td>{toDateInput(training.date) || "—"}</td>
-                  <td>
-                    <Badge tone={STATUS_TONE[training.status]}>
-                      {STATUS_LABEL[training.status]}
-                    </Badge>
-                  </td>
-                  <td>
-                    <div className="trainings_page__table__actions">
-                      <Button variant="secondary" onClick={() => openEditForm(training)}>
-                        Editar
-                      </Button>
-                      <Button variant="danger" onClick={() => setTrainingToDelete(training)}>
-                        Excluir
-                      </Button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
+              {trainings.map((training) => {
+                const roster = training.participants ?? [];
+                const present = roster.filter((p) => p.attended).length;
+                return (
+                  <tr key={training.id}>
+                    <td>{training.title}</td>
+                    <td>{training.category || "—"}</td>
+                    <td>{toDateInput(training.date) || "—"}</td>
+                    <td>{roster.length > 0 ? `${present}/${roster.length} presentes` : "—"}</td>
+                    <td>
+                      <Badge tone={STATUS_TONE[training.status]}>
+                        {STATUS_LABEL[training.status]}
+                      </Badge>
+                    </td>
+                    <td>
+                      <div className="trainings_page__table__actions">
+                        <Button variant="secondary" onClick={() => openEditForm(training)}>
+                          Editar
+                        </Button>
+                        <Button variant="danger" onClick={() => setTrainingToDelete(training)}>
+                          Excluir
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
@@ -293,7 +359,107 @@ export default function Treinamento() {
                 <option value="cancelado">Cancelado</option>
               </select>
             </FormField>
+            <FormField label="Avaliação do treinamento (0 a 5)">
+              <input
+                type="number"
+                min="0"
+                max="5"
+                step="0.5"
+                value={form.rating}
+                onChange={(e) => setForm({ ...form, rating: Number(e.target.value) })}
+              />
+            </FormField>
           </div>
+
+          <div className="trainings_page__section">
+            <h3>Participantes</h3>
+            {participants.length > 0 && (
+              <table className="trainings_page__participants">
+                <thead>
+                  <tr>
+                    <th>Funcionário</th>
+                    <th>Presente</th>
+                    <th>Nota</th>
+                    <th>Certificado</th>
+                    <th />
+                  </tr>
+                </thead>
+                <tbody>
+                  {participants.map((participant, index) => (
+                    <tr key={participant.employeeId}>
+                      <td>{participant.employeeName}</td>
+                      <td>
+                        <input
+                          type="checkbox"
+                          checked={participant.attended}
+                          onChange={(e) =>
+                            updateParticipant(index, { attended: e.target.checked })
+                          }
+                        />
+                      </td>
+                      <td>
+                        <input
+                          type="number"
+                          min="0"
+                          max="100"
+                          step="1"
+                          value={participant.score}
+                          onChange={(e) =>
+                            updateParticipant(index, { score: Number(e.target.value) })
+                          }
+                        />
+                      </td>
+                      <td>
+                        <input
+                          type="checkbox"
+                          checked={participant.certificateIssued}
+                          onChange={(e) =>
+                            updateParticipant(index, { certificateIssued: e.target.checked })
+                          }
+                        />
+                      </td>
+                      <td>
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          onClick={() => removeParticipant(index)}
+                        >
+                          Remover
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+            <div className="trainings_page__draft">
+              <FormField label="Adicionar participante">
+                <select
+                  value={participantDraftId}
+                  onChange={(e) => setParticipantDraftId(e.target.value)}
+                >
+                  <option value="">Selecione o funcionário</option>
+                  {availableEmployees.map((employee) => (
+                    <option key={employee.id} value={employee.id}>
+                      {employee.name}
+                    </option>
+                  ))}
+                </select>
+              </FormField>
+              <Button type="button" variant="secondary" onClick={addParticipant}>
+                + Adicionar
+              </Button>
+            </div>
+            {participants.length > 0 && (
+              <p className="trainings_page__hint">
+                {attendanceSummary.present} de {attendanceSummary.total} presentes ·{" "}
+                {attendanceSummary.certificates} certificado
+                {attendanceSummary.certificates === 1 ? "" : "s"} emitido
+                {attendanceSummary.certificates === 1 ? "" : "s"}
+              </p>
+            )}
+          </div>
+
           <FormField label="Descrição">
             <textarea
               value={form.description}
