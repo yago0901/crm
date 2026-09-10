@@ -42,8 +42,32 @@ describe("mapPerformanceReview", () => {
       score: 0,
       strengths: "",
       improvements: "",
+      competencies: [],
+      developmentPlan: [],
+      goals: [],
       status: "rascunho",
     });
+  });
+
+  it("passes through competencies, development plan and goals", () => {
+    const snap = {
+      id: "r2",
+      data: () => ({
+        employeeId: "e1",
+        period: "2026-Q3",
+        status: "finalizada",
+        ownerId: "owner1",
+        competencies: [{ name: "Comunicação", weight: 2, selfScore: 4, managerScore: 3 }],
+        developmentPlan: [{ action: "Curso de liderança", deadline: null, status: "pendente" }],
+        goals: [{ description: "Aumentar NPS", weight: 1, progressPercent: 60 }],
+      }),
+    } as never;
+
+    const review = mapPerformanceReview(snap);
+    expect(review.competencies).toHaveLength(1);
+    expect(review.competencies?.[0].name).toBe("Comunicação");
+    expect(review.developmentPlan?.[0].action).toBe("Curso de liderança");
+    expect(review.goals?.[0].progressPercent).toBe(60);
   });
 });
 
