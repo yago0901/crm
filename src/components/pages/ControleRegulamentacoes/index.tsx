@@ -1,5 +1,11 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
-import { Timestamp, orderBy, where } from "firebase/firestore";
+import { orderBy, where } from "firebase/firestore";
+import {
+  MAX_INPUT_DATE,
+  MIN_INPUT_DATE,
+  fromDateInput,
+  toDateInput,
+} from "../../../utils/dateInput";
 import { useAuth } from "../../../contexts/auth/AuthContext";
 import { useToast } from "../../common/Toast/ToastContext";
 import Modal from "../../common/Modal";
@@ -40,12 +46,6 @@ const EMPTY_FORM: RegulationInput = {
   status: "pendente",
   notes: "",
 };
-
-const toDateInput = (value: Timestamp | null) =>
-  value ? value.toDate().toISOString().slice(0, 10) : "";
-
-const fromDateInput = (value: string): Timestamp | null =>
-  value ? Timestamp.fromDate(new Date(`${value}T00:00:00`)) : null;
 
 export default function ControleRegulamentacoes() {
   const { currentUser } = useAuth();
@@ -285,6 +285,8 @@ export default function ControleRegulamentacoes() {
             <FormField label="Prazo">
               <input
                 type="date"
+                min={MIN_INPUT_DATE}
+                max={MAX_INPUT_DATE}
                 value={toDateInput(form.deadline)}
                 onChange={(e) => setForm({ ...form, deadline: fromDateInput(e.target.value) })}
               />

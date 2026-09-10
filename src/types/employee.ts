@@ -2,6 +2,20 @@ import { Timestamp } from "firebase/firestore";
 
 export type EmployeeStatus = "ativo" | "ferias" | "desligado";
 
+export type ContractType =
+  | "clt"
+  | "pj"
+  | "estagio"
+  | "temporario"
+  | "terceirizado";
+
+export interface IJobHistoryEntry {
+  effectiveDate: Timestamp | null;
+  role: string;
+  salary: number;
+  reason: string;
+}
+
 export interface IEmployee {
   id: string;
   companyId: string;
@@ -15,6 +29,12 @@ export interface IEmployee {
   hireDate: Timestamp | null;
   commissionRate?: number;
   costPerHour?: number;
+  managerId?: string;
+  managerName?: string;
+  contractType?: ContractType | "";
+  costCenter?: string;
+  weeklyHours?: number;
+  jobHistory?: IJobHistoryEntry[];
   notes?: string;
   userId: string | null;
   ownerId: string;
@@ -35,5 +55,11 @@ export type EmployeeInput = Pick<
   | "hireDate"
   | "commissionRate"
   | "costPerHour"
+  | "managerId"
+  | "managerName"
+  | "contractType"
+  | "costCenter"
+  | "weeklyHours"
+  | "jobHistory"
   | "notes"
 >;

@@ -1,5 +1,11 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
-import { Timestamp, orderBy, where } from "firebase/firestore";
+import { orderBy, where } from "firebase/firestore";
+import {
+  MAX_INPUT_DATE,
+  MIN_INPUT_DATE,
+  fromDateInput,
+  toDateInput,
+} from "../../../utils/dateInput";
 import { useAuth } from "../../../contexts/auth/AuthContext";
 import { useToast } from "../../common/Toast/ToastContext";
 import Modal from "../../common/Modal";
@@ -12,11 +18,18 @@ import { usePaginatedCollection } from "../../../hooks/usePaginatedCollection";
 import {
   createEmployee,
   deleteEmployee,
+  fetchActiveEmployees,
   getActivePayrollTotal,
   mapEmployee,
   updateEmployeeAndSyncAccess,
 } from "../../../services/rh/employees";
-import { EmployeeInput, EmployeeStatus, IEmployee } from "../../../types/employee";
+import {
+  ContractType,
+  EmployeeInput,
+  EmployeeStatus,
+  IEmployee,
+  IJobHistoryEntry,
+} from "../../../types/employee";
 import { PAGE_SIZE } from "../../../constants/pagination";
 import "./styles.scss";
 
@@ -24,6 +37,21 @@ const STATUS_LABEL: Record<EmployeeStatus, string> = {
   ativo: "Ativo",
   ferias: "Férias",
   desligado: "Desligado",
+};
+
+const CONTRACT_TYPE_LABEL: Record<ContractType, string> = {
+  clt: "CLT",
+  pj: "PJ",
+  estagio: "Estágio",
+  temporario: "Temporário",
+  terceirizado: "Terceirizado",
+};
+
+const EMPTY_JOB_HISTORY_ENTRY: IJobHistoryEntry = {
+  effectiveDate: null,
+  role: "",
+  salary: 0,
+  reason: "",
 };
 
 const STATUS_TONE: Record<EmployeeStatus, "success" | "warning" | "neutral"> = {
@@ -43,6 +71,12 @@ const EMPTY_FORM: EmployeeInput = {
   hireDate: null,
   commissionRate: 0,
   costPerHour: 0,
+  managerId: "",
+  managerName: "",
+  contractType: "",
+  costCenter: "",
+  weeklyHours: 0,
+  jobHistory: [],
   notes: "",
 };
 
@@ -50,12 +84,6 @@ const currency = new Intl.NumberFormat("pt-BR", {
   style: "currency",
   currency: "BRL",
 });
-
-const toDateInput = (value: Timestamp | null) =>
-  value ? value.toDate().toISOString().slice(0, 10) : "";
-
-const fromDateInput = (value: string): Timestamp | null =>
-  value ? Timestamp.fromDate(new Date(`${value}T00:00:00`)) : null;
 
 export default function GestaoFuncionarios() {
   const { currentUser } = useAuth();
@@ -65,6 +93,7 @@ export default function GestaoFuncionarios() {
   const [search, setSearch] = useState("");
   const [totalFolhaAtiva, setTotalFolhaAtiva] = useState(0);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [activeEmployees, setActiveEmployees] = useState<IEmployee[]>([]);
 
   const constraints = useMemo(
     () =>
@@ -110,18 +139,33 @@ export default function GestaoFuncionarios() {
     refreshTotal();
   }, []);
 
+  useEffect(() => {
+    fetchActiveEmployees()
+      .then(setActiveEmployees)
+      .catch((err) => setLoadError(err.message));
+  }, []);
+
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingEmployee, setEditingEmployee] = useState<IEmployee | null>(null);
   const [form, setForm] = useState<EmployeeInput>(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
+  const [jobHistoryDraft, setJobHistoryDraft] = useState<IJobHistoryEntry>(
+    EMPTY_JOB_HISTORY_ENTRY
+  );
 
   const [employeeToDelete, setEmployeeToDelete] = useState<IEmployee | null>(null);
+
+  const managerOptions = useMemo(
+    () => activeEmployees.filter((e) => e.id !== editingId),
+    [activeEmployees, editingId]
+  );
 
   const openCreateForm = () => {
     setEditingId(null);
     setEditingEmployee(null);
     setForm(EMPTY_FORM);
+    setJobHistoryDraft(EMPTY_JOB_HISTORY_ENTRY);
     setIsFormOpen(true);
   };
 
@@ -139,8 +183,15 @@ export default function GestaoFuncionarios() {
       hireDate: employee.hireDate,
       commissionRate: employee.commissionRate ?? 0,
       costPerHour: employee.costPerHour ?? 0,
+      managerId: employee.managerId ?? "",
+      managerName: employee.managerName ?? "",
+      contractType: employee.contractType ?? "",
+      costCenter: employee.costCenter ?? "",
+      weeklyHours: employee.weeklyHours ?? 0,
+      jobHistory: employee.jobHistory ?? [],
       notes: employee.notes,
     });
+    setJobHistoryDraft(EMPTY_JOB_HISTORY_ENTRY);
     setIsFormOpen(true);
   };
 
@@ -149,6 +200,28 @@ export default function GestaoFuncionarios() {
     setEditingId(null);
     setEditingEmployee(null);
     setForm(EMPTY_FORM);
+    setJobHistoryDraft(EMPTY_JOB_HISTORY_ENTRY);
+  };
+
+  const handleManagerChange = (managerId: string) => {
+    const manager = activeEmployees.find((e) => e.id === managerId);
+    setForm({ ...form, managerId, managerName: manager?.name ?? "" });
+  };
+
+  const addJobHistoryEntry = () => {
+    if (!jobHistoryDraft.role.trim()) return;
+    setForm({
+      ...form,
+      jobHistory: [...(form.jobHistory ?? []), jobHistoryDraft],
+    });
+    setJobHistoryDraft(EMPTY_JOB_HISTORY_ENTRY);
+  };
+
+  const removeJobHistoryEntry = (index: number) => {
+    setForm({
+      ...form,
+      jobHistory: (form.jobHistory ?? []).filter((_, i) => i !== index),
+    });
   };
 
   const handleSubmit = async (event: FormEvent) => {
@@ -370,6 +443,8 @@ export default function GestaoFuncionarios() {
             <FormField label="Data de admissão">
               <input
                 type="date"
+                min={MIN_INPUT_DATE}
+                max={MAX_INPUT_DATE}
                 value={toDateInput(form.hireDate)}
                 onChange={(e) =>
                   setForm({ ...form, hireDate: fromDateInput(e.target.value) })
@@ -399,7 +474,126 @@ export default function GestaoFuncionarios() {
                 }
               />
             </FormField>
+            <FormField label="Gestor direto (opcional)">
+              <select
+                value={form.managerId}
+                onChange={(e) => handleManagerChange(e.target.value)}
+              >
+                <option value="">Nenhum</option>
+                {managerOptions.map((manager) => (
+                  <option key={manager.id} value={manager.id}>
+                    {manager.name}
+                  </option>
+                ))}
+              </select>
+            </FormField>
+            <FormField label="Tipo de contrato (opcional)">
+              <select
+                value={form.contractType}
+                onChange={(e) =>
+                  setForm({ ...form, contractType: e.target.value as ContractType | "" })
+                }
+              >
+                <option value="">Não informado</option>
+                {(Object.keys(CONTRACT_TYPE_LABEL) as ContractType[]).map((type) => (
+                  <option key={type} value={type}>
+                    {CONTRACT_TYPE_LABEL[type]}
+                  </option>
+                ))}
+              </select>
+            </FormField>
+            <FormField label="Centro de custo (opcional)">
+              <input
+                value={form.costCenter}
+                onChange={(e) => setForm({ ...form, costCenter: e.target.value })}
+              />
+            </FormField>
+            <FormField label="Carga horária semanal (h, opcional)">
+              <input
+                type="number"
+                min="0"
+                step="1"
+                value={form.weeklyHours}
+                onChange={(e) =>
+                  setForm({ ...form, weeklyHours: Number(e.target.value) })
+                }
+              />
+            </FormField>
           </div>
+
+          <div className="employees_page__history">
+            <h3>Histórico de cargo e salário</h3>
+            {(form.jobHistory ?? []).length > 0 && (
+              <ul className="employees_page__history__list">
+                {(form.jobHistory ?? []).map((entry, index) => (
+                  <li key={index} className="employees_page__history__item">
+                    <span>
+                      {toDateInput(entry.effectiveDate) || "sem data"} — {entry.role || "—"} —{" "}
+                      {currency.format(entry.salary)}
+                      {entry.reason ? ` (${entry.reason})` : ""}
+                    </span>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      onClick={() => removeJobHistoryEntry(index)}
+                    >
+                      Remover
+                    </Button>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <div className="employees_page__history__draft">
+              <FormField label="Data">
+                <input
+                  type="date"
+                  min={MIN_INPUT_DATE}
+                  max={MAX_INPUT_DATE}
+                  value={toDateInput(jobHistoryDraft.effectiveDate)}
+                  onChange={(e) =>
+                    setJobHistoryDraft({
+                      ...jobHistoryDraft,
+                      effectiveDate: fromDateInput(e.target.value),
+                    })
+                  }
+                />
+              </FormField>
+              <FormField label="Cargo">
+                <input
+                  value={jobHistoryDraft.role}
+                  onChange={(e) =>
+                    setJobHistoryDraft({ ...jobHistoryDraft, role: e.target.value })
+                  }
+                />
+              </FormField>
+              <FormField label="Salário (R$)">
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={jobHistoryDraft.salary}
+                  onChange={(e) =>
+                    setJobHistoryDraft({
+                      ...jobHistoryDraft,
+                      salary: Number(e.target.value),
+                    })
+                  }
+                />
+              </FormField>
+              <FormField label="Motivo">
+                <input
+                  value={jobHistoryDraft.reason}
+                  onChange={(e) =>
+                    setJobHistoryDraft({ ...jobHistoryDraft, reason: e.target.value })
+                  }
+                />
+              </FormField>
+              <Button type="button" variant="secondary" onClick={addJobHistoryEntry}>
+                + Adicionar
+              </Button>
+            </div>
+          </div>
+
           <FormField label="Observações">
             <textarea
               value={form.notes}

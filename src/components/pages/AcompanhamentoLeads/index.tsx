@@ -1,6 +1,12 @@
 import { FormEvent, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Timestamp } from "firebase/firestore";
+import {
+  MAX_INPUT_DATE,
+  MIN_INPUT_DATE,
+  fromDateInput,
+  toDateInput,
+} from "../../../utils/dateInput";
 import { useAuth } from "../../../contexts/auth/AuthContext";
 import { useToast } from "../../common/Toast/ToastContext";
 import Button from "../../common/Button";
@@ -43,9 +49,6 @@ const formatDateShort = (value: Timestamp | null) =>
 
 const isOverdue = (value: Timestamp | null) =>
   !!value && value.toDate().getTime() < Date.now();
-
-const toDateInputValue = (value: Timestamp | null) =>
-  value ? value.toDate().toISOString().slice(0, 10) : "";
 
 export default function AcompanhamentoLeads() {
   const { contactId } = useParams<{ contactId: string }>();
@@ -122,7 +125,7 @@ export default function AcompanhamentoLeads() {
 
   const handleNextContactChange = async (value: string) => {
     if (!contactId) return;
-    const date = value ? Timestamp.fromDate(new Date(`${value}T00:00:00`)) : null;
+    const date = fromDateInput(value);
     try {
       await updateNextContact(contactId, date);
     } catch (err) {
@@ -223,7 +226,9 @@ export default function AcompanhamentoLeads() {
                 <span>Próximo contato previsto</span>
                 <input
                   type="date"
-                  value={toDateInputValue(selectedLead.nextContactAt)}
+                  min={MIN_INPUT_DATE}
+                  max={MAX_INPUT_DATE}
+                  value={toDateInput(selectedLead.nextContactAt)}
                   onChange={(e) => handleNextContactChange(e.target.value)}
                 />
               </div>

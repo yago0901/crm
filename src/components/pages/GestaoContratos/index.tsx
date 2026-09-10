@@ -1,5 +1,11 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
-import { Timestamp, orderBy, where } from "firebase/firestore";
+import { orderBy, where } from "firebase/firestore";
+import {
+  MAX_INPUT_DATE,
+  MIN_INPUT_DATE,
+  fromDateInput,
+  toDateInput,
+} from "../../../utils/dateInput";
 import { useAuth } from "../../../contexts/auth/AuthContext";
 import { useToast } from "../../common/Toast/ToastContext";
 import Modal from "../../common/Modal";
@@ -54,12 +60,6 @@ const currency = new Intl.NumberFormat("pt-BR", {
   style: "currency",
   currency: "BRL",
 });
-
-const toDateInput = (value: Timestamp | null) =>
-  value ? value.toDate().toISOString().slice(0, 10) : "";
-
-const fromDateInput = (value: string): Timestamp | null =>
-  value ? Timestamp.fromDate(new Date(`${value}T00:00:00`)) : null;
 
 export default function GestaoContratos() {
   const { currentUser } = useAuth();
@@ -394,6 +394,8 @@ export default function GestaoContratos() {
             <FormField label="Início">
               <input
                 type="date"
+                min={MIN_INPUT_DATE}
+                max={MAX_INPUT_DATE}
                 value={toDateInput(form.startDate)}
                 onChange={(e) =>
                   setForm({ ...form, startDate: fromDateInput(e.target.value) })
@@ -403,6 +405,8 @@ export default function GestaoContratos() {
             <FormField label="Término">
               <input
                 type="date"
+                min={MIN_INPUT_DATE}
+                max={MAX_INPUT_DATE}
                 value={toDateInput(form.endDate)}
                 onChange={(e) =>
                   setForm({ ...form, endDate: fromDateInput(e.target.value) })
