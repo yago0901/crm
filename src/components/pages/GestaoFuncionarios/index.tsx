@@ -31,6 +31,7 @@ import {
   IJobHistoryEntry,
 } from "../../../types/employee";
 import { PAGE_SIZE } from "../../../constants/pagination";
+import { currency } from "../../../utils/format";
 import "./styles.scss";
 
 const STATUS_LABEL: Record<EmployeeStatus, string> = {
@@ -79,11 +80,6 @@ const EMPTY_FORM: EmployeeInput = {
   jobHistory: [],
   notes: "",
 };
-
-const currency = new Intl.NumberFormat("pt-BR", {
-  style: "currency",
-  currency: "BRL",
-});
 
 export default function GestaoFuncionarios() {
   const { currentUser } = useAuth();

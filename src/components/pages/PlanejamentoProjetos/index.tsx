@@ -28,6 +28,7 @@ import {
 } from "../../../services/projetos/projectCosts";
 import { IProject, ProjectInput, ProjectStatus } from "../../../types/project";
 import { PAGE_SIZE } from "../../../constants/pagination";
+import { currency } from "../../../utils/format";
 import "./styles.scss";
 
 const STATUS_LABEL: Record<ProjectStatus, string> = {
@@ -53,11 +54,6 @@ const EMPTY_FORM: ProjectInput = {
   status: "planejamento",
   notes: "",
 };
-
-const currency = new Intl.NumberFormat("pt-BR", {
-  style: "currency",
-  currency: "BRL",
-});
 
 export default function PlanejamentoProjetos() {
   const { currentUser } = useAuth();

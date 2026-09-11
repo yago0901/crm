@@ -31,6 +31,7 @@ import { IProposal } from "../../../types/proposal";
 import { IProduct } from "../../../types/product";
 import { IWarehouse } from "../../../types/warehouse";
 import { PAGE_SIZE } from "../../../constants/pagination";
+import { currency } from "../../../utils/format";
 import "./styles.scss";
 
 const STATUS_LABEL: Record<SalesOrderStatus, string> = {
@@ -64,11 +65,6 @@ const EMPTY_FORM: SalesOrderInput = {
 };
 
 const EMPTY_ITEM_DRAFT = { productId: "", quantity: 1, unitPrice: 0, discountPercent: 0 };
-
-const currency = new Intl.NumberFormat("pt-BR", {
-  style: "currency",
-  currency: "BRL",
-});
 
 const lineSubtotal = (item: ISalesOrderItem): number =>
   item.quantity * item.unitPrice * (1 - item.discountPercent / 100);

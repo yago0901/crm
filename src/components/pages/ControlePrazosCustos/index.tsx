@@ -30,6 +30,7 @@ import {
 } from "../../../types/projectMilestone";
 import { IProject } from "../../../types/project";
 import { PAGE_SIZE } from "../../../constants/pagination";
+import { currency } from "../../../utils/format";
 import "./styles.scss";
 
 const STATUS_LABEL: Record<ProjectMilestoneStatus, string> = {
@@ -54,11 +55,6 @@ const EMPTY_FORM: ProjectMilestoneInput = {
   status: "pendente",
   notes: "",
 };
-
-const currency = new Intl.NumberFormat("pt-BR", {
-  style: "currency",
-  currency: "BRL",
-});
 
 export default function ControlePrazosCustos() {
   const { currentUser } = useAuth();

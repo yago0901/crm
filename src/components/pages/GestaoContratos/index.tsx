@@ -29,6 +29,7 @@ import { ContractInput, ContractStatus, IContract } from "../../../types/contrac
 import { IContact } from "../../../types/contact";
 import { IDeal } from "../../../types/deal";
 import { PAGE_SIZE } from "../../../constants/pagination";
+import { currency } from "../../../utils/format";
 import "./styles.scss";
 
 const STATUS_LABEL: Record<ContractStatus, string> = {
@@ -55,11 +56,6 @@ const EMPTY_FORM: ContractInput = {
   endDate: null,
   notes: "",
 };
-
-const currency = new Intl.NumberFormat("pt-BR", {
-  style: "currency",
-  currency: "BRL",
-});
 
 export default function GestaoContratos() {
   const { currentUser } = useAuth();

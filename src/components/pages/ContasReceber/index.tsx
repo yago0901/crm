@@ -28,6 +28,7 @@ import { fetchClientContacts } from "../../../services/vendas-crm/contacts";
 import { FinanceStatus, IReceivable, PaymentMethod, ReceivableInput } from "../../../types/finance";
 import { IContact } from "../../../types/contact";
 import { PAGE_SIZE } from "../../../constants/pagination";
+import { currency } from "../../../utils/format";
 import "./styles.scss";
 
 const STATUS_LABEL: Record<FinanceStatus, string> = {
@@ -74,11 +75,6 @@ const EMPTY_FORM: ReceivableInput = {
   bankAccount: "",
   notes: "",
 };
-
-const currency = new Intl.NumberFormat("pt-BR", {
-  style: "currency",
-  currency: "BRL",
-});
 
 export default function ContasReceber() {
   const { currentUser } = useAuth();

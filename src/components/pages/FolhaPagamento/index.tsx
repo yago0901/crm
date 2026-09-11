@@ -21,6 +21,7 @@ import { fetchActiveEmployees } from "../../../services/rh/employees";
 import { IPayrollEntry, PayrollEntryInput, PayrollStatus } from "../../../types/payrollEntry";
 import { IEmployee } from "../../../types/employee";
 import { PAGE_SIZE } from "../../../constants/pagination";
+import { currency } from "../../../utils/format";
 import "./styles.scss";
 
 const STATUS_LABEL: Record<PayrollStatus, string> = {
@@ -44,11 +45,6 @@ const EMPTY_FORM: PayrollEntryInput = {
   status: "pendente",
   notes: "",
 };
-
-const currency = new Intl.NumberFormat("pt-BR", {
-  style: "currency",
-  currency: "BRL",
-});
 
 export default function FolhaPagamento() {
   const { currentUser } = useAuth();

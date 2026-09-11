@@ -1,12 +1,8 @@
 import { useEffect, useState } from "react";
 import { getCashFlowForecast, IForecastMonth } from "../../../services/business-intelligence/forecasting";
 import TrendForecastChart from "../../common/charts/TrendForecastChart";
+import { currency } from "../../../utils/format";
 import "./styles.scss";
-
-const currency = new Intl.NumberFormat("pt-BR", {
-  style: "currency",
-  currency: "BRL",
-});
 
 const formatMonth = (key: string) => {
   const [year, month] = key.split("-");

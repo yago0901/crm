@@ -21,12 +21,8 @@ import {
   IStatusCount,
 } from "../../../services/shared/dashboard";
 import { IMonthlyCashFlow } from "../../../services/financeiro/finance";
+import { currency } from "../../../utils/format";
 import "./styles.scss";
-
-const currency = new Intl.NumberFormat("pt-BR", {
-  style: "currency",
-  currency: "BRL",
-});
 
 const Home = () => {
   const { currentUser } = useAuth();
