@@ -1,20 +1,7 @@
-import { FormEvent, useEffect, useMemo, useState } from "react";
-import { orderBy, where } from "firebase/firestore";
-import {
-  MAX_INPUT_DATE,
-  MIN_INPUT_DATE,
-  fromDateInput,
-  toDateInput,
-} from "../../../utils/dateInput";
-import { useAuth } from "../../../contexts/auth/AuthContext";
-import { useToast } from "../../common/Toast/ToastContext";
-import Modal from "../../common/Modal";
-import ConfirmDialog from "../../common/ConfirmDialog";
-import Button from "../../common/Button";
 import Badge from "../../common/Badge";
-import FormField from "../../common/FormField";
-import Pagination from "../../common/Pagination";
-import { usePaginatedCollection } from "../../../hooks/usePaginatedCollection";
+import ResourcePage from "../../common/ResourcePage";
+import { ResourceSchema } from "../../common/ResourcePage/types";
+import { toDateInput } from "../../../utils/dateInput";
 import {
   createProductionOrder,
   deleteProductionOrder,
@@ -23,8 +10,6 @@ import {
   updateProductionOrder,
 } from "../../../services/producao-manufatura/productionOrders";
 import { IProductionOrder, ProductionOrderInput, ProductionOrderStatus } from "../../../types/productionOrder";
-import { PAGE_SIZE } from "../../../constants/pagination";
-import "./styles.scss";
 
 const STATUS_LABEL: Record<ProductionOrderStatus, string> = {
   pendente: "Pendente",
@@ -49,289 +34,81 @@ const EMPTY_FORM: ProductionOrderInput = {
   notes: "",
 };
 
+const schema: ResourceSchema<IProductionOrder, ProductionOrderInput> = {
+  pageTitle: "Ordens de Produção",
+  newLabel: "Nova ordem de produção",
+  entityLabel: "ordem de produção",
+  loadingMessage: "Carregando ordens...",
+  emptyMessage: "Nenhuma ordem de produção encontrada.",
+  messages: {
+    created: "Ordem de produção criada.",
+    updated: "Ordem de produção atualizada.",
+    deleted: "Ordem de produção excluída.",
+  },
+
+  collectionPath: "productionOrders",
+  mapDoc: mapProductionOrder,
+  orderByField: "dueDate",
+  orderDirection: "asc",
+  filterOptions: [
+    { value: "pendente", label: "Pendente" },
+    { value: "em_producao", label: "Em produção" },
+    { value: "concluida", label: "Concluída" },
+    { value: "cancelada", label: "Cancelada" },
+  ],
+
+  columns: [
+    { key: "description", label: "Descrição", render: (o) => o.description },
+    { key: "productName", label: "Produto", render: (o) => o.productName },
+    { key: "quantity", label: "Quantidade", render: (o) => o.quantity },
+    { key: "dueDate", label: "Prazo", render: (o) => toDateInput(o.dueDate) || "—" },
+    {
+      key: "status",
+      label: "Status",
+      render: (o) => <Badge tone={STATUS_TONE[o.status]}>{STATUS_LABEL[o.status]}</Badge>,
+    },
+  ],
+
+  fields: [
+    { key: "description", label: "Descrição", kind: "text", required: true },
+    { key: "productName", label: "Produto", kind: "text", required: true },
+    { key: "quantity", label: "Quantidade", kind: "number", required: true },
+    { key: "dueDate", label: "Prazo", kind: "date" },
+    {
+      key: "status",
+      label: "Status",
+      kind: "select",
+      options: [
+        { value: "pendente", label: "Pendente" },
+        { value: "em_producao", label: "Em produção" },
+        { value: "concluida", label: "Concluída" },
+        { value: "cancelada", label: "Cancelada" },
+      ],
+    },
+    { key: "notes", label: "Observações", kind: "textarea", fullWidth: true },
+  ],
+
+  emptyForm: EMPTY_FORM,
+  toInput: (o) => ({
+    description: o.description,
+    productName: o.productName,
+    quantity: o.quantity,
+    status: o.status,
+    dueDate: o.dueDate,
+    notes: o.notes,
+  }),
+  getRowLabel: (o) => o.description,
+
+  create: createProductionOrder,
+  update: updateProductionOrder,
+  remove: deleteProductionOrder,
+
+  summary: {
+    label: "Pendentes",
+    fetch: getPendingProductionOrdersCount,
+  },
+};
+
 export default function OrdensProducao() {
-  const { currentUser } = useAuth();
-  const { showToast } = useToast();
-
-  const [pendingCount, setPendingCount] = useState(0);
-  const [loadError, setLoadError] = useState<string | null>(null);
-
-  const [statusFilter, setStatusFilter] = useState<ProductionOrderStatus | "all">("all");
-
-  const constraints = useMemo(
-    () =>
-      statusFilter === "all"
-        ? [orderBy("dueDate", "asc")]
-        : [where("status", "==", statusFilter), orderBy("dueDate", "asc")],
-    [statusFilter]
-  );
-
-  const {
-    items: orders,
-    currentPage,
-    totalPages,
-    setCurrentPage,
-    loading,
-    error: pageError,
-    refresh,
-  } = usePaginatedCollection({
-    collectionPath: "productionOrders",
-    constraints,
-    mapDoc: mapProductionOrder,
-    pageSize: PAGE_SIZE,
-    resetKey: statusFilter,
-  });
-
-  const refreshPendingCount = () => {
-    getPendingProductionOrdersCount()
-      .then(setPendingCount)
-      .catch((err) => setLoadError(err.message));
-  };
-
-  useEffect(() => {
-    refreshPendingCount();
-  }, []);
-
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [form, setForm] = useState<ProductionOrderInput>(EMPTY_FORM);
-  const [saving, setSaving] = useState(false);
-
-  const [orderToDelete, setOrderToDelete] = useState<IProductionOrder | null>(null);
-
-  const openCreateForm = () => {
-    setEditingId(null);
-    setForm(EMPTY_FORM);
-    setIsFormOpen(true);
-  };
-
-  const openEditForm = (order: IProductionOrder) => {
-    setEditingId(order.id);
-    setForm({
-      description: order.description,
-      productName: order.productName,
-      quantity: order.quantity,
-      status: order.status,
-      dueDate: order.dueDate,
-      notes: order.notes,
-    });
-    setIsFormOpen(true);
-  };
-
-  const closeForm = () => {
-    setIsFormOpen(false);
-    setEditingId(null);
-    setForm(EMPTY_FORM);
-  };
-
-  const handleSubmit = async (event: FormEvent) => {
-    event.preventDefault();
-    if (!currentUser) return;
-
-    setSaving(true);
-    try {
-      if (editingId) {
-        await updateProductionOrder(editingId, form);
-        showToast("Ordem de produção atualizada.", "success");
-      } else {
-        await createProductionOrder(form, {
-          uid: currentUser.uid,
-          name: currentUser.displayName ?? currentUser.email,
-        });
-        showToast("Ordem de produção criada.", "success");
-      }
-      refresh();
-      refreshPendingCount();
-      closeForm();
-    } catch (err) {
-      showToast(
-        err instanceof Error ? err.message : "Erro ao salvar ordem",
-        "error"
-      );
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const handleDelete = async () => {
-    if (!orderToDelete) return;
-    try {
-      await deleteProductionOrder(orderToDelete.id);
-      showToast("Ordem de produção excluída.", "success");
-      refresh();
-      refreshPendingCount();
-    } catch (err) {
-      showToast(
-        err instanceof Error ? err.message : "Erro ao excluir ordem",
-        "error"
-      );
-    } finally {
-      setOrderToDelete(null);
-    }
-  };
-
-  return (
-    <div className="production_orders_page">
-      <div className="production_orders_page__header">
-        <h1>Ordens de Produção</h1>
-        <Button variant="primary" onClick={openCreateForm}>
-          + Nova ordem
-        </Button>
-      </div>
-
-      <div className="production_orders_page__summary">
-        <span>Pendentes</span>
-        <strong>{pendingCount}</strong>
-      </div>
-
-      <div className="production_orders_page__filters">
-        <select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value as ProductionOrderStatus | "all")}
-        >
-          <option value="all">Todos os status</option>
-          <option value="pendente">Pendente</option>
-          <option value="em_producao">Em produção</option>
-          <option value="concluida">Concluída</option>
-          <option value="cancelada">Cancelada</option>
-        </select>
-      </div>
-
-      {(loadError || pageError) && (
-        <p className="production_orders_page__error">{loadError ?? pageError}</p>
-      )}
-
-      {loading ? (
-        <p className="production_orders_page__empty">Carregando ordens...</p>
-      ) : orders.length === 0 ? (
-        <p className="production_orders_page__empty">Nenhuma ordem de produção encontrada.</p>
-      ) : (
-        <div className="production_orders_page__table_wrap">
-          <table className="production_orders_page__table">
-            <thead>
-              <tr>
-                <th>Descrição</th>
-                <th>Produto</th>
-                <th>Quantidade</th>
-                <th>Prazo</th>
-                <th>Status</th>
-                <th />
-              </tr>
-            </thead>
-            <tbody>
-              {orders.map((order) => (
-                <tr key={order.id}>
-                  <td>{order.description}</td>
-                  <td>{order.productName}</td>
-                  <td>{order.quantity}</td>
-                  <td>{toDateInput(order.dueDate) || "—"}</td>
-                  <td>
-                    <Badge tone={STATUS_TONE[order.status]}>
-                      {STATUS_LABEL[order.status]}
-                    </Badge>
-                  </td>
-                  <td>
-                    <div className="production_orders_page__table__actions">
-                      <Button variant="secondary" onClick={() => openEditForm(order)}>
-                        Editar
-                      </Button>
-                      <Button variant="danger" onClick={() => setOrderToDelete(order)}>
-                        Excluir
-                      </Button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      <Pagination
-        currentPage={currentPage}
-        totalPages={totalPages}
-        onPageChange={setCurrentPage}
-      />
-
-      <Modal
-        isOpen={isFormOpen}
-        onClose={closeForm}
-        title={editingId ? "Editar ordem de produção" : "Nova ordem de produção"}
-      >
-        <form className="production_orders_page__form" onSubmit={handleSubmit}>
-          <div className="production_orders_page__form__grid">
-            <FormField label="Descrição*">
-              <input
-                required
-                value={form.description}
-                onChange={(e) => setForm({ ...form, description: e.target.value })}
-              />
-            </FormField>
-            <FormField label="Produto*">
-              <input
-                required
-                value={form.productName}
-                onChange={(e) => setForm({ ...form, productName: e.target.value })}
-              />
-            </FormField>
-            <FormField label="Quantidade*">
-              <input
-                required
-                type="number"
-                min="0"
-                value={form.quantity}
-                onChange={(e) => setForm({ ...form, quantity: Number(e.target.value) })}
-              />
-            </FormField>
-            <FormField label="Prazo">
-              <input
-                type="date"
-                min={MIN_INPUT_DATE}
-                max={MAX_INPUT_DATE}
-                value={toDateInput(form.dueDate)}
-                onChange={(e) => setForm({ ...form, dueDate: fromDateInput(e.target.value) })}
-              />
-            </FormField>
-            <FormField label="Status">
-              <select
-                value={form.status}
-                onChange={(e) =>
-                  setForm({ ...form, status: e.target.value as ProductionOrderStatus })
-                }
-              >
-                <option value="pendente">Pendente</option>
-                <option value="em_producao">Em produção</option>
-                <option value="concluida">Concluída</option>
-                <option value="cancelada">Cancelada</option>
-              </select>
-            </FormField>
-          </div>
-          <FormField label="Observações">
-            <textarea
-              value={form.notes}
-              onChange={(e) => setForm({ ...form, notes: e.target.value })}
-            />
-          </FormField>
-          <div className="production_orders_page__form__actions">
-            <Button type="button" variant="secondary" onClick={closeForm} disabled={saving}>
-              Cancelar
-            </Button>
-            <Button type="submit" variant="primary" disabled={saving}>
-              {saving ? "Salvando..." : "Salvar"}
-            </Button>
-          </div>
-        </form>
-      </Modal>
-
-      <ConfirmDialog
-        isOpen={!!orderToDelete}
-        title="Excluir ordem de produção"
-        message={`Excluir "${orderToDelete?.description}"?`}
-        confirmLabel="Excluir"
-        danger
-        onConfirm={handleDelete}
-        onCancel={() => setOrderToDelete(null)}
-      />
-    </div>
-  );
+  return <ResourcePage schema={schema} />;
 }

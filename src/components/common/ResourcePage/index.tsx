@@ -103,7 +103,7 @@ export default function ResourcePage<T extends { id: string }, TInput extends ob
           }`}
         >
           <span>{schema.summary.label}</span>
-          <strong>{crud.summaryValue}</strong>
+          <strong>{schema.summary.format ? schema.summary.format(crud.summaryValue) : crud.summaryValue}</strong>
         </div>
       )}
 
