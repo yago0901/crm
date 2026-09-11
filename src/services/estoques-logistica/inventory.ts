@@ -98,12 +98,20 @@ export async function updateInventoryItem(
   input: Partial<InventoryItemInput>
 ): Promise<void> {
   await inventoryService.update(itemId, input);
-  await syncLowStockNotificationForItem(itemId);
+  await safeSyncLowStockNotification(itemId);
 }
 
 export async function deleteInventoryItem(itemId: string): Promise<void> {
   await inventoryService.remove(itemId);
-  await syncLowStockNotificationForItem(itemId);
+  await safeSyncLowStockNotification(itemId);
+}
+
+async function safeSyncLowStockNotification(itemId: string): Promise<void> {
+  try {
+    await syncLowStockNotificationForItem(itemId);
+  } catch (err) {
+    console.error("Falha ao sincronizar notificação de estoque baixo:", err);
+  }
 }
 
 export async function getActiveInventoryTotal(): Promise<number> {

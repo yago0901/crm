@@ -888,7 +888,8 @@ service cloud.firestore {
     }
 
     match /notifications/{notificationId} {
-      allow read: if belongsToCompany(resource.data.get('companyId', null));
+      allow read: if resource == null
+        || belongsToCompany(resource.data.get('companyId', null));
 
       allow create: if isSignedIn()
         && belongsToCompany(request.resource.data.companyId)
