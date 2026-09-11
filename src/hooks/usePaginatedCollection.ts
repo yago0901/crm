@@ -99,7 +99,7 @@ export function usePaginatedCollection<T>({
 
   const refresh = () => {
     cursorsRef.current = new Map();
-    queryClient.invalidateQueries({ queryKey: [collectionPath] });
+    return queryClient.invalidateQueries({ queryKey: [collectionPath], refetchType: "all" });
   };
 
   return {
