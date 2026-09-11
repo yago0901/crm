@@ -3,6 +3,7 @@ import "./styles.scss";
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useEffect, useMemo, useState } from 'react';
 import {
+  FaBell,
   FaChartLine,
   FaChevronDown,
   FaClipboardCheck,
@@ -22,6 +23,7 @@ import {
 } from 'react-icons/fa';
 import { useTheme } from '../../../hooks/useTheme';
 import { useAuth } from '../../../contexts/auth/AuthContext';
+import { subscribeToOpenNotificationCount } from '../../../services/shared/notifications';
 
 const DEFAULT_MENU: NavbarMenuItem[] = [
   { key: 'home', label: 'Home', icon: FaHome, path: '/home' },
@@ -164,6 +166,12 @@ const Navbar: React.FC<INavbar> = ({ isMenuOpen, onToggleMenu, menu = DEFAULT_ME
   );
 
   const [openKey, setOpenKey] = useState<string | null>(findActiveKey(visibleMenu, location.pathname));
+  const [notificationCount, setNotificationCount] = useState(0);
+
+  useEffect(() => {
+    const unsubscribe = subscribeToOpenNotificationCount(setNotificationCount);
+    return unsubscribe;
+  }, []);
 
   const handleLogout = async () => {
     await logout();
@@ -236,6 +244,14 @@ const Navbar: React.FC<INavbar> = ({ isMenuOpen, onToggleMenu, menu = DEFAULT_ME
                 );
               })}
             </ul>
+
+            <button className="navbar__settings" onClick={() => handleNavigate('/notificacoes')}>
+              <FaBell />
+              <span>Notificações</span>
+              {notificationCount > 0 && (
+                <span className="navbar__badge">{notificationCount}</span>
+              )}
+            </button>
 
             {isAdmin && (
               <button className="navbar__settings" onClick={() => handleNavigate('/configuracoes')}>

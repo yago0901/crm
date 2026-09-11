@@ -14,6 +14,7 @@ import { firestore } from "../shared/firebase";
 import { createCrudService } from "../shared/crudFactory";
 import { getCurrentCompanyId } from "../shared/tenant";
 import { appendAuditLog } from "../shared/auditLog";
+import { applyLowStockNotification, lowStockNotificationRef } from "./lowStockNotifications";
 import { IPurchaseOrder, PurchaseOrderInput, PurchaseOrderStatus } from "../../types/purchaseOrder";
 
 export const mapPurchaseOrder = (
@@ -129,9 +130,12 @@ export async function receivePurchaseOrder(
       ? doc(firestore, "warehouseStock", `${order.inventoryItemId}_${order.warehouseId}`)
       : null;
 
+    const notifRef = itemRef ? lowStockNotificationRef(order.inventoryItemId) : null;
+
     let newQuantity = 0;
     let itemName = "";
     let creditedQuantity = 0;
+    let minQuantity = 0;
     if (itemRef) {
       const itemSnap = await transaction.get(itemRef);
       if (!itemSnap.exists()) {
@@ -141,12 +145,15 @@ export async function receivePurchaseOrder(
       const currentQuantity = (itemData.quantity as number) ?? 0;
       const unitsPerPurchase = (itemData.unitsPerPurchase as number) ?? 0;
       itemName = itemData.name ?? "";
+      minQuantity = (itemData.minQuantity as number) ?? 0;
       creditedQuantity =
         unitsPerPurchase > 0
           ? Math.abs(order.quantity) * unitsPerPurchase
           : Math.abs(order.quantity);
       newQuantity = currentQuantity + creditedQuantity;
     }
+
+    const notifSnap = notifRef ? await transaction.get(notifRef) : null;
 
     const warehouseStockSnap = warehouseStockRef
       ? await transaction.get(warehouseStockRef)
@@ -179,6 +186,17 @@ export async function receivePurchaseOrder(
         quantity: newQuantity,
         updatedAt: serverTimestamp(),
       });
+
+      if (notifRef && notifSnap) {
+        applyLowStockNotification(transaction, notifRef, notifSnap, {
+          companyId,
+          itemId: order.inventoryItemId,
+          itemName,
+          quantity: newQuantity,
+          minQuantity,
+          owner,
+        });
+      }
 
       transaction.set(movementRef, {
         companyId,

@@ -1,6 +1,7 @@
 import {
   DocumentData,
   DocumentReference,
+  DocumentSnapshot,
   QueryDocumentSnapshot,
   Unsubscribe,
   collection,
@@ -17,6 +18,10 @@ import { createCrudService } from "../shared/crudFactory";
 import { getCurrentCompanyId } from "../shared/tenant";
 import { firestore } from "../shared/firebase";
 import { appendAuditLog } from "../shared/auditLog";
+import {
+  applyLowStockNotification,
+  lowStockNotificationRef,
+} from "../estoques-logistica/lowStockNotifications";
 import { ISalesOrder, ISalesOrderItem, SalesOrderInput, SalesOrderStatus } from "../../types/salesOrder";
 
 export const mapSalesOrder = (snap: QueryDocumentSnapshot<DocumentData>): ISalesOrder => {
@@ -182,8 +187,9 @@ export async function approveSalesOrder(
 
     const inventoryData = new Map<
       string,
-      { ref: DocumentReference<DocumentData>; quantity: number; name: string }
+      { ref: DocumentReference<DocumentData>; quantity: number; name: string; minQuantity: number }
     >();
+    const notifSnapById = new Map<string, DocumentSnapshot<DocumentData>>();
     for (const [itemId, ref] of inventoryRefById) {
       const snap = await transaction.get(ref);
       if (snap.exists()) {
@@ -192,7 +198,9 @@ export async function approveSalesOrder(
           ref,
           quantity: (data.quantity as number) ?? 0,
           name: data.name ?? "",
+          minQuantity: (data.minQuantity as number) ?? 0,
         });
+        notifSnapById.set(itemId, await transaction.get(lowStockNotificationRef(ref.id)));
       }
     }
 
@@ -221,6 +229,23 @@ export async function approveSalesOrder(
       }
 
       transaction.update(inv.ref, { quantity: newQuantity, updatedAt: serverTimestamp() });
+
+      const notifSnap = notifSnapById.get(itemId);
+      if (notifSnap) {
+        applyLowStockNotification(
+          transaction,
+          lowStockNotificationRef(inv.ref.id),
+          notifSnap,
+          {
+            companyId,
+            itemId: inv.ref.id,
+            itemName: inv.name,
+            quantity: newQuantity,
+            minQuantity: inv.minQuantity,
+            owner,
+          }
+        );
+      }
 
       const movementRef = doc(collection(firestore, "stockMovements"));
       transaction.set(movementRef, {

@@ -12,6 +12,7 @@ import {
 } from "firebase/firestore";
 import { firestore } from "../shared/firebase";
 import { getCurrentCompanyId } from "../shared/tenant";
+import { applyLowStockNotification, lowStockNotificationRef } from "./lowStockNotifications";
 import { IStockMovement, StockMovementType } from "../../types/stockMovement";
 
 const INCREASING_TYPES: StockMovementType[] = ["entrada", "devolucao"];
@@ -65,6 +66,7 @@ export async function createStockMovement(
 
   const itemRef = doc(firestore, "inventoryItems", input.itemId);
   const movementRef = doc(collection(firestore, "stockMovements"));
+  const notifRef = lowStockNotificationRef(input.itemId);
   const warehouseStockRef = input.warehouseId
     ? doc(firestore, "warehouseStock", `${input.itemId}_${input.warehouseId}`)
     : null;
@@ -77,6 +79,7 @@ export async function createStockMovement(
     const warehouseStockSnap = warehouseStockRef
       ? await transaction.get(warehouseStockRef)
       : null;
+    const notifSnap = await transaction.get(notifRef);
 
     const itemData = itemSnap.data();
     const currentQuantity = (itemData.quantity as number) ?? 0;
@@ -90,6 +93,15 @@ export async function createStockMovement(
     transaction.update(itemRef, {
       quantity: newQuantity,
       updatedAt: serverTimestamp(),
+    });
+
+    applyLowStockNotification(transaction, notifRef, notifSnap, {
+      companyId,
+      itemId: input.itemId,
+      itemName: itemData.name ?? "",
+      quantity: newQuantity,
+      minQuantity: (itemData.minQuantity as number) ?? 0,
+      owner,
     });
 
     transaction.set(movementRef, {

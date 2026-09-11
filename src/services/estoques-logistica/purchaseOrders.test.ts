@@ -39,6 +39,8 @@ const mockTransaction = (
   const get = vi.fn().mockResolvedValueOnce({ exists: () => true, data: () => orderData });
   if (itemData !== undefined) {
     get.mockResolvedValueOnce({ exists: () => true, data: () => itemData });
+    // low-stock notification lookup (deterministic id) — default to "none open"
+    get.mockResolvedValueOnce({ exists: () => false });
   }
   if (orderData.warehouseId) {
     get.mockResolvedValueOnce(

@@ -49,11 +49,19 @@ const mockInventoryLookup = (inventoryDocs: { ref: { id: string }; data: Record<
   } as never);
 };
 
-const mockTransaction = (order: Record<string, unknown>, inventorySnaps: Record<string, unknown>[]) => {
+const mockTransaction = (
+  order: Record<string, unknown>,
+  inventorySnaps: Record<string, unknown>[],
+  notifSnaps: (Record<string, unknown> | null)[] = []
+) => {
   const get = vi.fn().mockResolvedValueOnce({ exists: () => true, data: () => order });
-  for (const snap of inventorySnaps) {
+  inventorySnaps.forEach((snap, index) => {
     get.mockResolvedValueOnce({ exists: () => true, data: () => snap });
-  }
+    const notif = notifSnaps[index];
+    get.mockResolvedValueOnce(
+      notif ? { exists: () => true, data: () => notif } : { exists: () => false }
+    );
+  });
   const set = vi.fn();
   const update = vi.fn();
   vi.mocked(runTransaction).mockImplementation(async (_db, callback) =>
@@ -166,7 +174,9 @@ describe("approveSalesOrder", () => {
       .fn()
       .mockResolvedValueOnce({ exists: () => true, data: () => order })
       .mockResolvedValueOnce({ exists: () => true, data: () => ({ quantity: 100, name: "Pão" }) })
-      .mockResolvedValueOnce({ exists: () => true, data: () => ({ quantity: 10, name: "Tomate" }) });
+      .mockResolvedValueOnce({ exists: () => false })
+      .mockResolvedValueOnce({ exists: () => true, data: () => ({ quantity: 10, name: "Tomate" }) })
+      .mockResolvedValueOnce({ exists: () => false });
     const set = vi.fn();
     const update = vi.fn();
     vi.mocked(runTransaction).mockImplementation(async (_db, callback) =>
