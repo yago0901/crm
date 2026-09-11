@@ -51,7 +51,6 @@ export async function createFollowUp(
   owner: { uid: string; name?: string | null }
 ): Promise<string> {
   return followUpsService.create(input, owner, {
-    companyId: getCurrentCompanyId(),
     completedAt: null,
   });
 }

@@ -53,9 +53,7 @@ export async function createPerformanceReview(
   input: PerformanceReviewInput,
   owner: { uid: string; name?: string | null }
 ): Promise<string> {
-  return performanceReviewsService.create(input, owner, {
-    companyId: getCurrentCompanyId(),
-  });
+  return performanceReviewsService.create(input, owner);
 }
 
 export async function updatePerformanceReview(

@@ -41,7 +41,7 @@ export async function createMaintenanceRequest(
   input: MaintenanceRequestInput,
   owner: { uid: string; name?: string | null }
 ): Promise<string> {
-  return maintenanceRequestsService.create(input, owner, { companyId: getCurrentCompanyId() });
+  return maintenanceRequestsService.create(input, owner);
 }
 
 export async function updateMaintenanceRequest(

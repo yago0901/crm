@@ -43,7 +43,7 @@ export async function createTraining(
   input: TrainingInput,
   owner: { uid: string; name?: string | null }
 ): Promise<string> {
-  return trainingsService.create(input, owner, { companyId: getCurrentCompanyId() });
+  return trainingsService.create(input, owner);
 }
 
 export async function updateTraining(

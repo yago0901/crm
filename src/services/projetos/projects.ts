@@ -50,7 +50,7 @@ export async function createProject(
   input: ProjectInput,
   owner: { uid: string; name?: string | null }
 ): Promise<string> {
-  return projectsService.create(input, owner, { companyId: getCurrentCompanyId() });
+  return projectsService.create(input, owner);
 }
 
 export async function updateProject(

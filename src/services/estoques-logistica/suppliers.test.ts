@@ -70,7 +70,15 @@ describe("fetchActiveSuppliers", () => {
     setCurrentCompanyId(null);
   });
 
+  it("returns an empty array without querying when there is no current company", async () => {
+    const suppliers = await fetchActiveSuppliers();
+
+    expect(suppliers).toEqual([]);
+    expect(getDocs).not.toHaveBeenCalled();
+  });
+
   it("returns only active suppliers mapped from the snapshot", async () => {
+    setCurrentCompanyId("acme");
     const docs = [
       { id: "s1", data: () => ({ name: "Fornecedor A", category: "Insumos", status: "ativo", ownerId: "o1" }) },
     ];

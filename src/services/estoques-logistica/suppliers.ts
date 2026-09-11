@@ -1,12 +1,4 @@
-import {
-  DocumentData,
-  getDocs,
-  orderBy,
-  query,
-  QueryDocumentSnapshot,
-  Unsubscribe,
-  where,
-} from "firebase/firestore";
+import { DocumentData, QueryDocumentSnapshot, Unsubscribe } from "firebase/firestore";
 import { createCrudService } from "../shared/crudFactory";
 import { getCurrentCompanyId } from "../shared/tenant";
 import { ISupplier, SupplierInput, SupplierStatus } from "../../types/supplier";
@@ -49,7 +41,7 @@ export async function createSupplier(
   input: SupplierInput,
   owner: { uid: string; name?: string | null }
 ): Promise<string> {
-  return suppliersService.create(input, owner, { companyId: getCurrentCompanyId() });
+  return suppliersService.create(input, owner);
 }
 
 export async function updateSupplier(
@@ -64,13 +56,5 @@ export async function deleteSupplier(supplierId: string): Promise<void> {
 }
 
 export async function fetchActiveSuppliers(): Promise<ISupplier[]> {
-  const companyId = getCurrentCompanyId();
-  const constraints = [
-    ...(companyId ? [where("companyId", "==", companyId)] : []),
-    where("status", "==", "ativo"),
-    orderBy("name", "asc"),
-  ];
-  const q = query(suppliersService.ref, ...constraints);
-  const snapshot = await getDocs(q);
-  return snapshot.docs.map(mapSupplier);
+  return suppliersService.fetchActive();
 }

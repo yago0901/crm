@@ -51,7 +51,6 @@ export async function createCommission(
   owner: { uid: string; name?: string | null }
 ): Promise<string> {
   return commissionsService.create(input, owner, {
-    companyId: getCurrentCompanyId(),
     paidAt: null,
   });
 }

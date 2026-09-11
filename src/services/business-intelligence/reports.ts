@@ -236,7 +236,7 @@ export async function createSavedReport(
   input: SavedReportInput,
   owner: { uid: string; name?: string | null }
 ): Promise<string> {
-  return savedReportsService.create(input, owner, { companyId: getCurrentCompanyId() });
+  return savedReportsService.create(input, owner);
 }
 
 export async function updateSavedReport(

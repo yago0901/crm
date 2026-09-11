@@ -1,16 +1,6 @@
-import {
-  DocumentData,
-  QueryDocumentSnapshot,
-  Unsubscribe,
-  collection,
-  getDocs,
-  orderBy,
-  query,
-  where,
-} from "firebase/firestore";
+import { DocumentData, QueryDocumentSnapshot, Unsubscribe } from "firebase/firestore";
 import { createCrudService } from "./crudFactory";
 import { getCurrentCompanyId } from "./tenant";
-import { firestore } from "./firebase";
 import { IProduct, ProductInput, ProductStatus } from "../../types/product";
 
 export const mapProduct = (snap: QueryDocumentSnapshot<DocumentData>): IProduct => {
@@ -47,7 +37,7 @@ export async function createProduct(
   input: ProductInput,
   owner: { uid: string; name?: string | null }
 ): Promise<string> {
-  return productService.create(input, owner, { companyId: getCurrentCompanyId() });
+  return productService.create(input, owner);
 }
 
 export async function updateProduct(
@@ -62,15 +52,5 @@ export async function deleteProduct(productId: string): Promise<void> {
 }
 
 export async function fetchActiveProducts(): Promise<IProduct[]> {
-  const companyId = getCurrentCompanyId();
-  if (!companyId) return [];
-
-  const q = query(
-    collection(firestore, "products"),
-    where("companyId", "==", companyId),
-    where("status", "==", "ativo"),
-    orderBy("name", "asc")
-  );
-  const snap = await getDocs(q);
-  return snap.docs.map(mapProduct);
+  return productService.fetchActive();
 }

@@ -100,7 +100,6 @@ export async function createPayable(
   owner: { uid: string; name?: string | null }
 ): Promise<string> {
   return payablesService.create(input, owner, {
-    companyId: getCurrentCompanyId(),
     paidAt: input.paidAt ?? null,
   });
 }
@@ -192,7 +191,6 @@ export async function createReceivable(
   owner: { uid: string; name?: string | null }
 ): Promise<string> {
   return receivablesService.create(input, owner, {
-    companyId: getCurrentCompanyId(),
     receivedAt: input.receivedAt ?? null,
   });
 }

@@ -65,7 +65,7 @@ export async function createPurchaseOrder(
   input: PurchaseOrderInput,
   owner: { uid: string; name?: string | null }
 ): Promise<string> {
-  return purchaseOrdersService.create(input, owner, { companyId: getCurrentCompanyId() });
+  return purchaseOrdersService.create(input, owner);
 }
 
 export async function updatePurchaseOrder(

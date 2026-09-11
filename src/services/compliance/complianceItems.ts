@@ -41,7 +41,7 @@ export async function createComplianceItem(
   input: ComplianceItemInput,
   owner: { uid: string; name?: string | null }
 ): Promise<string> {
-  return complianceItemsService.create(input, owner, { companyId: getCurrentCompanyId() });
+  return complianceItemsService.create(input, owner);
 }
 
 export async function updateComplianceItem(

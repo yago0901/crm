@@ -4,7 +4,6 @@ import {
   doc,
   documentId,
   getDocs,
-  orderBy,
   query,
   QueryDocumentSnapshot,
   serverTimestamp,
@@ -68,7 +67,7 @@ export async function createEmployee(
   input: EmployeeInput,
   owner: { uid: string; name?: string | null }
 ): Promise<string> {
-  return employeesService.create(input, owner, { companyId: getCurrentCompanyId() });
+  return employeesService.create(input, owner);
 }
 
 export async function updateEmployee(
@@ -87,15 +86,7 @@ export async function getActivePayrollTotal(): Promise<number> {
 }
 
 export async function fetchActiveEmployees(): Promise<IEmployee[]> {
-  const companyId = getCurrentCompanyId();
-  const constraints = [
-    ...(companyId ? [where("companyId", "==", companyId)] : []),
-    where("status", "==", "ativo"),
-    orderBy("name", "asc"),
-  ];
-  const q = query(employeesService.ref, ...constraints);
-  const snapshot = await getDocs(q);
-  return snapshot.docs.map(mapEmployee);
+  return employeesService.fetchActive();
 }
 
 export async function fetchEmployeesByIds(employeeIds: string[]): Promise<IEmployee[]> {

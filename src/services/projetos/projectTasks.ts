@@ -42,7 +42,7 @@ export async function createProjectTask(
   input: ProjectTaskInput,
   owner: { uid: string; name?: string | null }
 ): Promise<string> {
-  return projectTasksService.create(input, owner, { companyId: getCurrentCompanyId() });
+  return projectTasksService.create(input, owner);
 }
 
 export async function updateProjectTask(

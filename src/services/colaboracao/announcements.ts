@@ -41,7 +41,6 @@ export async function createAnnouncement(
   owner: { uid: string; name?: string | null }
 ): Promise<string> {
   return announcementsService.create(input, owner, {
-    companyId: getCurrentCompanyId(),
     publishedAt: null,
   });
 }

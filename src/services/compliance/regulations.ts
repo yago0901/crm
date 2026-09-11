@@ -41,7 +41,7 @@ export async function createRegulation(
   input: RegulationInput,
   owner: { uid: string; name?: string | null }
 ): Promise<string> {
-  return regulationsService.create(input, owner, { companyId: getCurrentCompanyId() });
+  return regulationsService.create(input, owner);
 }
 
 export async function updateRegulation(

@@ -7,6 +7,7 @@ import {
   DocumentData,
   getAggregateFromServer,
   getDoc,
+  getDocs,
   onSnapshot,
   orderBy,
   OrderByDirection,
@@ -20,6 +21,7 @@ import {
 } from "firebase/firestore";
 import { auth, firestore } from "./firebase";
 import { appendAuditLog, computeChangedFields, summarizeEntity } from "./auditLog";
+import { getCurrentCompanyId } from "./tenant";
 
 interface CrudServiceConfig {
   orderByField?: string;
@@ -71,12 +73,27 @@ export function createCrudService<T, TInput extends object>(
     const docRef = await addDoc(ref, {
       ...input,
       ...extra,
+      companyId: getCurrentCompanyId(),
       ownerId: owner.uid,
       ownerName: owner.name ?? "",
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     });
     return docRef.id;
+  }
+
+  async function fetchActive(activeOrderByField = "name"): Promise<T[]> {
+    const companyId = getCurrentCompanyId();
+    if (!companyId) return [];
+
+    const q = query(
+      ref,
+      where("companyId", "==", companyId),
+      where(filterField, "==", "ativo"),
+      orderBy(activeOrderByField, "asc")
+    );
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(mapDoc);
   }
 
   async function update(
@@ -156,5 +173,5 @@ export function createCrudService<T, TInput extends object>(
     return snap.data().total;
   }
 
-  return { ref, subscribe, create, update, remove, sumByStatus, countByStatus };
+  return { ref, subscribe, create, update, remove, sumByStatus, countByStatus, fetchActive };
 }
