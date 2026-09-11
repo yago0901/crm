@@ -38,6 +38,11 @@ export function useResourceCrud<T extends { id: string }, TInput extends object>
     resetKey: statusFilter,
   });
 
+  const changeStatusFilter = (value: string) => {
+    setStatusFilter(value);
+    setCurrentPage(1);
+  };
+
   const refreshSummary = () => {
     if (!schema.summary) return;
     schema.summary
@@ -135,7 +140,7 @@ export function useResourceCrud<T extends { id: string }, TInput extends object>
     pageError,
     loadError,
     statusFilter,
-    setStatusFilter,
+    setStatusFilter: changeStatusFilter,
     summaryValue,
     isFormOpen,
     editingId,

@@ -1,9 +1,10 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { act, renderHook } from "@testing-library/react";
 
-const { showToast, refresh, usePaginatedCollectionMock } = vi.hoisted(() => ({
+const { showToast, refresh, setCurrentPage, usePaginatedCollectionMock } = vi.hoisted(() => ({
   showToast: vi.fn(),
   refresh: vi.fn(),
+  setCurrentPage: vi.fn(),
   usePaginatedCollectionMock: vi.fn(),
 }));
 
@@ -70,7 +71,7 @@ describe("useResourceCrud", () => {
       items: [{ id: "i1", name: "Item 1", status: "ativo" }],
       currentPage: 1,
       totalPages: 1,
-      setCurrentPage: vi.fn(),
+      setCurrentPage,
       loading: false,
       error: null,
       refresh,
@@ -94,6 +95,14 @@ describe("useResourceCrud", () => {
     const lastCall = calls[calls.length - 1][0];
     expect(lastCall.constraints).toHaveLength(2);
     expect(lastCall.constraints[0]).toMatchObject({ field: "status", value: "ativo" });
+  });
+
+  it("resets to page 1 when the status filter changes, even from a later page", () => {
+    const { result } = renderHook(() => useResourceCrud(buildSchema()));
+
+    act(() => result.current.setStatusFilter("ativo"));
+
+    expect(setCurrentPage).toHaveBeenCalledWith(1);
   });
 
   it("openEditForm loads the item through toInput, openCreateForm resets to emptyForm", () => {

@@ -1,20 +1,8 @@
-import { FormEvent, useEffect, useMemo, useState } from "react";
-import { orderBy, where } from "firebase/firestore";
-import {
-  MAX_INPUT_DATE,
-  MIN_INPUT_DATE,
-  fromDateInput,
-  toDateInput,
-} from "../../../utils/dateInput";
-import { useAuth } from "../../../contexts/auth/AuthContext";
-import { useToast } from "../../common/Toast/ToastContext";
-import Modal from "../../common/Modal";
-import ConfirmDialog from "../../common/ConfirmDialog";
-import Button from "../../common/Button";
 import Badge from "../../common/Badge";
-import FormField from "../../common/FormField";
-import Pagination from "../../common/Pagination";
-import { usePaginatedCollection } from "../../../hooks/usePaginatedCollection";
+import ResourcePage from "../../common/ResourcePage";
+import { ResourceSchema } from "../../common/ResourcePage/types";
+import { toDateInput } from "../../../utils/dateInput";
+import { currency } from "../../../utils/format";
 import {
   createLedgerEntry,
   deleteLedgerEntry,
@@ -23,9 +11,6 @@ import {
   updateLedgerEntry,
 } from "../../../services/financeiro/ledger";
 import { ILedgerEntry, LedgerEntryInput, LedgerEntryType } from "../../../types/ledgerEntry";
-import { PAGE_SIZE } from "../../../constants/pagination";
-import { currency } from "../../../utils/format";
-import "./styles.scss";
 
 const TYPE_LABEL: Record<LedgerEntryType, string> = {
   debito: "Débito",
@@ -46,286 +31,76 @@ const EMPTY_FORM: LedgerEntryInput = {
   notes: "",
 };
 
+const schema: ResourceSchema<ILedgerEntry, LedgerEntryInput> = {
+  pageTitle: "Contabilidade",
+  newLabel: "Novo lançamento",
+  entityLabel: "lançamento",
+  loadingMessage: "Carregando lançamentos...",
+  emptyMessage: "Nenhum lançamento contábil encontrado.",
+  messages: {
+    created: "Lançamento criado com sucesso.",
+    updated: "Lançamento atualizado com sucesso.",
+    deleted: "Lançamento excluído.",
+  },
+
+  collectionPath: "ledgerEntries",
+  mapDoc: mapLedgerEntry,
+  orderByField: "date",
+  orderDirection: "desc",
+  filterField: "type",
+  filterOptions: [
+    { value: "credito", label: "Crédito" },
+    { value: "debito", label: "Débito" },
+  ],
+
+  columns: [
+    { key: "description", label: "Descrição", render: (e) => e.description },
+    { key: "category", label: "Categoria", render: (e) => e.category || "—" },
+    { key: "type", label: "Tipo", render: (e) => <Badge tone={TYPE_TONE[e.type]}>{TYPE_LABEL[e.type]}</Badge> },
+    { key: "value", label: "Valor", render: (e) => currency.format(e.value) },
+    { key: "date", label: "Data", render: (e) => toDateInput(e.date) || "—" },
+  ],
+
+  fields: [
+    { key: "description", label: "Descrição", kind: "text", required: true },
+    { key: "category", label: "Categoria", kind: "text" },
+    {
+      key: "type",
+      label: "Tipo",
+      kind: "select",
+      options: [
+        { value: "debito", label: "Débito" },
+        { value: "credito", label: "Crédito" },
+      ],
+    },
+    { key: "value", label: "Valor (R$)", kind: "number", required: true },
+    { key: "date", label: "Data", kind: "date" },
+    { key: "notes", label: "Observações", kind: "textarea", fullWidth: true },
+  ],
+
+  emptyForm: EMPTY_FORM,
+  toInput: (e) => ({
+    description: e.description,
+    category: e.category,
+    type: e.type,
+    value: e.value,
+    date: e.date,
+    notes: e.notes,
+  }),
+  getRowLabel: (e) => e.description,
+
+  create: createLedgerEntry,
+  update: updateLedgerEntry,
+  remove: deleteLedgerEntry,
+
+  summary: {
+    label: "Saldo contábil",
+    fetch: getLedgerBalance,
+    tone: (value) => (value >= 0 ? "success" : "danger"),
+    format: (value) => currency.format(value),
+  },
+};
+
 export default function Contabilidade() {
-  const { currentUser } = useAuth();
-  const { showToast } = useToast();
-
-  const [typeFilter, setTypeFilter] = useState<LedgerEntryType | "all">("all");
-  const [balance, setBalance] = useState(0);
-  const [loadError, setLoadError] = useState<string | null>(null);
-
-  const constraints = useMemo(
-    () =>
-      typeFilter === "all"
-        ? [orderBy("date", "desc")]
-        : [where("type", "==", typeFilter), orderBy("date", "desc")],
-    [typeFilter]
-  );
-
-  const {
-    items: entries,
-    currentPage,
-    totalPages,
-    setCurrentPage,
-    loading,
-    error: pageError,
-    refresh,
-  } = usePaginatedCollection({
-    collectionPath: "ledgerEntries",
-    constraints,
-    mapDoc: mapLedgerEntry,
-    pageSize: PAGE_SIZE,
-    resetKey: typeFilter,
-  });
-
-  const refreshBalance = () => {
-    getLedgerBalance()
-      .then(setBalance)
-      .catch((err) => setLoadError(err.message));
-  };
-
-  useEffect(() => {
-    refreshBalance();
-  }, []);
-
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [form, setForm] = useState<LedgerEntryInput>(EMPTY_FORM);
-  const [saving, setSaving] = useState(false);
-
-  const [entryToDelete, setEntryToDelete] = useState<ILedgerEntry | null>(null);
-
-  const openCreateForm = () => {
-    setEditingId(null);
-    setForm(EMPTY_FORM);
-    setIsFormOpen(true);
-  };
-
-  const openEditForm = (entry: ILedgerEntry) => {
-    setEditingId(entry.id);
-    setForm({
-      description: entry.description,
-      category: entry.category,
-      type: entry.type,
-      value: entry.value,
-      date: entry.date,
-      notes: entry.notes,
-    });
-    setIsFormOpen(true);
-  };
-
-  const closeForm = () => {
-    setIsFormOpen(false);
-    setEditingId(null);
-    setForm(EMPTY_FORM);
-  };
-
-  const handleSubmit = async (event: FormEvent) => {
-    event.preventDefault();
-    if (!currentUser) return;
-
-    setSaving(true);
-    try {
-      if (editingId) {
-        await updateLedgerEntry(editingId, form);
-        showToast("Lançamento atualizado com sucesso.", "success");
-      } else {
-        await createLedgerEntry(form, {
-          uid: currentUser.uid,
-          name: currentUser.displayName ?? currentUser.email,
-        });
-        showToast("Lançamento criado com sucesso.", "success");
-      }
-      refresh();
-      refreshBalance();
-      closeForm();
-    } catch (err) {
-      showToast(
-        err instanceof Error ? err.message : "Erro ao salvar lançamento",
-        "error"
-      );
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const handleDelete = async () => {
-    if (!entryToDelete) return;
-    try {
-      await deleteLedgerEntry(entryToDelete.id);
-      showToast("Lançamento excluído.", "success");
-      refresh();
-      refreshBalance();
-    } catch (err) {
-      showToast(
-        err instanceof Error ? err.message : "Erro ao excluir lançamento",
-        "error"
-      );
-    } finally {
-      setEntryToDelete(null);
-    }
-  };
-
-  return (
-    <div className="ledger_page">
-      <div className="ledger_page__header">
-        <h1>Contabilidade</h1>
-        <Button variant="primary" onClick={openCreateForm}>
-          + Novo lançamento
-        </Button>
-      </div>
-
-      <div
-        className={`ledger_page__summary ${
-          balance >= 0 ? "ledger_page__summary--positive" : "ledger_page__summary--negative"
-        }`}
-      >
-        <span>Saldo contábil</span>
-        <strong>{currency.format(balance)}</strong>
-      </div>
-
-      <div className="ledger_page__filters">
-        <select
-          value={typeFilter}
-          onChange={(e) => setTypeFilter(e.target.value as LedgerEntryType | "all")}
-        >
-          <option value="all">Todos os lançamentos</option>
-          <option value="credito">Crédito</option>
-          <option value="debito">Débito</option>
-        </select>
-      </div>
-
-      {(loadError || pageError) && (
-        <p className="ledger_page__error">{loadError ?? pageError}</p>
-      )}
-
-      {loading ? (
-        <p className="ledger_page__empty">Carregando lançamentos...</p>
-      ) : entries.length === 0 ? (
-        <p className="ledger_page__empty">Nenhum lançamento contábil encontrado.</p>
-      ) : (
-        <div className="ledger_page__table_wrap">
-          <table className="ledger_page__table">
-            <thead>
-              <tr>
-                <th>Descrição</th>
-                <th>Categoria</th>
-                <th>Tipo</th>
-                <th>Valor</th>
-                <th>Data</th>
-                <th />
-              </tr>
-            </thead>
-            <tbody>
-              {entries.map((entry) => (
-                <tr key={entry.id}>
-                  <td>{entry.description}</td>
-                  <td>{entry.category || "—"}</td>
-                  <td>
-                    <Badge tone={TYPE_TONE[entry.type]}>{TYPE_LABEL[entry.type]}</Badge>
-                  </td>
-                  <td>{currency.format(entry.value)}</td>
-                  <td>{toDateInput(entry.date) || "—"}</td>
-                  <td>
-                    <div className="ledger_page__table__actions">
-                      <Button variant="secondary" onClick={() => openEditForm(entry)}>
-                        Editar
-                      </Button>
-                      <Button variant="danger" onClick={() => setEntryToDelete(entry)}>
-                        Excluir
-                      </Button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      <Pagination
-        currentPage={currentPage}
-        totalPages={totalPages}
-        onPageChange={setCurrentPage}
-      />
-
-      <Modal
-        isOpen={isFormOpen}
-        onClose={closeForm}
-        title={editingId ? "Editar lançamento" : "Novo lançamento"}
-      >
-        <form className="ledger_page__form" onSubmit={handleSubmit}>
-          <div className="ledger_page__form__grid">
-            <FormField label="Descrição*">
-              <input
-                required
-                value={form.description}
-                onChange={(e) => setForm({ ...form, description: e.target.value })}
-              />
-            </FormField>
-            <FormField label="Categoria">
-              <input
-                value={form.category}
-                onChange={(e) => setForm({ ...form, category: e.target.value })}
-              />
-            </FormField>
-            <FormField label="Tipo">
-              <select
-                value={form.type}
-                onChange={(e) =>
-                  setForm({ ...form, type: e.target.value as LedgerEntryType })
-                }
-              >
-                <option value="debito">Débito</option>
-                <option value="credito">Crédito</option>
-              </select>
-            </FormField>
-            <FormField label="Valor (R$)*">
-              <input
-                required
-                type="number"
-                min="0"
-                step="0.01"
-                value={form.value}
-                onChange={(e) => setForm({ ...form, value: Number(e.target.value) })}
-              />
-            </FormField>
-            <FormField label="Data">
-              <input
-                type="date"
-                min={MIN_INPUT_DATE}
-                max={MAX_INPUT_DATE}
-                value={toDateInput(form.date)}
-                onChange={(e) => setForm({ ...form, date: fromDateInput(e.target.value) })}
-              />
-            </FormField>
-          </div>
-          <FormField label="Observações">
-            <textarea
-              value={form.notes}
-              onChange={(e) => setForm({ ...form, notes: e.target.value })}
-            />
-          </FormField>
-          <div className="ledger_page__form__actions">
-            <Button type="button" variant="secondary" onClick={closeForm} disabled={saving}>
-              Cancelar
-            </Button>
-            <Button type="submit" variant="primary" disabled={saving}>
-              {saving ? "Salvando..." : "Salvar"}
-            </Button>
-          </div>
-        </form>
-      </Modal>
-
-      <ConfirmDialog
-        isOpen={!!entryToDelete}
-        title="Excluir lançamento"
-        message={`Excluir "${entryToDelete?.description}"?`}
-        confirmLabel="Excluir"
-        danger
-        onConfirm={handleDelete}
-        onCancel={() => setEntryToDelete(null)}
-      />
-    </div>
-  );
+  return <ResourcePage schema={schema} />;
 }

@@ -33,6 +33,8 @@ export interface ResourceSummary {
   label: string;
   fetch: () => Promise<number>;
   tone?: (value: number) => ResourceSummaryTone;
+  /** Defaults to the raw number — pass e.g. currency.format for a monetary summary. */
+  format?: (value: number) => string;
 }
 
 export interface ResourceMessages {
