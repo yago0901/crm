@@ -42,7 +42,7 @@ export async function createInternalAudit(
   input: InternalAuditInput,
   owner: { uid: string; name?: string | null }
 ): Promise<string> {
-  return internalAuditsService.create(input, owner, { companyId: getCurrentCompanyId() });
+  return internalAuditsService.create(input, owner);
 }
 
 export async function updateInternalAudit(

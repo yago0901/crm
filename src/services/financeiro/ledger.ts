@@ -41,7 +41,7 @@ export async function createLedgerEntry(
   input: LedgerEntryInput,
   owner: { uid: string; name?: string | null }
 ): Promise<string> {
-  return ledgerService.create(input, owner, { companyId: getCurrentCompanyId() });
+  return ledgerService.create(input, owner);
 }
 
 export async function updateLedgerEntry(

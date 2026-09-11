@@ -10,6 +10,7 @@ vi.mock("firebase/firestore", () => ({
   doc: vi.fn((_db, ...path) => ({ type: "doc", path })),
   addDoc: vi.fn(),
   getDoc: vi.fn(),
+  getDocs: vi.fn(),
   writeBatch: vi.fn(),
   getAggregateFromServer: vi.fn(),
   query: vi.fn((ref, ...constraints) => ({ type: "query", ref, constraints })),
@@ -25,11 +26,14 @@ import {
   addDoc,
   getAggregateFromServer,
   getDoc,
+  getDocs,
   onSnapshot,
+  orderBy,
   where,
   writeBatch,
 } from "firebase/firestore";
 import { createCrudService } from "./crudFactory";
+import { setCurrentCompanyId } from "./tenant";
 
 interface FakeItem {
   id: string;
@@ -56,6 +60,20 @@ const mockBatch = () => {
 describe("createCrudService", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    setCurrentCompanyId(null);
+  });
+
+  it("create() stamps the current companyId itself, without the caller passing it", async () => {
+    const service = createCrudService<FakeItem, { name: string }>("fakes", mapFakeItem);
+    vi.mocked(addDoc).mockResolvedValue({ id: "new-id" } as never);
+    setCurrentCompanyId("acme");
+
+    await service.create({ name: "Item" }, { uid: "owner1", name: "Yago" });
+
+    expect(addDoc).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ companyId: "acme" })
+    );
   });
 
   it("create() merges owner info, timestamps, and extra fields over the input", async () => {
@@ -244,6 +262,50 @@ describe("createCrudService", () => {
 
     await service.countByStatus("pendente", "acme");
     expect(where).toHaveBeenCalledWith("companyId", "==", "acme");
+  });
+
+  it("fetchActive() returns an empty array without querying when there is no current company", async () => {
+    const service = createCrudService<FakeItem, { name: string }>("fakes", mapFakeItem);
+
+    const items = await service.fetchActive();
+
+    expect(items).toEqual([]);
+    expect(getDocs).not.toHaveBeenCalled();
+  });
+
+  it("fetchActive() filters by companyId + status ativo, ordered by name by default", async () => {
+    const service = createCrudService<FakeItem, { name: string }>("fakes", mapFakeItem);
+    setCurrentCompanyId("acme");
+    vi.mocked(getDocs).mockResolvedValue({ docs: [] } as never);
+
+    await service.fetchActive();
+
+    expect(where).toHaveBeenCalledWith("companyId", "==", "acme");
+    expect(where).toHaveBeenCalledWith("status", "==", "ativo");
+  });
+
+  it("fetchActive() maps the returned documents", async () => {
+    const service = createCrudService<FakeItem, { name: string }>("fakes", () => ({
+      id: "f1",
+      name: "Item",
+      status: "ativo",
+    }));
+    setCurrentCompanyId("acme");
+    vi.mocked(getDocs).mockResolvedValue({ docs: [{}] } as never);
+
+    const items = await service.fetchActive();
+
+    expect(items).toEqual([{ id: "f1", name: "Item", status: "ativo" }]);
+  });
+
+  it("fetchActive() accepts a custom order-by field", async () => {
+    const service = createCrudService<FakeItem, { name: string }>("fakes", mapFakeItem);
+    setCurrentCompanyId("acme");
+    vi.mocked(getDocs).mockResolvedValue({ docs: [] } as never);
+
+    await service.fetchActive("hireDate");
+
+    expect(orderBy).toHaveBeenCalledWith("hireDate", "asc");
   });
 
   it("uses a custom filterField for subscribe/sumByStatus/countByStatus when configured", async () => {

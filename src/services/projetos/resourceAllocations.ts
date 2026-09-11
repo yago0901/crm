@@ -63,9 +63,7 @@ export async function createResourceAllocation(
   input: ResourceAllocationInput,
   owner: { uid: string; name?: string | null }
 ): Promise<string> {
-  return resourceAllocationsService.create(input, owner, {
-    companyId: getCurrentCompanyId(),
-  });
+  return resourceAllocationsService.create(input, owner);
 }
 
 export async function updateResourceAllocation(

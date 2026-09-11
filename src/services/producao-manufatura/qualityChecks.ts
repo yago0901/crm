@@ -41,7 +41,7 @@ export async function createQualityCheck(
   input: QualityCheckInput,
   owner: { uid: string; name?: string | null }
 ): Promise<string> {
-  return qualityChecksService.create(input, owner, { companyId: getCurrentCompanyId() });
+  return qualityChecksService.create(input, owner);
 }
 
 export async function updateQualityCheck(

@@ -4,11 +4,7 @@ import {
   Unsubscribe,
   collection,
   doc,
-  getDocs,
-  orderBy,
-  query,
   serverTimestamp,
-  where,
   writeBatch,
 } from "firebase/firestore";
 import { createCrudService } from "../shared/crudFactory";
@@ -119,15 +115,5 @@ export async function getActiveInventoryTotal(): Promise<number> {
 }
 
 export async function fetchActiveInventoryItems(): Promise<IInventoryItem[]> {
-  const companyId = getCurrentCompanyId();
-  if (!companyId) return [];
-
-  const q = query(
-    collection(firestore, "inventoryItems"),
-    where("companyId", "==", companyId),
-    where("status", "==", "ativo"),
-    orderBy("name", "asc")
-  );
-  const snap = await getDocs(q);
-  return snap.docs.map(mapInventoryItem);
+  return inventoryService.fetchActive();
 }

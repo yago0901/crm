@@ -52,7 +52,6 @@ export async function createDeal(
   owner: { uid: string; name?: string | null }
 ): Promise<string> {
   return dealsService.create(input, owner, {
-    companyId: getCurrentCompanyId(),
     convertedToContractId: null,
   });
 }

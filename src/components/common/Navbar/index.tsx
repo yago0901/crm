@@ -4,144 +4,32 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useEffect, useMemo, useState } from 'react';
 import {
   FaBell,
-  FaChartLine,
   FaChevronDown,
-  FaClipboardCheck,
   FaCog,
-  FaCommentDots,
-  FaHandshake,
   FaHistory,
   FaHome,
-  FaIndustry,
-  FaMoneyBillWave,
   FaMoon,
-  FaProjectDiagram,
   FaSignOutAlt,
   FaSun,
-  FaUsers,
-  FaWarehouse,
 } from 'react-icons/fa';
 import { useTheme } from '../../../hooks/useTheme';
 import { useAuth } from '../../../contexts/auth/AuthContext';
 import { subscribeToOpenNotificationCount } from '../../../services/shared/notifications';
+import { NAV_GROUPS } from '../../../navigation';
 
 const DEFAULT_MENU: NavbarMenuItem[] = [
   { key: 'home', label: 'Home', icon: FaHome, path: '/home' },
-  {
-    key: 'human-resources',
-    requiredModule: 'human-resources',
-    label: 'Recursos Humanos',
-    icon: FaUsers,
-    children: [
-      { label: 'Funcionários', path: '/rh/gestao-funcionarios' },
-      { label: 'Acessos', path: '/rh/acessos', adminOnly: true },
-      { label: 'Folha de Pagamento', path: '/rh/folha-pagamento' },
-      { label: 'Recrutamento', path: '/rh/recrutamento' },
-      { label: 'Treinamento', path: '/rh/treinamento' },
-      { label: 'Avaliação de Desempenho', path: '/rh/avaliacao-desempenho' },
-    ],
-  },
-  {
-    key: 'sales',
-    requiredModule: 'sales',
-    label: 'Vendas / CRM',
-    icon: FaHandshake,
-    children: [
-      { label: 'Gestão de Contatos', path: '/vendas-crm/gestao-contatos' },
-      { label: 'Acompanhamento de Leads', path: '/vendas-crm/acompanhamento-leads' },
-      { label: 'Negócios', path: '/vendas-crm/negocios' },
-      { label: 'Propostas', path: '/vendas-crm/propostas' },
-      { label: 'Pedidos de Venda', path: '/vendas-crm/pedidos-de-venda' },
-      { label: 'Comissões', path: '/vendas-crm/comissoes' },
-      { label: 'Automação de Vendas', path: '/vendas-crm/automacao-vendas' },
-      { label: 'Gestão de Contratos', path: '/vendas-crm/gestao-contratos' },
-      { label: 'Produtos', path: '/vendas-crm/produtos' },
-    ],
-  },
-  {
-    key: 'financial',
-    requiredModule: 'financial',
-    label: 'Financeiro',
-    icon: FaMoneyBillWave,
-    children: [
-      { label: 'Fluxo de Caixa', path: '/financeiro/fluxo-caixa' },
-      { label: 'Contabilidade', path: '/financeiro/contabilidade' },
-      { label: 'Contas a Pagar', path: '/financeiro/contas-pagar' },
-      { label: 'Contas a Receber', path: '/financeiro/contas-receber' },
-      { label: 'Relatórios Financeiros', path: '/financeiro/relatorios-financeiros' },
-    ],
-  },
-  {
-    key: 'inventory-logistics',
-    requiredModule: 'inventory-logistics',
-    label: 'Estoques e Logística',
-    icon: FaWarehouse,
-    children: [
-      { label: 'Gestão de Fornecedores', path: '/estoques-logistica/gestao-fornecedores' },
-      { label: 'Controle de Estoque', path: '/estoques-logistica/controle-estoque' },
-      { label: 'Compras', path: '/estoques-logistica/compras' },
-      { label: 'Logística e Distribuição', path: '/estoques-logistica/logistica-distribuicao' },
-      { label: 'Gestão de Armazéns', path: '/estoques-logistica/gestao-armazens' },
-      { label: 'Estoque por Armazém', path: '/estoques-logistica/estoque-por-armazem' },
-    ],
-  },
-  {
-    key: 'production',
-    requiredModule: 'production',
-    label: 'Produção e Manufatura',
-    icon: FaIndustry,
-    children: [
-      { label: 'Planejamento de Produção', path: '/producao-manufatura/planejamento-producao' },
-      { label: 'Ordens de Produção', path: '/producao-manufatura/ordens-producao' },
-      { label: 'Controle de Qualidade', path: '/producao-manufatura/controle-qualidade' },
-      { label: 'Manutenção de Equipamentos', path: '/producao-manufatura/manutencao-equipamentos' },
-    ],
-  },
-  {
-    key: 'projects',
-    requiredModule: 'projects',
-    label: 'Projetos',
-    icon: FaProjectDiagram,
-    children: [
-      { label: 'Planejamento de Projetos', path: '/projetos/planejamento-projetos' },
-      { label: 'Alocação de Recursos', path: '/projetos/alocacao-recursos' },
-      { label: 'Controle de Prazos e Custos', path: '/projetos/controle-prazos-custos' },
-      { label: 'Colaboração de Equipe', path: '/projetos/colaboracao-equipe' },
-    ],
-  },
-  {
-    key: 'business-intelligence',
-    requiredModule: 'business-intelligence',
-    label: 'Business Intelligence',
-    icon: FaChartLine,
-    children: [
-      { label: 'Painéis de Controle', path: '/business-intelligence/painels-controle' },
-      { label: 'Análise de Dados', path: '/business-intelligence/analise-dados' },
-      { label: 'Relatórios Personalizados', path: '/business-intelligence/relatorios-personalizados' },
-      { label: 'Previsão de Tendências', path: '/business-intelligence/previsao-tendencias' },
-    ],
-  },
-  {
-    key: 'compliance',
-    requiredModule: 'compliance',
-    label: 'Compliance e Regulamentações',
-    icon: FaClipboardCheck,
-    children: [
-      { label: 'Gestão de Conformidade', path: '/compliance-regulamentacoes/gestao-conformidade' },
-      { label: 'Auditoria Interna', path: '/compliance-regulamentacoes/auditoria-interna' },
-      { label: 'Controle de Regulamentações', path: '/compliance-regulamentacoes/controle-regulamentacoes' },
-    ],
-  },
-  {
-    key: 'collaboration',
-    requiredModule: 'collaboration',
-    label: 'Colaboração',
-    icon: FaCommentDots,
-    children: [
-      { label: 'Comunicação Interna', path: '/integracao-colaboracao/comunicacao-interna' },
-      { label: 'Colaboração de Departamentos', path: '/integracao-colaboracao/colaboracao-departamentos' },
-    ],
-  },
+  ...NAV_GROUPS.map((group) => ({
+    key: group.key,
+    requiredModule: group.key,
+    label: group.label,
+    icon: group.icon,
+    children: group.pages.map((page) => ({
+      label: page.label,
+      path: page.path,
+      adminOnly: page.adminOnly,
+    })),
+  })),
 ];
 
 const findActiveKey = (menu: NavbarMenuItem[], pathname: string): string | null => {

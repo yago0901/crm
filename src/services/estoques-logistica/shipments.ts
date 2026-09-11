@@ -42,7 +42,7 @@ export async function createShipment(
   input: ShipmentInput,
   owner: { uid: string; name?: string | null }
 ): Promise<string> {
-  return shipmentsService.create(input, owner, { companyId: getCurrentCompanyId() });
+  return shipmentsService.create(input, owner);
 }
 
 export async function updateShipment(

@@ -41,7 +41,7 @@ export async function createProductionPlan(
   input: ProductionPlanInput,
   owner: { uid: string; name?: string | null }
 ): Promise<string> {
-  return productionPlansService.create(input, owner, { companyId: getCurrentCompanyId() });
+  return productionPlansService.create(input, owner);
 }
 
 export async function updateProductionPlan(

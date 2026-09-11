@@ -65,7 +65,6 @@ export async function createSalesOrder(
   owner: { uid: string; name?: string | null }
 ): Promise<string> {
   return salesOrdersService.create(input, owner, {
-    companyId: getCurrentCompanyId(),
     approvedProcessedAt: null,
   });
 }

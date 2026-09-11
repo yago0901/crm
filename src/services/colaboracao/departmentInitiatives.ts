@@ -49,9 +49,7 @@ export async function createDepartmentInitiative(
   input: DepartmentInitiativeInput,
   owner: { uid: string; name?: string | null }
 ): Promise<string> {
-  return departmentInitiativesService.create(input, owner, {
-    companyId: getCurrentCompanyId(),
-  });
+  return departmentInitiativesService.create(input, owner);
 }
 
 export async function updateDepartmentInitiative(

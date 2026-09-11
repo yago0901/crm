@@ -48,7 +48,7 @@ export async function createProposal(
   input: ProposalInput,
   owner: { uid: string; name?: string | null }
 ): Promise<string> {
-  return proposalsService.create(input, owner, { companyId: getCurrentCompanyId() });
+  return proposalsService.create(input, owner);
 }
 
 export async function updateProposal(

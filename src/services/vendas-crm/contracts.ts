@@ -54,7 +54,7 @@ export async function createContract(
   input: ContractInput,
   owner: { uid: string; name?: string | null }
 ): Promise<string> {
-  return contractsService.create(input, owner, { companyId: getCurrentCompanyId() });
+  return contractsService.create(input, owner);
 }
 
 export async function updateContract(

@@ -67,7 +67,6 @@ export async function createContact(
   owner: { uid: string; name?: string | null }
 ): Promise<string> {
   return contactsService.create(input, owner, {
-    companyId: getCurrentCompanyId(),
     tags: input.tags ?? [],
     lastInteractionAt: null,
     nextContactAt: null,

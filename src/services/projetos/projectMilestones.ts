@@ -61,9 +61,7 @@ export async function createProjectMilestone(
   input: ProjectMilestoneInput,
   owner: { uid: string; name?: string | null }
 ): Promise<string> {
-  return projectMilestonesService.create(input, owner, {
-    companyId: getCurrentCompanyId(),
-  });
+  return projectMilestonesService.create(input, owner);
 }
 
 export async function updateProjectMilestone(
