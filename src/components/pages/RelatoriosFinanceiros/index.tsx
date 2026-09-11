@@ -10,12 +10,8 @@ import {
 import { IMonthlyCashFlow } from "../../../services/financeiro/finance";
 import CashFlowChart from "../../common/charts/CashFlowChart";
 import FinanceStatusChart from "../../common/charts/FinanceStatusChart";
+import { currency } from "../../../utils/format";
 import "./styles.scss";
-
-const currency = new Intl.NumberFormat("pt-BR", {
-  style: "currency",
-  currency: "BRL",
-});
 
 interface IFinancialReportStats {
   totalAPagar: number;

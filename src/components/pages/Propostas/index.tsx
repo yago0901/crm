@@ -29,6 +29,7 @@ import { IContact } from "../../../types/contact";
 import { IDeal } from "../../../types/deal";
 import { IProduct } from "../../../types/product";
 import { PAGE_SIZE } from "../../../constants/pagination";
+import { currency } from "../../../utils/format";
 import "./styles.scss";
 
 const STATUS_LABEL: Record<ProposalStatus, string> = {
@@ -60,11 +61,6 @@ const EMPTY_FORM: ProposalInput = {
 };
 
 const EMPTY_ITEM_DRAFT = { productId: "", quantity: 1, unitPrice: 0 };
-
-const currency = new Intl.NumberFormat("pt-BR", {
-  style: "currency",
-  currency: "BRL",
-});
 
 const computeTotal = (items: IProposalItem[]): number =>
   items.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0);

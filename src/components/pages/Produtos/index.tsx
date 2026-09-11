@@ -18,6 +18,7 @@ import {
 } from "../../../services/shared/products";
 import { IProduct, IRecipeItem, ProductInput, ProductStatus } from "../../../types/product";
 import { PAGE_SIZE } from "../../../constants/pagination";
+import { currency } from "../../../utils/format";
 import "./styles.scss";
 
 const STATUS_LABEL: Record<ProductStatus, string> = {
@@ -42,11 +43,6 @@ const EMPTY_FORM: ProductInput = {
 };
 
 const EMPTY_INGREDIENT_DRAFT = { ingredientProductId: "", quantityPerUnit: 1 };
-
-const currency = new Intl.NumberFormat("pt-BR", {
-  style: "currency",
-  currency: "BRL",
-});
 
 export default function Produtos() {
   const { currentUser } = useAuth();

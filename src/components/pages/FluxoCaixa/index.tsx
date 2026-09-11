@@ -5,12 +5,8 @@ import {
   subscribeToReceivables,
 } from "../../../services/financeiro/finance";
 import { IPayable, IReceivable } from "../../../types/finance";
+import { currency } from "../../../utils/format";
 import "./styles.scss";
-
-const currency = new Intl.NumberFormat("pt-BR", {
-  style: "currency",
-  currency: "BRL",
-});
 
 const formatMonth = (key: string) => {
   if (key === "sem-data") return "Sem data";

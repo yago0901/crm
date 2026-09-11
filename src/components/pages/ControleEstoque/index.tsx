@@ -27,6 +27,7 @@ import { IProduct } from "../../../types/product";
 import { IWarehouse } from "../../../types/warehouse";
 import { IStockMovement, StockMovementType } from "../../../types/stockMovement";
 import { PAGE_SIZE } from "../../../constants/pagination";
+import { currency } from "../../../utils/format";
 import "./styles.scss";
 
 const STATUS_LABEL: Record<InventoryItemStatus, string> = {
@@ -76,11 +77,6 @@ const MOVEMENT_VALUE_LABEL: Record<StockMovementType, string> = {
   ajuste: "Quantidade (negativo para diminuir)",
   inventario: "Quantidade contada agora",
 };
-
-const currency = new Intl.NumberFormat("pt-BR", {
-  style: "currency",
-  currency: "BRL",
-});
 
 export default function ControleEstoque() {
   const { currentUser } = useAuth();

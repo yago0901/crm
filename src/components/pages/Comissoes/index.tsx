@@ -23,6 +23,7 @@ import { CommissionInput, CommissionStatus, ICommission } from "../../../types/c
 import { IEmployee } from "../../../types/employee";
 import { ISalesOrder } from "../../../types/salesOrder";
 import { PAGE_SIZE } from "../../../constants/pagination";
+import { currency } from "../../../utils/format";
 import "./styles.scss";
 
 const STATUS_LABEL: Record<CommissionStatus, string> = {
@@ -46,11 +47,6 @@ const EMPTY_FORM: CommissionInput = {
   status: "pendente",
   notes: "",
 };
-
-const currency = new Intl.NumberFormat("pt-BR", {
-  style: "currency",
-  currency: "BRL",
-});
 
 const computeCommissionValue = (saleValue: number, rate: number): number =>
   Number(((saleValue * rate) / 100).toFixed(2));

@@ -17,12 +17,8 @@ import { getActiveInventoryTotal } from "../../../services/estoques-logistica/in
 import { getLowStockItemsCount } from "../../../services/business-intelligence/analytics";
 import { getPendingProductionOrdersCount } from "../../../services/producao-manufatura/productionOrders";
 import { getActiveProjectsCount } from "../../../services/projetos/projects";
+import { currency } from "../../../utils/format";
 import "./styles.scss";
-
-const currency = new Intl.NumberFormat("pt-BR", {
-  style: "currency",
-  currency: "BRL",
-});
 
 interface IPanelStats {
   dashboard: IDashboardStats;

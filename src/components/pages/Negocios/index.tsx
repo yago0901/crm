@@ -32,6 +32,7 @@ import {
 } from "../../../types/deal";
 import { IContact } from "../../../types/contact";
 import { PAGE_SIZE } from "../../../constants/pagination";
+import { currency } from "../../../utils/format";
 import "./styles.scss";
 
 const STATUS_LABEL: Record<DealStatus, string> = {
@@ -67,11 +68,6 @@ const EMPTY_FORM: DealInput = {
   competitor: "",
   notes: "",
 };
-
-const currency = new Intl.NumberFormat("pt-BR", {
-  style: "currency",
-  currency: "BRL",
-});
 
 export default function Negocios() {
   const { currentUser } = useAuth();

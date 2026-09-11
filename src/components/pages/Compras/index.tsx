@@ -33,6 +33,7 @@ import { IInventoryItem } from "../../../types/inventoryItem";
 import { IWarehouse } from "../../../types/warehouse";
 import { IProject } from "../../../types/project";
 import { PAGE_SIZE } from "../../../constants/pagination";
+import { currency } from "../../../utils/format";
 import "./styles.scss";
 
 const EDITABLE_STATUSES: { value: PurchaseOrderStatus; label: string }[] = [
@@ -72,11 +73,6 @@ const EMPTY_FORM: PurchaseOrderInput = {
   projectId: "",
   projectName: "",
 };
-
-const currency = new Intl.NumberFormat("pt-BR", {
-  style: "currency",
-  currency: "BRL",
-});
 
 export default function Compras() {
   const { currentUser } = useAuth();

@@ -9,12 +9,8 @@ import {
 } from "../../../services/business-intelligence/analytics";
 import { IStatusCount } from "../../../services/shared/dashboard";
 import StatusBreakdownChart from "../../common/charts/StatusBreakdownChart";
+import { currency } from "../../../utils/format";
 import "./styles.scss";
-
-const currency = new Intl.NumberFormat("pt-BR", {
-  style: "currency",
-  currency: "BRL",
-});
 
 const INVENTORY_LABELS = { ativo: "Ativo", descontinuado: "Descontinuado" };
 const INVENTORY_COLORS = { ativo: "var(--chart-green)", descontinuado: "var(--chart-gray)" };

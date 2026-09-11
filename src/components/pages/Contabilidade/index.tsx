@@ -24,6 +24,7 @@ import {
 } from "../../../services/financeiro/ledger";
 import { ILedgerEntry, LedgerEntryInput, LedgerEntryType } from "../../../types/ledgerEntry";
 import { PAGE_SIZE } from "../../../constants/pagination";
+import { currency } from "../../../utils/format";
 import "./styles.scss";
 
 const TYPE_LABEL: Record<LedgerEntryType, string> = {
@@ -44,11 +45,6 @@ const EMPTY_FORM: LedgerEntryInput = {
   date: null,
   notes: "",
 };
-
-const currency = new Intl.NumberFormat("pt-BR", {
-  style: "currency",
-  currency: "BRL",
-});
 
 export default function Contabilidade() {
   const { currentUser } = useAuth();
