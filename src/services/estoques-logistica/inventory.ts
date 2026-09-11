@@ -14,6 +14,7 @@ import {
 import { createCrudService } from "../shared/crudFactory";
 import { getCurrentCompanyId } from "../shared/tenant";
 import { firestore } from "../shared/firebase";
+import { syncLowStockNotificationForItem } from "./lowStockNotifications";
 import { IInventoryItem, InventoryItemInput, InventoryItemStatus } from "../../types/inventoryItem";
 
 export const mapInventoryItem = (
@@ -88,6 +89,7 @@ export async function createInventoryItem(
   }
 
   await batch.commit();
+  await syncLowStockNotificationForItem(itemRef.id);
   return itemRef.id;
 }
 
@@ -95,11 +97,21 @@ export async function updateInventoryItem(
   itemId: string,
   input: Partial<InventoryItemInput>
 ): Promise<void> {
-  return inventoryService.update(itemId, input);
+  await inventoryService.update(itemId, input);
+  await safeSyncLowStockNotification(itemId);
 }
 
 export async function deleteInventoryItem(itemId: string): Promise<void> {
-  return inventoryService.remove(itemId);
+  await inventoryService.remove(itemId);
+  await safeSyncLowStockNotification(itemId);
+}
+
+async function safeSyncLowStockNotification(itemId: string): Promise<void> {
+  try {
+    await syncLowStockNotificationForItem(itemId);
+  } catch (err) {
+    console.error("Falha ao sincronizar notificação de estoque baixo:", err);
+  }
 }
 
 export async function getActiveInventoryTotal(): Promise<number> {

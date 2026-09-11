@@ -5,6 +5,7 @@ const batchCommit = vi.fn().mockResolvedValue(undefined);
 
 vi.mock("../shared/firebase", () => ({
   firestore: {},
+  auth: { currentUser: { uid: "owner1", displayName: "Yago", email: "yago@test.com" } },
 }));
 
 vi.mock("firebase/firestore", () => ({
@@ -23,6 +24,8 @@ vi.mock("firebase/firestore", () => ({
   addDoc: vi.fn(),
   deleteDoc: vi.fn(),
   updateDoc: vi.fn(),
+  setDoc: vi.fn(),
+  getDoc: vi.fn().mockResolvedValue({ exists: () => false }),
   writeBatch: vi.fn(() => ({ set: batchSet, commit: batchCommit })),
   getAggregateFromServer: vi.fn(),
   getDocs: vi.fn(),

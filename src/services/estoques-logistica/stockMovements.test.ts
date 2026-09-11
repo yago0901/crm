@@ -121,6 +121,7 @@ describe("createStockMovement", () => {
   it("also updates the per-warehouse balance when a warehouseId is given", async () => {
     transactionGet
       .mockResolvedValueOnce({ exists: () => true, data: () => ({ quantity: 5, name: "Parafuso M4" }) })
+      .mockResolvedValueOnce({ exists: () => false })
       .mockResolvedValueOnce({ exists: () => false });
 
     await createStockMovement(
@@ -143,7 +144,8 @@ describe("createStockMovement", () => {
   it("accumulates onto the existing warehouse balance instead of overwriting it", async () => {
     transactionGet
       .mockResolvedValueOnce({ exists: () => true, data: () => ({ quantity: 20, name: "Parafuso M4" }) })
-      .mockResolvedValueOnce({ exists: () => true, data: () => ({ quantity: 8 }) });
+      .mockResolvedValueOnce({ exists: () => true, data: () => ({ quantity: 8 }) })
+      .mockResolvedValueOnce({ exists: () => false });
 
     await createStockMovement(
       { itemId: "item-1", type: "entrada", value: 10, warehouseId: "wh-1" },
@@ -153,6 +155,69 @@ describe("createStockMovement", () => {
     expect(transactionSet).toHaveBeenCalledWith(
       expect.objectContaining({ id: "item-1_wh-1" }),
       expect.objectContaining({ quantity: 18 })
+    );
+  });
+
+  it("opens a low-stock notification when a saída drops the balance to or below the minimum", async () => {
+    transactionGet
+      .mockResolvedValueOnce({
+        exists: () => true,
+        data: () => ({ quantity: 12, name: "Cerveja Pilsen", minQuantity: 10 }),
+      })
+      .mockResolvedValueOnce({ exists: () => false });
+
+    await createStockMovement(
+      { itemId: "item-1", type: "saida", value: 5 },
+      { uid: "owner1", name: "Yago" }
+    );
+
+    expect(transactionSet).toHaveBeenCalledWith(
+      expect.objectContaining({ id: "estoque_baixo__item-1" }),
+      expect.objectContaining({
+        type: "estoque_baixo",
+        status: "aberto",
+        relatedId: "item-1",
+        triggerValue: 7,
+        thresholdValue: 10,
+      })
+    );
+  });
+
+  it("resolves an open low-stock notification when an entrada brings the balance back above the minimum", async () => {
+    transactionGet
+      .mockResolvedValueOnce({
+        exists: () => true,
+        data: () => ({ quantity: 8, name: "Cerveja Pilsen", minQuantity: 10 }),
+      })
+      .mockResolvedValueOnce({ exists: () => true, data: () => ({ status: "aberto" }) });
+
+    await createStockMovement(
+      { itemId: "item-1", type: "entrada", value: 20 },
+      { uid: "owner1", name: "Yago" }
+    );
+
+    expect(transactionUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ id: "estoque_baixo__item-1" }),
+      expect.objectContaining({ status: "resolvido" })
+    );
+  });
+
+  it("does not touch notifications when the item has no minimum set", async () => {
+    transactionGet
+      .mockResolvedValueOnce({
+        exists: () => true,
+        data: () => ({ quantity: 3, name: "Item sem mínimo", minQuantity: 0 }),
+      })
+      .mockResolvedValueOnce({ exists: () => false });
+
+    await createStockMovement(
+      { itemId: "item-1", type: "saida", value: 2 },
+      { uid: "owner1", name: "Yago" }
+    );
+
+    expect(transactionSet).not.toHaveBeenCalledWith(
+      expect.objectContaining({ id: "estoque_baixo__item-1" }),
+      expect.anything()
     );
   });
 });

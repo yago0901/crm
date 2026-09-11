@@ -29,6 +29,7 @@ import GestaoContratos from "../components/pages/GestaoContratos";
 import GestaoFornecedores from "../components/pages/GestaoFornecedores";
 import GestaoFuncionarios from "../components/pages/GestaoFuncionarios";
 import Historico from "../components/pages/Historico";
+import Notificacoes from "../components/pages/Notificacoes";
 import Home from '../components/pages/Home';
 import LogisticaDistribuicao from "../components/pages/LogisticaDistribuicao";
 import Login from "../components/pages/Login";
@@ -113,6 +114,7 @@ function Router() {
         <Route path="/home" element={<PrivateRoute><Home /></PrivateRoute>} />
         <Route path="/configuracoes" element={<PrivateRoute><AdminOnlyRoute><ConfiguracoesEmpresa /></AdminOnlyRoute></PrivateRoute>} />
         <Route path="/historico" element={<PrivateRoute><AdminOnlyRoute><Historico /></AdminOnlyRoute></PrivateRoute>} />
+        <Route path="/notificacoes" element={<PrivateRoute><Notificacoes /></PrivateRoute>} />
 
         <Route path="/financeiro/contabilidade" element={<PrivateRoute><ModuleRoute requiredModule="financial"><Contabilidade /></ModuleRoute></PrivateRoute>} />
         <Route path="/financeiro/contas-pagar" element={<PrivateRoute><ModuleRoute requiredModule="financial"><ContasPagar /></ModuleRoute></PrivateRoute>} />
