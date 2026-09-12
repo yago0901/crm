@@ -8,7 +8,7 @@ export default function TrialExpirado() {
 
   const handleLogout = async () => {
     await logout();
-    navigate("/");
+    navigate("/entrar");
   };
 
   const expiredOn = trialEndsAt ? trialEndsAt.toDate().toLocaleDateString("pt-BR") : null;

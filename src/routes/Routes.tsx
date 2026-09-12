@@ -5,6 +5,7 @@ import AcompanhamentoLeads from "../components/pages/AcompanhamentoLeads";
 import Historico from "../components/pages/Historico";
 import Notificacoes from "../components/pages/Notificacoes";
 import Home from '../components/pages/Home';
+import Landing from "../components/pages/Landing";
 import Login from "../components/pages/Login";
 import RedefinirSenha from "../components/pages/RedefinirSenha";
 import Register from '../components/pages/Register';
@@ -21,7 +22,7 @@ const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
 
   if (loading) return null;
-  if (!currentUser) return <Navigate to="/" />;
+  if (!currentUser) return <Navigate to="/entrar" />;
   if (trialExpired && location.pathname !== "/trial-expirado") {
     return <Navigate to="/trial-expirado" />;
   }
@@ -83,7 +84,8 @@ const renderPageRoute = (page: NavPageDef, group: NavGroupDef) => {
 function Router() {
   return (
     <Routes>
-      <Route path="/" element={<Login />} />
+      <Route path="/" element={<Landing />} />
+      <Route path="/entrar" element={<Login />} />
       <Route path="/register" element={<Register />} />
       <Route path="/redefinir-senha" element={<PrivateRoute><RedefinirSenha /></PrivateRoute>} />
       <Route path="/trial-expirado" element={<PrivateRoute><TrialExpirado /></PrivateRoute>} />
