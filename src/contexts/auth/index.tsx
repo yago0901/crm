@@ -10,6 +10,7 @@ import {
 import { UserLevel } from './types'
 import { Timestamp, doc, getDoc, onSnapshot, updateDoc } from 'firebase/firestore';
 import { setCurrentCompanyId } from '../../services/shared/tenant';
+import { touchCompanyLastLogin } from '../../services/plataforma/companies';
 import { CompanyPlan } from '../../types/company';
 import { AuthContext } from './AuthContext';
 
@@ -179,6 +180,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       throw new Error(
         'Esta conta ainda não foi configurada corretamente. Fale com o administrador.'
       );
+    }
+
+    const loggedInCompanyId = userDoc.data()?.companyId as string | undefined;
+    if (loggedInCompanyId) {
+      touchCompanyLastLogin(loggedInCompanyId).catch(() => {});
     }
 
     setCurrentUser(user);

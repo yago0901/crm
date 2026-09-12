@@ -41,7 +41,13 @@ const findActiveKey = (menu: NavbarMenuItem[], pathname: string): string | null 
   return item?.key ?? null;
 };
 
-const Navbar: React.FC<INavbar> = ({ isMenuOpen, onToggleMenu, menu = DEFAULT_MENU, logoutRedirectTo = '/entrar' }) => {
+const Navbar: React.FC<INavbar> = ({
+  isMenuOpen,
+  onToggleMenu,
+  menu = DEFAULT_MENU,
+  logoutRedirectTo = '/entrar',
+  showNotifications = true,
+}) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { theme, toggleTheme } = useTheme();
@@ -57,9 +63,10 @@ const Navbar: React.FC<INavbar> = ({ isMenuOpen, onToggleMenu, menu = DEFAULT_ME
   const [notificationCount, setNotificationCount] = useState(0);
 
   useEffect(() => {
+    if (!showNotifications) return;
     const unsubscribe = subscribeToOpenNotificationCount(setNotificationCount);
     return unsubscribe;
-  }, []);
+  }, [showNotifications]);
 
   const handleLogout = async () => {
     await logout();
@@ -133,13 +140,15 @@ const Navbar: React.FC<INavbar> = ({ isMenuOpen, onToggleMenu, menu = DEFAULT_ME
               })}
             </ul>
 
-            <button className="navbar__settings" onClick={() => handleNavigate('/notificacoes')}>
-              <FaBell />
-              <span>Notificações</span>
-              {notificationCount > 0 && (
-                <span className="navbar__badge">{notificationCount}</span>
-              )}
-            </button>
+            {showNotifications && (
+              <button className="navbar__settings" onClick={() => handleNavigate('/notificacoes')}>
+                <FaBell />
+                <span>Notificações</span>
+                {notificationCount > 0 && (
+                  <span className="navbar__badge">{notificationCount}</span>
+                )}
+              </button>
+            )}
 
             {isAdmin && (
               <button onClick={() => handleNavigate('/configuracoes')}>

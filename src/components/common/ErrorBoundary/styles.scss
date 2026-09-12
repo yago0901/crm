@@ -16,13 +16,7 @@
     margin: 0;
   }
 
-  button {
+  .btn {
     align-self: flex-start;
-    padding: 0.5rem 1rem;
-    border-radius: var(--radius-sm);
-    border: 1px solid var(--color-border);
-    background-color: var(--color-primary-soft);
-    color: var(--color-primary-soft-text);
-    cursor: pointer;
   }
 }

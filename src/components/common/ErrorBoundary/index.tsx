@@ -1,4 +1,5 @@
 import { Component, ErrorInfo, ReactNode } from "react";
+import Button from "../Button";
 import "./styles.scss";
 
 interface ErrorBoundaryProps {
@@ -33,9 +34,9 @@ export default class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBo
             Ocorreu um erro inesperado. Você pode voltar para outra tela pelo menu ao lado,
             ou recarregar a página.
           </p>
-          <button type="button" onClick={this.handleReload}>
+          <Button type="button" variant="primary" onClick={this.handleReload}>
             Recarregar a página
-          </button>
+          </Button>
         </div>
       );
     }

@@ -31,6 +31,7 @@ const AdminLayout = ({ children }: { children: ReactNode }) => {
           onToggleMenu={handleToggleMenu}
           menu={ADMIN_MENU}
           logoutRedirectTo="/admin"
+          showNotifications={false}
         />
         <div className="home_background__container__card_login">
           {children}

@@ -4,8 +4,9 @@
   border-radius: var(--radius-md);
   border: 1px solid transparent;
   font-size: var(--font-size-base);
+  font-weight: 700;
   cursor: pointer;
-  transition: background-color var(--transition-fast), border-color var(--transition-fast);
+  transition: background-color var(--transition-fast), border-color var(--transition-fast), filter var(--transition-fast), color var(--transition-fast);
 
   &:disabled {
     opacity: 0.6;
@@ -13,11 +14,12 @@
   }
 
   &--primary {
-    background-color: var(--color-primary);
+    background: linear-gradient(135deg, var(--color-primary), var(--chart-cyan));
     color: white;
+    box-shadow: 0 8px 20px rgba(37, 99, 235, 0.18);
 
     &:hover:not(:disabled) {
-      background-color: var(--color-primary-hover);
+      filter: brightness(1.05);
     }
   }
 
@@ -28,6 +30,7 @@
 
     &:hover:not(:disabled) {
       border-color: var(--color-primary);
+      color: var(--color-primary);
     }
   }
 
