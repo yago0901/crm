@@ -7,6 +7,7 @@ const Register = () => {
   const [companyName, setCompanyName] = useState<string>("");
   const [slug, setSlug] = useState<string>("");
   const [slugTouched, setSlugTouched] = useState(false);
+  const [name, setName] = useState<string>("");
   const [username, setUsername] = useState<string>("");
   const [email, setEmail] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
@@ -35,8 +36,8 @@ const Register = () => {
     event.preventDefault();
     setError(null);
 
-    if (!companyName.trim() || !username.trim() || !email.trim()) {
-      setError('Preencha o nome da empresa, o usuário e o e-mail.');
+    if (!companyName.trim() || !name.trim() || !username.trim() || !email.trim()) {
+      setError('Preencha o nome da empresa, o seu nome, o usuário e o e-mail.');
       return;
     }
 
@@ -45,6 +46,7 @@ const Register = () => {
       const result = await provisionCompanyWithPrimaryAccount({
         companyName: companyName.trim(),
         slugHint: slug.trim() || undefined,
+        name: name.trim(),
         username: username.trim(),
         email: email.trim(),
       });
@@ -106,6 +108,14 @@ const Register = () => {
               type="text"
               value={slug}
               onChange={(e) => handleSlugChange(e.target.value)}
+            />
+            <input
+              name="name"
+              placeholder="Seu nome"
+              aria-label="Seu nome"
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
             />
             <input
               name="username"

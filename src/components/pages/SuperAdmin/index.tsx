@@ -19,6 +19,7 @@ const SuperAdmin = () => {
   const [loading, setLoading] = useState(true);
 
   const [companyName, setCompanyName] = useState("");
+  const [name, setName] = useState("");
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [creating, setCreating] = useState(false);
@@ -73,8 +74,8 @@ const SuperAdmin = () => {
     setCreateError(null);
     setCreatedInfo(null);
 
-    if (!companyName.trim() || !username.trim() || !email.trim()) {
-      setCreateError("Preencha o nome da empresa, o usuário e o e-mail.");
+    if (!companyName.trim() || !name.trim() || !username.trim() || !email.trim()) {
+      setCreateError("Preencha o nome da empresa, o nome do responsável, o usuário e o e-mail.");
       return;
     }
 
@@ -82,12 +83,14 @@ const SuperAdmin = () => {
     try {
       const result = await provisionCompanyWithPrimaryAccount({
         companyName: companyName.trim(),
+        name: name.trim(),
         username: username.trim(),
         email: email.trim(),
         skipAutoSignIn: true,
       });
       setCreatedInfo({ login: result.login, tempPassword: result.tempPassword });
       setCompanyName("");
+      setName("");
       setUsername("");
       setEmail("");
     } catch (err) {
@@ -178,6 +181,12 @@ const SuperAdmin = () => {
             aria-label="Nome da empresa"
             value={companyName}
             onChange={(e) => setCompanyName(e.target.value)}
+          />
+          <input
+            placeholder="Nome do responsável"
+            aria-label="Nome do responsável"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
           />
           <input
             placeholder="Usuário"

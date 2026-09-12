@@ -15,6 +15,9 @@ import { AuthContext } from './AuthContext';
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [employeeId, setEmployeeId] = useState<string | null>(null);
+  const [employeeName, setEmployeeName] = useState<string | null>(null);
+  const [profileName, setProfileName] = useState<string | null>(null);
   const [userLevel, setUserLevel] = useState<UserLevel | null>(null);
   const [companyId, setCompanyId] = useState<string | null>(null);
   const [companyName, setCompanyName] = useState<string | null>(null);
@@ -57,6 +60,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setModules([]);
       setMustChangePassword(false);
       setCurrentCompanyId(null);
+      setEmployeeId(null);
+      setProfileName(null);
       setCompanyReady(true);
       return;
     }
@@ -77,11 +82,33 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setModules((data?.modules as string[]) ?? []);
       setMustChangePassword((data?.mustChangePassword as boolean) ?? false);
       setCurrentCompanyId(nextCompanyId);
+      setEmployeeId((data?.employeeId as string) ?? null);
+      setProfileName((data?.name as string) ?? null);
       setProfileReady(true);
     });
 
     return unsubscribe;
   }, [currentUser]);
+
+  useEffect(() => {
+    if (!employeeId) {
+      setEmployeeName(null);
+      return;
+    }
+
+    const employeeRef = doc(firestore, 'employees', employeeId);
+    const unsubscribe = onSnapshot(
+      employeeRef,
+      snap => {
+        setEmployeeName((snap.data()?.name as string) ?? null);
+      },
+      () => {
+        setEmployeeName(null);
+      }
+    );
+
+    return unsubscribe;
+  }, [employeeId]);
 
   useEffect(() => {
     if (!currentUser) {
@@ -189,6 +216,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     <AuthContext.Provider
       value={{
         currentUser,
+        currentUserName:
+          employeeName ?? profileName ?? currentUser?.displayName ?? currentUser?.email ?? null,
         userLevel,
         companyId,
         companyName,

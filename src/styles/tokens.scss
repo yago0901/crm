@@ -1,21 +1,23 @@
 :root {
-  --color-primary: #2f6feb;
-  --color-primary-hover: #2657bd;
-  --color-primary-soft: #eaf1fd;
-  --color-primary-soft-text: #1c4fa3;
+  /* Continuum Blue — one blue family (primary) plus a coordinated cool set
+     (cyan, emerald, slate) and a single warm accent (amber) for contrast. */
+  --color-primary: #2563eb;
+  --color-primary-hover: #1d4ed8;
+  --color-primary-soft: #dbeafe;
+  --color-primary-soft-text: #1e3a8a;
 
-  --color-success: #1c7a44;
-  --color-success-hover: #145c34;
-  --color-success-soft: #d9f2e3;
+  --color-success: #047857;
+  --color-success-hover: #065f46;
+  --color-success-soft: #d1fae5;
 
-  --color-danger: #c62828;
-  --color-danger-soft: #fdecea;
+  --color-danger: #be123c;
+  --color-danger-soft: #ffe4e6;
 
-  --color-warning: #8a6d00;
-  --color-warning-soft: #fff4cc;
+  --color-warning: #92400e;
+  --color-warning-soft: #fef3c7;
 
-  --color-info-soft: #dde6f7;
-  --color-info-text: #2f4f8f;
+  --color-info-soft: #cffafe;
+  --color-info-text: #155e75;
 
   --color-neutral-soft: #eee;
   --color-neutral-text: #666;
@@ -41,6 +43,9 @@
   --space-5: 1.5rem;
   --space-6: 2rem;
 
+  --font-family-base: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue",
+    Arial, sans-serif;
+
   --font-size-sm: 0.8rem;
   --font-size-base: 0.9rem;
   --font-size-md: 1.1rem;
@@ -51,48 +56,50 @@
   --shadow-card: 0 1px 3px rgba(20, 30, 60, 0.12);
 
   --color-page-bg: #f2f4fa;
+  /* The content shell and the sidebar both float as translucent-white panels
+     directly on --color-page-bg — one background, not a stacked extra tier. */
+  --color-content-bg: rgba(255, 255, 255, 0.6);
 
   --color-navbar-bg: rgba(255, 255, 255, 0.55);
-  --color-glass-bg: var(--color-navbar-bg);
   --color-navbar-text: #333333;
   --color-navbar-hover-bg: rgba(0, 0, 0, 0.06);
   --color-navbar-hover-text: #111111;
   --color-navbar-border: rgba(0, 0, 0, 0.1);
   --color-navbar-backdrop: rgba(0, 0, 0, 0.25);
 
-  --gradient-amber: linear-gradient(135deg, #fb923c, #f97316);
-  --gradient-teal: linear-gradient(135deg, #34d399, #10b981);
-  --gradient-blue: linear-gradient(135deg, #60a5fa, #3b82f6);
-  --gradient-violet: linear-gradient(135deg, #a78bfa, #8b5cf6);
+  --gradient-amber: linear-gradient(135deg, #fbbf24, #d97706);
+  --gradient-teal: linear-gradient(135deg, #34d399, #059669);
+  --gradient-blue: linear-gradient(135deg, #60a5fa, #2563eb);
+  --gradient-cyan: linear-gradient(135deg, #22d3ee, #0891b2);
 
-  --chart-orange: #f97316;
-  --chart-green: #10b981;
-  --chart-gray: #9ca3af;
-  --chart-blue: #3b82f6;
-  --chart-violet: #8b5cf6;
+  --chart-orange: #d97706;
+  --chart-green: #059669;
+  --chart-gray: #64748b;
+  --chart-blue: var(--color-primary);
+  --chart-cyan: #0891b2;
 
   --transition-fast: 0.15s ease-in-out;
   --transition-base: 0.3s ease-in-out;
 }
 
 :root[data-theme="dark"] {
-  --color-primary: #5b8def;
-  --color-primary-hover: #7ba3f2;
-  --color-primary-soft: rgba(91, 141, 239, 0.16);
-  --color-primary-soft-text: #9cbdf5;
+  --color-primary: #5c93f5;
+  --color-primary-hover: #7ba8f7;
+  --color-primary-soft: rgba(92, 147, 245, 0.16);
+  --color-primary-soft-text: #a9c6fa;
 
-  --color-success: #3ddc84;
-  --color-success-hover: #5ee69c;
-  --color-success-soft: rgba(61, 220, 132, 0.14);
+  --color-success: #34d399;
+  --color-success-hover: #5ee6b0;
+  --color-success-soft: rgba(52, 211, 153, 0.14);
 
-  --color-danger: #ff6b6b;
-  --color-danger-soft: rgba(255, 107, 107, 0.14);
+  --color-danger: #fb7185;
+  --color-danger-soft: rgba(251, 113, 133, 0.14);
 
-  --color-warning: #f0b429;
-  --color-warning-soft: rgba(240, 180, 41, 0.14);
+  --color-warning: #fbbf24;
+  --color-warning-soft: rgba(251, 191, 36, 0.14);
 
-  --color-info-soft: rgba(122, 156, 227, 0.16);
-  --color-info-text: #a7c0f2;
+  --color-info-soft: rgba(34, 211, 238, 0.16);
+  --color-info-text: #67e8f9;
 
   --color-neutral-soft: #333333;
   --color-neutral-text: #b5b5b5;
@@ -111,18 +118,17 @@
   --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.3);
 
   --color-page-bg: #17171a;
+  --color-content-bg: rgba(255, 255, 255, 0.05);
 
   --color-navbar-bg: rgba(0, 0, 0, 0.5);
-  --color-glass-bg: var(--color-navbar-bg);
   --color-navbar-text: #ffffff;
   --color-navbar-hover-bg: rgba(255, 255, 255, 0.2);
   --color-navbar-hover-text: #f0f0f0;
   --color-navbar-border: rgba(255, 255, 255, 0.15);
   --color-navbar-backdrop: rgba(0, 0, 0, 0.4);
 
-  --chart-orange: #fb923c;
+  --chart-orange: #fbbf24;
   --chart-green: #34d399;
   --chart-gray: #a1a1aa;
-  --chart-blue: #60a5fa;
-  --chart-violet: #a78bfa;
+  --chart-cyan: #22d3ee;
 }

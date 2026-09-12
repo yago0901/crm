@@ -142,7 +142,7 @@ const Navbar: React.FC<INavbar> = ({ isMenuOpen, onToggleMenu, menu = DEFAULT_ME
             </button>
 
             {isAdmin && (
-              <button className="navbar__settings" onClick={() => handleNavigate('/configuracoes')}>
+              <button onClick={() => handleNavigate('/configuracoes')}>
                 <FaCog />
                 <span>Configurações</span>
               </button>
@@ -155,7 +155,10 @@ const Navbar: React.FC<INavbar> = ({ isMenuOpen, onToggleMenu, menu = DEFAULT_ME
               </button>
             )}
 
-            <button className="navbar__theme_toggle" onClick={toggleTheme}>
+            <button
+              className={`navbar__theme_toggle ${!isAdmin ? 'navbar__settings' : ''}`}
+              onClick={toggleTheme}
+            >
               {theme === 'light' ? <FaMoon /> : <FaSun />}
               <span>{theme === 'light' ? 'Modo escuro' : 'Modo claro'}</span>
             </button>

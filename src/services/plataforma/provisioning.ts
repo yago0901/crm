@@ -42,6 +42,7 @@ export async function findAvailableSlug(companyName: string): Promise<string> {
 export interface IProvisionCompanyInput {
   companyName: string;
   slugHint?: string;
+  name: string;
   username: string;
   email: string;
   skipAutoSignIn?: boolean;
@@ -85,6 +86,7 @@ export async function provisionCompanyWithPrimaryAccount(
       await setDoc(doc(db, "users", uid), {
         companyId: slug,
         email: input.email,
+        name: input.name,
         login,
         level: "Admin",
         modules: [...ALL_MODULE_KEYS],

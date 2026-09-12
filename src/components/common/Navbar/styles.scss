@@ -4,10 +4,9 @@
 
 .navbar {
   position: relative;
-  height: 85vh;
+  height: 100%;
   background-color: var(--color-navbar-bg);
-  backdrop-filter: blur(5px);
-  border-radius: 40px;
+  border-radius: 20px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -44,7 +43,7 @@
   }
 
   &.open {
-    width: 15%;
+    width: 13%;
     justify-content: space-between;
 
     .navbar__button_close {
@@ -58,7 +57,7 @@
     }
 
     @media (max-width: 1050px) {
-      width: 22%;
+      width: 19%;
     }
   }
 

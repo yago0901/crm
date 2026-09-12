@@ -246,7 +246,7 @@ export const NAV_GROUPS: NavGroupDef[] = [
   },
   {
     key: "compliance",
-    label: "Compliance e Regulamentações",
+    label: "Compliance",
     icon: FaClipboardCheck,
     pages: [
       {
