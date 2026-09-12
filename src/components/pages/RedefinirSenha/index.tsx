@@ -48,7 +48,7 @@ const RedefinirSenha = () => {
 
   const handleLogout = async () => {
     await logout();
-    navigate("/");
+    navigate("/entrar");
   };
 
   return (

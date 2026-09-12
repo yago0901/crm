@@ -41,7 +41,7 @@ const findActiveKey = (menu: NavbarMenuItem[], pathname: string): string | null 
   return item?.key ?? null;
 };
 
-const Navbar: React.FC<INavbar> = ({ isMenuOpen, onToggleMenu, menu = DEFAULT_MENU, logoutRedirectTo = '/' }) => {
+const Navbar: React.FC<INavbar> = ({ isMenuOpen, onToggleMenu, menu = DEFAULT_MENU, logoutRedirectTo = '/entrar' }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { theme, toggleTheme } = useTheme();

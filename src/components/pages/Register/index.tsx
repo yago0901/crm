@@ -17,7 +17,7 @@ const Register = () => {
   const navigate = useNavigate();
 
   const handleHome = () => {
-    navigate('/');
+    navigate('/entrar');
   };
 
   const handleCompanyNameChange = (value: string) => {
