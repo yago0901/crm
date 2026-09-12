@@ -45,6 +45,15 @@
         box-shadow: var(--shadow-card);
         box-sizing: border-box;
         padding: var(--space-4);
+
+        /* These pages' titles are left-aligned (unlike Home's, which is
+           centered), so on mobile they'd otherwise start right where the
+           floating menu button sits. Push the whole card down to clear it
+           (margin, not padding — the card itself shouldn't stretch with
+           empty space inside it). */
+        @media (max-width: 768px) {
+          margin-top: 3.5rem;
+        }
       }
 
       &__titles {
@@ -138,10 +147,6 @@
     &__container {
       &__card_login {
         padding: 0.75rem;
-        /* The mobile menu button floats fixed at top-left (~68px tall);
-           give page content enough top clearance that nothing renders
-           underneath it. */
-        padding-top: 4.5rem;
       }
     }
   }

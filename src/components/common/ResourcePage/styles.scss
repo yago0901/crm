@@ -11,6 +11,15 @@
   box-sizing: border-box;
   box-shadow: var(--shadow-card);
 
+  /* Title here is left-aligned, so on mobile it'd otherwise start right
+     where the floating menu button sits — same reasoning as Layout's
+     fallback-card rule for the other hand-written pages. Margin, not
+     padding: push the whole card down, don't stretch it with empty
+     space inside. */
+  @media (max-width: 768px) {
+    margin-top: 3.5rem;
+  }
+
   &__header {
     display: flex;
     align-items: center;
@@ -67,6 +76,7 @@
   &__filters {
     display: flex;
     gap: var(--space-3);
+    flex-wrap: wrap;
 
     select {
       padding: 0.5rem;
