@@ -32,7 +32,7 @@ const AdminLayout = ({ children }: { children: ReactNode }) => {
           menu={ADMIN_MENU}
           logoutRedirectTo="/admin"
         />
-        <div className={`home_background__container__card_login ${isMenuOpen ? 'open' : ''}`}>
+        <div className="home_background__container__card_login">
           {children}
         </div>
       </div>

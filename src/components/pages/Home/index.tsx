@@ -25,7 +25,7 @@ import { currency } from "../../../utils/format";
 import "./styles.scss";
 
 const Home = () => {
-  const { currentUser } = useAuth();
+  const { currentUserName } = useAuth();
 
   const [stats, setStats] = useState<IDashboardStats | null>(null);
   const [contactsByStatus, setContactsByStatus] = useState<IStatusCount[]>([]);
@@ -75,7 +75,7 @@ const Home = () => {
   return (
     <div className="home_page">
       <div className="home_page__header">
-        <h1>Olá, {currentUser?.displayName || currentUser?.email}</h1>
+        <h1>Olá, {currentUserName}</h1>
         <QuickActions />
       </div>
 

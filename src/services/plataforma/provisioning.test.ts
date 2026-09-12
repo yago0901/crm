@@ -92,6 +92,7 @@ describe("provisionCompanyWithPrimaryAccount", () => {
   it("creates the company, the primary admin profile, and the login mapping", async () => {
     const result = await provisionCompanyWithPrimaryAccount({
       companyName: "Acme Ltda",
+      name: "João Silva",
       username: "joao",
       email: "joao@example.com",
     });
@@ -122,6 +123,7 @@ describe("provisionCompanyWithPrimaryAccount", () => {
       expect.objectContaining({
         companyId: "acmeltda",
         email: "joao@example.com",
+        name: "João Silva",
         level: "Admin",
         mustChangePassword: true,
       })
@@ -142,6 +144,7 @@ describe("provisionCompanyWithPrimaryAccount", () => {
   it("uses slugHint instead of the company name when provided (user-edited slug)", async () => {
     const result = await provisionCompanyWithPrimaryAccount({
       companyName: "Acme Comércio e Serviços Ltda",
+      name: "João Silva",
       slugHint: "acme",
       username: "joao",
       email: "joao@example.com",
@@ -156,6 +159,7 @@ describe("provisionCompanyWithPrimaryAccount", () => {
 
     const result = await provisionCompanyWithPrimaryAccount({
       companyName: "Acme Ltda",
+      name: "João Silva",
       username: "joao",
       email: "joao@example.com",
     });
@@ -168,6 +172,7 @@ describe("provisionCompanyWithPrimaryAccount", () => {
   it("skips the auto sign-in entirely when skipAutoSignIn is set (Super Admin manual creation)", async () => {
     const result = await provisionCompanyWithPrimaryAccount({
       companyName: "Acme Ltda",
+      name: "João Silva",
       username: "joao",
       email: "joao@example.com",
       skipAutoSignIn: true,
@@ -181,6 +186,7 @@ describe("provisionCompanyWithPrimaryAccount", () => {
     const before = Date.now();
     await provisionCompanyWithPrimaryAccount({
       companyName: "Acme Ltda",
+      name: "João Silva",
       username: "joao",
       email: "joao@example.com",
     });
@@ -199,6 +205,7 @@ describe("provisionCompanyWithPrimaryAccount", () => {
   it("stamps the company with primaryEmail", async () => {
     await provisionCompanyWithPrimaryAccount({
       companyName: "Acme Ltda",
+      name: "João Silva",
       username: "joao",
       email: "joao@example.com",
     });
@@ -212,6 +219,7 @@ describe("provisionCompanyWithPrimaryAccount", () => {
   it("grants every module to the primary admin account", async () => {
     await provisionCompanyWithPrimaryAccount({
       companyName: "Acme Ltda",
+      name: "João Silva",
       username: "joao",
       email: "joao@example.com",
     });

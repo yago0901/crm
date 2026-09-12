@@ -58,7 +58,7 @@ export default function PayrollByDepartmentChart({ data }: PayrollByDepartmentCh
             <Bar
               dataKey="total"
               name="Folha"
-              fill="var(--chart-violet)"
+              fill="var(--chart-cyan)"
               radius={[0, 4, 4, 0]}
               maxBarSize={20}
             />

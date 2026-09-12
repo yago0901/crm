@@ -30,7 +30,7 @@ const Layout = () => {
     <div className="home_background">
       <div className="home_background__container">
         <Navbar isMenuOpen={isMenuOpen} onToggleMenu={handleToggleMenu} />
-        <div className={`home_background__container__card_login ${isMenuOpen ? 'open' : ''}`}>
+        <div className="home_background__container__card_login">
             {showTrialBanner && (
               <div className="trial_banner">
                 {trialDaysRemaining === 0

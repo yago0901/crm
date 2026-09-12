@@ -1,45 +1,50 @@
 .home_background {
   width: 100%;
   height: 100vh;
-  background-image: url("../../../assets/fundo.jpg");
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
+  background-color: var(--color-page-bg);
   display: flex;
-  align-items: center;
-  justify-content: center;
+  align-items: stretch;
+  justify-content: stretch;
+  padding: 12px;
+  gap: 12px;
+  box-sizing: border-box;
   position: relative;
+  transition: background-color var(--transition-base);
 
   &__container {
-    width: 90%;
-    height: 90vh;
-    border-radius: 30px;
-    padding: 1rem;
-    background-color: var(--color-glass-bg);
-    backdrop-filter: blur(5px);
-    display: inherit;
-    align-items: center;
-    gap: 1%;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: stretch;
     transition: background-color var(--transition-base);
 
     &__card_login {
-      width: 97.7%;
-      height: 85vh;
-      background-color: var(--color-glass-bg);
-      backdrop-filter: blur(5px);
+      flex: 1;
+      min-width: 0;
+      height: 100%;
+      background-color: transparent;
       color: var(--color-text);
-      border-radius: 30px;
       padding: 1rem;
       display: flex;
       flex-direction: column;
-      align-items: center;
-      justify-content: center;
+      align-items: stretch;
+      justify-content: flex-start;
       gap: 1rem;
-      transition: width 0.3s ease-in-out, background-color var(--transition-base);
+      overflow-y: auto;
+      transition: background-color var(--transition-base);
       position: relative;
 
-      &.open {
-        width: 85%;
+      /* Pages that don't yet own a card background of their own (most of
+         the app still predates ResourcePage) get one here as a fallback,
+         so they don't render bare on the page background. .resource_page
+         and .home_page already carry this treatment on their own root —
+         each of ITS inner pieces is the "card", not the whole page. */
+      > *:not(.resource_page):not(.home_page) {
+        background-color: var(--color-content-bg);
+        border-radius: 20px;
+        box-shadow: var(--shadow-card);
+        box-sizing: border-box;
+        padding: var(--space-4);
       }
 
       &__titles {
@@ -130,22 +135,13 @@
   }
 
   @media (max-width: 768px) {
-    body {
-      background-size: contain;
-    }
-
     &__container {
-      width: 100%;
-      height: 100vh;
-      border-radius: 0;
-      padding: 0.5rem;
-
       &__card_login {
-        width: 100%;
-
-        &.open {
-          width: 100%;
-        }
+        padding: 0.75rem;
+        /* The mobile menu button floats fixed at top-left (~68px tall);
+           give page content enough top clearance that nothing renders
+           underneath it. */
+        padding-top: 4.5rem;
       }
     }
   }
