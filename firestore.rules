@@ -58,7 +58,10 @@ service cloud.firestore {
         && request.resource.data.userCount == 1
         && !exists(/databases/$(database)/documents/users/$(request.auth.uid));
 
-      allow update: if isSuperAdmin() || (belongsToCompany(companyId) && isAdmin());
+      allow update: if isSuperAdmin()
+        || (belongsToCompany(companyId) && isAdmin())
+        || (belongsToCompany(companyId)
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['lastLoginAt']));
 
       allow delete: if isSuperAdmin();
     }

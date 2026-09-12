@@ -9,6 +9,7 @@ import {
   QueryDocumentSnapshot,
   serverTimestamp,
   setDoc,
+  updateDoc,
   Unsubscribe,
   writeBatch,
 } from "firebase/firestore";
@@ -37,6 +38,7 @@ export const mapCompany = (
     primaryEmail: data.primaryEmail ?? "",
     createdAt: data.createdAt ?? null,
     updatedAt: data.updatedAt ?? null,
+    lastLoginAt: data.lastLoginAt ?? null,
   };
 };
 
@@ -85,6 +87,12 @@ export async function updateCompany(
   }
 
   await batch.commit();
+}
+
+export async function touchCompanyLastLogin(companyId: string): Promise<void> {
+  await updateDoc(doc(firestore, COLLECTION, companyId), {
+    lastLoginAt: serverTimestamp(),
+  });
 }
 
 export function subscribeToCompanies(

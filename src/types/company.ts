@@ -17,6 +17,7 @@ export interface ICompany {
   primaryEmail: string;
   createdAt: Timestamp | null;
   updatedAt: Timestamp | null;
+  lastLoginAt: Timestamp | null;
 }
 
 export type CompanyInput = Pick<

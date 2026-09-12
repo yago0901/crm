@@ -79,7 +79,13 @@ const Register = () => {
             <p>
               <strong>Senha:</strong> {fallback.tempPassword}
             </p>
-            <button onClick={handleHome}>Ir para o login</button>
+            <button
+              className="register_background__container__card_login__buttons__submit"
+              type="button"
+              onClick={handleHome}
+            >
+              Ir para o login
+            </button>
           </div>
         </div>
       </div>
@@ -91,7 +97,6 @@ const Register = () => {
       <div className="register_background__container">
         <div className="register_background__container__card_login">
           <h1>Criar conta grátis</h1>
-          <button onClick={handleHome} type="button">Voltar</button>
           <form onSubmit={handleSignUp}>
             <input
               name="companyName"
@@ -138,9 +143,22 @@ const Register = () => {
                 Seu login será: <strong>{slug}.{username}</strong>
               </p>
             )}
-            <button type="submit" disabled={saving}>
-              {saving ? 'Criando...' : 'Criar conta grátis'}
-            </button>
+            <div className="register_background__container__card_login__buttons">
+              <button
+                className="register_background__container__card_login__buttons__back"
+                type="button"
+                onClick={handleHome}
+              >
+                Voltar
+              </button>
+              <button
+                className="register_background__container__card_login__buttons__submit"
+                type="submit"
+                disabled={saving}
+              >
+                {saving ? 'Criando...' : 'Criar conta grátis'}
+              </button>
+            </div>
           </form>
           {error && <p style={{ color: "red" }}>{error}</p>}
         </div>

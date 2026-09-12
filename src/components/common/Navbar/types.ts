@@ -21,4 +21,5 @@ export interface INavbar {
   onToggleMenu: () => void;
   menu?: NavbarMenuItem[];
   logoutRedirectTo?: string;
+  showNotifications?: boolean;
 }

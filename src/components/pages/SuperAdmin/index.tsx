@@ -5,12 +5,46 @@ import { auth } from "../../../services/shared/firebase";
 import { subscribeToCompanies, updateCompany } from "../../../services/plataforma/companies";
 import { provisionCompanyWithPrimaryAccount } from "../../../services/plataforma/provisioning";
 import { ICompany } from "../../../types/company";
+import Badge, { BadgeTone } from "../../common/Badge";
 import Button from "../../common/Button";
 import { useToast } from "../../common/Toast/ToastContext";
 import "./styles.scss";
 
 const dateInputValue = (value: Timestamp | null) =>
   value ? value.toDate().toISOString().slice(0, 10) : "";
+
+const formatDate = (value: Timestamp | null) =>
+  value ? value.toDate().toLocaleDateString("pt-BR") : "—";
+
+const daysUntil = (value: Timestamp | null): number | null =>
+  value ? Math.ceil((value.toMillis() - Date.now()) / (24 * 60 * 60 * 1000)) : null;
+
+const daysSince = (value: Timestamp | null): number | null =>
+  value ? Math.floor((Date.now() - value.toMillis()) / (24 * 60 * 60 * 1000)) : null;
+
+const INACTIVITY_THRESHOLD_DAYS = 14;
+
+const lastAccessLabel = (value: Timestamp | null) => {
+  const days = daysSince(value);
+  if (days === null) return "Nunca acessou";
+  if (days === 0) return "Hoje";
+  if (days === 1) return "Ontem";
+  return `Há ${days} dias`;
+};
+
+const trialBadgeTone = (days: number | null): BadgeTone => {
+  if (days === null) return "neutral";
+  if (days < 0) return "danger";
+  if (days <= 5) return "warning";
+  return "success";
+};
+
+const trialBadgeLabel = (days: number | null) => {
+  if (days === null) return "Sem data";
+  if (days < 0) return `Expirou há ${Math.abs(days)}d`;
+  if (days === 0) return "Expira hoje";
+  return `${days}d restantes`;
+};
 
 const SuperAdmin = () => {
   const { showToast } = useToast();
@@ -43,7 +77,26 @@ const SuperAdmin = () => {
     const totalCompanies = companies.length;
     const totalUsers = companies.reduce((sum, company) => sum + (company.userCount ?? 0), 0);
     const payingCompanies = companies.filter((company) => company.plan === "pago").length;
-    return { totalCompanies, totalUsers, payingCompanies };
+    const trialCompanies = totalCompanies - payingCompanies;
+    const conversionRate = totalCompanies > 0 ? Math.round((payingCompanies / totalCompanies) * 100) : 0;
+    const expiringTrials = companies.filter((company) => {
+      if (company.plan !== "trial") return false;
+      const days = daysUntil(company.trialEndsAt);
+      return days !== null && days <= 5;
+    }).length;
+    const inactiveCompanies = companies.filter((company) => {
+      const days = daysSince(company.lastLoginAt);
+      return days === null || days > INACTIVITY_THRESHOLD_DAYS;
+    }).length;
+    return {
+      totalCompanies,
+      totalUsers,
+      payingCompanies,
+      trialCompanies,
+      conversionRate,
+      expiringTrials,
+      inactiveCompanies,
+    };
   }, [companies]);
 
   const handleTrialChange = async (slug: string, value: string) => {
@@ -110,12 +163,38 @@ const SuperAdmin = () => {
           <span className="super_admin_page__stat_label">Empresas cadastradas</span>
         </div>
         <div className="super_admin_page__stat_card">
-          <span className="super_admin_page__stat_value">{stats.totalUsers}</span>
-          <span className="super_admin_page__stat_label">Usuários no total</span>
+          <span className="super_admin_page__stat_value">{stats.trialCompanies}</span>
+          <span className="super_admin_page__stat_label">Em trial</span>
         </div>
         <div className="super_admin_page__stat_card">
           <span className="super_admin_page__stat_value">{stats.payingCompanies}</span>
           <span className="super_admin_page__stat_label">Empresas pagantes</span>
+        </div>
+        <div className="super_admin_page__stat_card">
+          <span className="super_admin_page__stat_value">{stats.conversionRate}%</span>
+          <span className="super_admin_page__stat_label">Taxa de conversão</span>
+        </div>
+        <div className="super_admin_page__stat_card">
+          <span className="super_admin_page__stat_value">{stats.totalUsers}</span>
+          <span className="super_admin_page__stat_label">Usuários no total</span>
+        </div>
+        <div
+          className={`super_admin_page__stat_card ${
+            stats.expiringTrials > 0 ? "super_admin_page__stat_card--alert" : ""
+          }`}
+        >
+          <span className="super_admin_page__stat_value">{stats.expiringTrials}</span>
+          <span className="super_admin_page__stat_label">Trials expirando (≤5 dias)</span>
+        </div>
+        <div
+          className={`super_admin_page__stat_card ${
+            stats.inactiveCompanies > 0 ? "super_admin_page__stat_card--alert" : ""
+          }`}
+        >
+          <span className="super_admin_page__stat_value">{stats.inactiveCompanies}</span>
+          <span className="super_admin_page__stat_label">
+            Sem acesso há mais de {INACTIVITY_THRESHOLD_DAYS} dias
+          </span>
         </div>
       </section>
 
@@ -133,6 +212,8 @@ const SuperAdmin = () => {
                   <th>Empresa</th>
                   <th>Slug</th>
                   <th>Plano</th>
+                  <th>Cliente desde</th>
+                  <th>Último acesso</th>
                   <th>Trial até</th>
                   <th>Usuários</th>
                   <th>E-mail do dono</th>
@@ -140,29 +221,52 @@ const SuperAdmin = () => {
                 </tr>
               </thead>
               <tbody>
-                {companies.map((company) => (
-                  <tr key={company.id}>
-                    <td>{company.name}</td>
-                    <td>{company.slug}</td>
-                    <td>{company.plan}</td>
-                    <td>
-                      <input
-                        type="date"
-                        defaultValue={dateInputValue(company.trialEndsAt)}
-                        onBlur={(e) => handleTrialChange(company.slug, e.target.value)}
-                      />
-                    </td>
-                    <td>
-                      {company.userCount}/{company.maxUsers}
-                    </td>
-                    <td>{company.primaryEmail}</td>
-                    <td>
-                      <Button variant="secondary" onClick={() => handleResetPassword(company)}>
-                        Resetar senha
-                      </Button>
-                    </td>
-                  </tr>
-                ))}
+                {companies.map((company) => {
+                  const trialDays = daysUntil(company.trialEndsAt);
+                  const seatsFull = company.maxUsers > 0 && company.userCount / company.maxUsers >= 0.9;
+                  const inactiveDays = daysSince(company.lastLoginAt);
+                  const inactive = inactiveDays === null || inactiveDays > INACTIVITY_THRESHOLD_DAYS;
+                  return (
+                    <tr key={company.id}>
+                      <td>{company.name}</td>
+                      <td>{company.slug}</td>
+                      <td>
+                        <Badge tone={company.plan === "pago" ? "success" : "info"}>
+                          {company.plan === "pago" ? "Pago" : "Trial"}
+                        </Badge>
+                      </td>
+                      <td>{formatDate(company.createdAt)}</td>
+                      <td>
+                        <span className={inactive ? "super_admin_page__warning_text" : ""}>
+                          {lastAccessLabel(company.lastLoginAt)}
+                        </span>
+                      </td>
+                      <td>
+                        <div className="super_admin_page__trial_cell">
+                          <input
+                            type="date"
+                            defaultValue={dateInputValue(company.trialEndsAt)}
+                            onBlur={(e) => handleTrialChange(company.slug, e.target.value)}
+                          />
+                          {company.plan === "trial" && (
+                            <Badge tone={trialBadgeTone(trialDays)}>{trialBadgeLabel(trialDays)}</Badge>
+                          )}
+                        </div>
+                      </td>
+                      <td>
+                        <span className={seatsFull ? "super_admin_page__warning_text" : ""}>
+                          {company.userCount}/{company.maxUsers}
+                        </span>
+                      </td>
+                      <td>{company.primaryEmail}</td>
+                      <td>
+                        <Button variant="secondary" onClick={() => handleResetPassword(company)}>
+                          Resetar senha
+                        </Button>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
